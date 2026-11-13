@@ -43,19 +43,6 @@ def check(name: str, condition: bool, detail: str = "") -> None:
     print(f"  [{mark}] {name}" + (f" — {detail}" if detail and not condition else ""))
 
 
-def read_email_code(email: str) -> str | None:
-    """Read this email's latest OTP code from the database (used by the tests)"""
-    import pyodbc
-
-    from app.config import Config
-
-    with pyodbc.connect(Config.CONNECTION_STRING) as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT Code FROM dbo.EmailCode WHERE Email = ?", (email,))
-        row = cur.fetchone()
-        return row[0] if row else None
-
-
 def cleanup_test_data() -> str:
     """Delete playlists/users the smoke test created so the real DB stays clean"""
     import pyodbc
@@ -64,7 +51,6 @@ def cleanup_test_data() -> str:
 
     with pyodbc.connect(Config.CONNECTION_STRING, autocommit=True) as conn:
         cur = conn.cursor()
-        cur.execute("DELETE FROM dbo.EmailCode WHERE Email LIKE 'smoke%'")
         cur.execute("DELETE FROM dbo.Playlist WHERE PLname LIKE N'ทดสอบ[_]%'")
         playlists = cur.rowcount
         cur.execute(
@@ -248,44 +234,37 @@ def main() -> int:
     r = session.get(base + "/playlist/3", timeout=15)
     check("ดูเพลย์ลิสต์ของคนอื่นได้ (read-only)", r.status_code == 200, str(r.status_code))
 
-    # 7) register / log in with email + OTP
-    print("\n[7] สมัคร/เข้าสู่ระบบด้วยอีเมล (OTP)")
-    new_email = f"smoke{int(time.time())}@example.com"
+    # 7) Sign up (single password form)
+    print("\n[7] สมัครสมาชิก")
+    new_user = f"smoke{int(time.time())}"
     fresh = requests.Session()
 
-    r = fresh.post(base + "/register", data={"email": new_email},
-                   allow_redirects=False, timeout=20)
-    check("อีเมลใหม่ -> ไปหน้าวันเกิด", "/register/details" in r.headers.get("Location", ""),
-          r.headers.get("Location", ""))
+    signup = {
+        "username": new_user,
+        "password": "testpass123",
+        "email": f"{new_user}@example.com",
+        "day": "15", "month": "6", "year": "1999",
+        "gender": "Male", "country": "TH", "tel": "0800000000",
+        "terms": "on",
+    }
+    r = fresh.post(base + "/register", data=signup, allow_redirects=False, timeout=20)
+    check("สมัครสมาชิกสำเร็จ", r.status_code in (301, 302), str(r.status_code))
+    check("ล็อกอินอัตโนมัติหลังสมัคร", new_user in fresh.get(base + "/", timeout=15).text)
 
-    r = fresh.post(base + "/register/details",
-                   data={"username": f"smoke{int(time.time())}", "password": "testpass123",
-                         "day": "15", "month": "6", "year": "1999",
-                         "gender": "Male", "country": "TH", "tel": "0800000000",
-                         "terms": "on"},
-                   allow_redirects=False, timeout=20)
-    check("กรอกข้อมูลครบ + ยอมรับข้อกำหนด -> ไปหน้ากรอกรหัส",
-          "/auth/code" in r.headers.get("Location", ""), r.headers.get("Location", ""))
+    dup = requests.Session()
+    r = dup.post(base + "/register", data=signup, allow_redirects=True, timeout=20)
+    check("สมัครซ้ำด้วยชื่อเดิม ถูกปฏิเสธ", "ถูกใช้แล้ว" in r.text)
 
-    code = read_email_code(new_email)
-    check("มีรหัสเก็บในฐานข้อมูล", bool(code), str(code))
+    bad = requests.Session()
+    weak = dict(signup, username=f"weak{int(time.time())}",
+                email=f"weak{int(time.time())}@example.com", password="123")
+    r = bad.post(base + "/register", data=weak, allow_redirects=True, timeout=20)
+    check("รหัสผ่านสั้นเกินไป ถูกปฏิเสธ", "อย่างน้อย 8 ตัวอักษร" in r.text)
 
-    r = fresh.post(base + "/auth/code", data={"code": "000000"}, allow_redirects=True, timeout=20)
-    check("รหัสผิดถูกปฏิเสธ", "รหัสไม่ถูกต้อง" in r.text)
-
-    r = fresh.post(base + "/auth/code", data={"code": code}, allow_redirects=False, timeout=20)
-    check("รหัสถูก -> เข้าระบบ", r.status_code in (301, 302), str(r.status_code))
-
-    r = fresh.get(base + "/playlists", timeout=15)
-    check("บัญชีใหม่ที่สร้างจากอีเมลใช้งานได้", r.status_code == 200, str(r.status_code))
-
-    check("รหสถูกลบหลังใช้ (ใช้ซ้ำไม่ได้)", read_email_code(new_email) is None)
-
-    repeat = requests.Session()
-    r = repeat.post(base + "/register", data={"email": new_email},
-                    allow_redirects=False, timeout=20)
-    check("อีเมลเดิม -> ข้ามไปหน้ากรอกรหัสทันที",
-          "/auth/code" in r.headers.get("Location", ""), r.headers.get("Location", ""))
+    r = requests.Session().post(base + "/login",
+                               data={"identity": new_user, "password": "testpass123"},
+                               allow_redirects=False, timeout=20)
+    check("ล็อกอินด้วยบัญชีที่เพิ่งสมัครได้", r.status_code in (301, 302), str(r.status_code))
 
     # 8) clean up the data the test created
     print("\n[8] เก็บกวาดข้อมูลทดสอบ")

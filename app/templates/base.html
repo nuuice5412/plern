@@ -60,10 +60,10 @@
           <a class="btn btn-ghost btn-sm" href="{{ url_for('main.logout') }}">ออกจากระบบ</a>
         {% else %}
           <span class="auth-split">
-            <a class="btn btn-ghost btn-sm" href="{{ url_for('main.register', intent='login') }}">เข้าสู่ระบบ</a>
-            <a class="btn btn-light btn-sm" href="{{ url_for('main.register', intent='signup') }}">สมัครสมาชิกฟรี</a>
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('main.login') }}">เข้าสู่ระบบ</a>
+            <a class="btn btn-light btn-sm" href="{{ url_for('main.register') }}">สมัครสมาชิกฟรี</a>
           </span>
-          {# จอแคบ: รวมเป็นปุ่มเดียวแบบ Tidal #}
+          {# Narrow screens: collapse into one pill (Tidal style) #}
           <a class="btn btn-light btn-sm auth-combined"
              href="{{ url_for('main.register') }}">เข้าสู่ระบบ / สมัครสมาชิกฟรี</a>
         {% endif %}

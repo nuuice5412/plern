@@ -24,7 +24,7 @@ end — tables, constraints, indexes, views, stored procedures, triggers, and tr
 | Listening history | Last 100 plays, total time, most-played artists (bar chart) |
 | Player | Play/pause, auto-advance, seek, volume, **shuffle**, **repeat (all/one)**, **full-screen now-playing** (⤢ or click the cover, `Esc` to close), spacebar |
 | Row play button | **White, no background** — a ▶ appears on hover, the playing row shows four animated bars, and hovering the playing row turns it into ⏸ |
-| Sign up / sign in | **Email + 6-digit OTP** (no password to remember) or classic password (PBKDF2-HMAC-SHA256 + salt), session cookie |
+| Sign up / sign in | Single password-based form (PBKDF2-HMAC-SHA256 + salt), session cookie |
 
 **Demo accounts** (password `demo1234`): `demo` · `napat` · `ploy` — the login page has one-click
 buttons that fill them in.
@@ -78,14 +78,12 @@ Plern/
 ├── db/
 │   ├── 01_schema.sql          # CREATE DATABASE + 8 tables + constraints + indexes + trigger
 │   ├── 02_seed.sql            # seed data (11 artists, 24 songs, 500 history rows)
-│   ├── 03_views_procs.sql     # 4 views + 5 stored procedures
-│   └── 04_email_code.sql      # EmailCode table (OTP login extension)
+│   └── 03_views_procs.sql     # 4 views + 5 stored procedures
 ├── app/
 │   ├── __init__.py            # application factory, template filters
 │   ├── config.py              # connection string from environment variables
 │   ├── db.py                  # data access layer (query / call_proc / error translation)
 │   ├── auth.py                # password hashing + @login_required
-│   ├── mailer.py              # OTP delivery over SMTP (or console in dev mode)
 │   ├── artwork.py             # cover/artist image resolution from manifest
 │   ├── routes.py              # all routes
 │   ├── templates/             # base, index, search, song, artist, playlist, history, auth…
@@ -106,7 +104,7 @@ Plern/
 │   ├── fetch_fonts.py         # self-hosted web fonts
 │   ├── gen_audio.py           # synthesize fallback .wav files
 │   ├── demo_live_db.py        # prove: change the DB → the page changes
-│   ├── smoke_test.py          # 57 end-to-end checks over HTTP
+│   ├── smoke_test.py          # 54 end-to-end checks over HTTP
 │   └── screenshot.py          # capture pages for the report
 └── docs/shots/                # screenshots
 ```
@@ -230,46 +228,15 @@ title, artist, preview badge, links — so the two views cannot disagree.
   unavailable (e.g. private mode).
 - Progress and volume are mirrored between the two surfaces.
 
-### 5.8 Email login (OTP) — the `EmailCode` table
+### 5.8 Sign-up and login
 
-Music apps usually ask for an email and send a code; this project does the same:
+Sign-up is a single form that fills every column of `USER` — Username, Password (stored as a
+PBKDF2 hash), Email, Gender, Date_of_Birth, Country, Tel — plus terms acceptance.
+Validation: unique username and email, password ≥ 8 characters, age 13+.
 
-1. `/register` takes **the email only**.
-2. If the email **already has an account** → send a code and go straight to the code screen.
-   If it is **new** → `/register/details` collects the full `USER` row: **Username, Password
-   (stored as a PBKDF2 hash), Gender, Date_of_Birth, Country, Tel**, plus terms acceptance
-   (age 13+, unique username, password ≥ 8 characters).
-3. `/auth/code` shows a masked address (`r***4@g****l.com`) and **six separate input boxes**
-   (auto-advance, backspace navigation, paste supported) plus a **resend** button with a 60 s
-   cooldown.
-4. Codes live in `dbo.EmailCode` — one per email, 10-minute expiry, 5 attempts — and are deleted
-   on success.
-
-This table sits outside the original ER (it is an extension for passwordless auth).
-`01_schema.sql` does not drop it; `04_email_code.sql` creates it with `IF NOT EXISTS`.
-
-```sql
-CREATE TABLE dbo.EmailCode (
-    Email     NVARCHAR(255) PRIMARY KEY,
-    Code      CHAR(6)       NOT NULL,
-    ExpiresAt DATETIME2     NOT NULL,
-    Attempts  INT           NOT NULL DEFAULT 0,
-    CreatedAt DATETIME2     NOT NULL DEFAULT SYSDATETIME()
-);
-```
-
-**Real email delivery** — set four environment variables (Gmail requires 2-Step Verification and
-an App Password):
-
-```powershell
-set SMTP_HOST=smtp.gmail.com
-set SMTP_PORT=587
-set SMTP_USER=you@gmail.com
-set SMTP_PASS=<16-character App Password>
-```
-
-Without them the app runs in **dev mode**: the code is printed to the server console and shown on
-the code screen, which is fine for a classroom demo.
+Login accepts either the username or the email plus the password; the session keeps only
+`user_id`. There is no email step: the database holds exactly the eight tables of the ER
+diagram, nothing more.
 
 ---
 
@@ -330,11 +297,11 @@ db.call_proc("""
 .\.venv\Scripts\python tools\smoke_test.py
 ```
 
-57 end-to-end checks covering every page, authorization, login/signup, OTP flow, play logging
+54 end-to-end checks covering every page, authorization, login/signup, play logging
 (verifying the trigger really increments `PlayCount`), playlist create/add/remove through stored
 procedures, and 404/403 behaviour. Test data is cleaned up automatically.
 
-Latest result: **57/57 passing**
+Latest result: **54/54 passing**
 
 ```powershell
 .\.venv\Scripts\python tools\screenshot.py    # refresh docs/shots

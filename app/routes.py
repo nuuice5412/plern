@@ -1,4 +1,4 @@
-"""
+﻿"""
 All web app routes live here.
 
 Query design notes:
@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import datetime as dt
 import re
-import secrets
 
 import pyodbc
 from flask import (
@@ -28,7 +27,7 @@ from flask import (
     url_for,
 )
 
-from . import db, mailer
+from . import db
 from .auth import hash_password, login_required, verify_password
 
 bp = Blueprint("main", __name__)
@@ -663,109 +662,16 @@ def login():
 
 
 # ---------------------------------------------------------------------------
-# Log in / sign up with email + OTP code (no password needed)
+# Sign up (single password-based form)
 # ---------------------------------------------------------------------------
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-CODE_TTL_MINUTES = 10
-MAX_CODE_ATTEMPTS = 5
-
-
-def _normalize_email(raw: str | None) -> str:
-    return (raw or "").strip().lower()
-
-
-def _issue_code(email: str) -> str:
-    """Generate a 6-digit code, store it in EmailCode (one code per email), then send it to the user"""
-    code = f"{secrets.randbelow(1000000):06d}"
-    db.execute(
-        "DELETE FROM dbo.EmailCode WHERE Email = ?;"
-        "INSERT INTO dbo.EmailCode (Email, Code, ExpiresAt) "
-        "VALUES (?, ?, DATEADD(MINUTE, ?, SYSDATETIME()));",
-        (email, email, code, CODE_TTL_MINUTES),
-    )
-    mailer.send_code(email, code)
-    return code
-
-
-def _username_from_email(email: str) -> str:
-    base = re.sub(r"[^a-z0-9._-]", "", email.split("@")[0].lower()) or "user"
-    candidate, suffix = base, 1
-    while db.query_one("SELECT 1 AS x FROM dbo.[User] WHERE Username = ?", (candidate,)):
-        suffix += 1
-        candidate = f"{base}{suffix}"
-    return candidate
-
-
-def _find_or_create_user(email: str, profile: dict | None = None) -> dict:
-    row = db.query_one("SELECT UserID, Username FROM dbo.[User] WHERE Email = ?", (email,))
-    if row:
-        return row
-
-    profile = profile or {}
-    username = profile.get("username") or _username_from_email(email)
-    password_hash = profile.get("password_hash") or hash_password(secrets.token_urlsafe(24))
-
-    rows = db.call_proc(
-        """
-        DECLARE @new_id INT;
-        EXEC dbo.usp_User_Register
-             @Username = ?, @Password = ?, @Email = ?, @Gender = ?,
-             @Date_of_Birth = ?, @Country = ?, @Tel = ?,
-             @NewUserID = @new_id OUTPUT;
-        SELECT @new_id AS NewUserID;
-        """,
-        (
-            username,
-            password_hash,
-            email,
-            profile.get("gender"),
-            profile.get("date_of_birth"),
-            profile.get("country"),
-            profile.get("tel"),
-        ),
-    )
-    return {"UserID": rows[0]["NewUserID"] if rows else None, "Username": username}
 
 
 @bp.route("/register", methods=["GET", "POST"])
 def register():
-    """Step 1: take the email -> if already registered, go straight to the code screen"""
+    """One form that fills every column of the USER table and creates the account"""
     if g.user:
         return redirect(url_for("main.index"))
-
-    email = _normalize_email(request.form.get("email") or request.args.get("email"))
-    if request.method == "POST":
-        if not EMAIL_RE.match(email):
-            flash("อีเมลไม่ถูกต้องครับ", "error")
-            return render_template("auth_email.html", email=email,
-                                   mailer_ready=mailer.is_configured())
-
-        existing = db.query_one("SELECT UserID FROM dbo.[User] WHERE Email = ?", (email,))
-        if existing:
-            # Already registered -> send a code and go to the code screen (login mode)
-            _issue_code(email)
-            session["otp_email"] = email
-            session["signup_dob"] = None
-            flash("อีเมลนี้มีบัญชีอยู่แล้ว — ส่งรหัสเข้าสู่ระบบให้แล้ว", "success")
-            return redirect(url_for("main.verify_code"))
-
-        # No account yet -> collect date of birth + accept the terms first
-        session["pending_email"] = email
-        return redirect(url_for("main.register_details"))
-
-    return render_template("auth_email.html", email=email, mailer_ready=mailer.is_configured(),
-                           intent=request.args.get("intent"))
-
-
-@bp.route("/register/details", methods=["GET", "POST"])
-def register_details():
-    """Step 2 (new emails only): fill in every field required by the USER table"""
-    if g.user:
-        return redirect(url_for("main.index"))
-
-    email = session.get("pending_email")
-    if not email:
-        return redirect(url_for("main.register"))
 
     days = range(1, 32)
     months = [(1, "ม.ค."), (2, "ก.พ."), (3, "มี.ค."), (4, "เม.ย."), (5, "พ.ค."), (6, "มิ.ย."),
@@ -781,14 +687,14 @@ def register_details():
     def render(form=None, error=None):
         if error:
             flash(error, "error")
-        return render_template("auth_details.html", email=email, days=days, months=months,
-                               years=years, countries=countries, genders=genders,
-                               form=form or {})
+        return render_template("register.html", days=days, months=months, years=years,
+                               countries=countries, genders=genders, form=form or {})
 
     if request.method == "POST":
         f = request.form
         username = (f.get("username") or "").strip()
         password = f.get("password") or ""
+        email = (f.get("email") or "").strip().lower()
         gender = (f.get("gender") or "").strip()
         country = (f.get("country") or "").strip()
         tel = (f.get("tel") or "").strip()
@@ -797,8 +703,12 @@ def register_details():
             return render(f, "ชื่อผู้ใช้ต้องยาว 3–50 ตัว ใช้ได้เฉพาะ a-z 0-9 . _ -")
         if len(password) < 8:
             return render(f, "รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร")
+        if not EMAIL_RE.match(email):
+            return render(f, "อีเมลไม่ถูกต้องครับ")
         if db.query_one("SELECT 1 AS x FROM dbo.[User] WHERE Username = ?", (username,)):
             return render(f, "ชื่อผู้ใช้นี้ถูกใช้แล้ว กรุณาเลือกชื่ออื่น")
+        if db.query_one("SELECT 1 AS x FROM dbo.[User] WHERE Email = ?", (email,)):
+            return render(f, "อีเมลนี้ถูกใช้แล้ว กรุณาใช้อีเมลอื่น")
 
         try:
             dob = dt.date(int(f.get("year")), int(f.get("month")), int(f.get("day")))
@@ -812,73 +722,38 @@ def register_details():
         if tel and not re.fullmatch(r"[0-9+ -]{9,20}", tel):
             return render(f, "เบอร์โทรไม่ถูกต้อง")
 
-        # Keep the profile in session (the password is only ever stored as a hash)
-        session["signup_profile"] = {
-            "username": username,
-            "password_hash": hash_password(password),
-            "gender": gender if gender in ("Male", "Female") else None,
-            "date_of_birth": dob.isoformat(),
-            "country": country if country in {c for c, _ in countries} else None,
-            "tel": tel or None,
-        }
-        session.pop("pending_email", None)
-        _issue_code(email)
-        session["otp_email"] = email
-        flash("ส่งรหัส 6 หลักไปที่อีเมลแล้ว (ใช้ได้ 10 นาที)", "success")
-        return redirect(url_for("main.verify_code"))
+        try:
+            rows = db.call_proc(
+                """
+                DECLARE @new_id INT;
+                EXEC dbo.usp_User_Register
+                     @Username = ?, @Password = ?, @Email = ?, @Gender = ?,
+                     @Date_of_Birth = ?, @Country = ?, @Tel = ?,
+                     @NewUserID = @new_id OUTPUT;
+                SELECT @new_id AS NewUserID;
+                """,
+                (
+                    username,
+                    hash_password(password),
+                    email,
+                    gender if gender in ("Male", "Female") else None,
+                    dob.isoformat(),
+                    country if country in {c for c, _ in countries} else None,
+                    tel or None,
+                ),
+            )
+        except pyodbc.Error as exc:
+            return render(f, db.db_message(exc))
+
+        if rows and rows[0]["NewUserID"]:
+            session.clear()
+            session["user_id"] = rows[0]["NewUserID"]
+            flash(f"สมัครสมาชิกสำเร็จ ยินดีต้อนรับ {username} 👋", "success")
+            return redirect(url_for("main.index"))
+
+        return render(f, "สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่")
 
     return render()
-
-
-@bp.route("/auth/code", methods=["GET", "POST"])
-def verify_code():
-    email = session.get("otp_email")
-    if not email:
-        flash("กรุณากรอกอีเมลก่อนครับ", "warning")
-        return redirect(url_for("main.register"))
-
-    # Test mode (SMTP not configured): show the code on screen so the demo works without real email
-    mailer_ready = mailer.is_configured()
-    existing = db.query_one("SELECT UserID FROM dbo.[User] WHERE Email = ?", (email,)) is not None
-    dev_code = None
-    if not mailer_ready:
-        row = db.query_one("SELECT Code FROM dbo.EmailCode WHERE Email = ?", (email,))
-        dev_code = row["Code"] if row else None
-
-    if request.method == "POST":
-        code = (request.form.get("code") or "").strip()
-        row = db.query_one(
-            """
-            SELECT Code, Attempts,
-                   CASE WHEN ExpiresAt > SYSDATETIME() THEN 1 ELSE 0 END AS Alive
-            FROM dbo.EmailCode WHERE Email = ?
-            """,
-            (email,),
-        )
-
-        if row is None or not row["Alive"]:
-            flash("รหัสหมดอายุแล้ว กรุณาขอรหัสใหม่", "error")
-            return redirect(url_for("main.register", email=email))
-        if row["Attempts"] >= MAX_CODE_ATTEMPTS:
-            flash("ลองผิดหลายครั้งเกินไป กรุณาขอรหัสใหม่", "error")
-            return redirect(url_for("main.register", email=email))
-        if code != row["Code"]:
-            db.execute("UPDATE dbo.EmailCode SET Attempts = Attempts + 1 WHERE Email = ?", (email,))
-            flash("รหัสไม่ถูกต้อง ลองอีกครั้งครับ", "error")
-            return render_template("auth_code.html", email=email, dev_code=dev_code, mailer_ready=mailer_ready, is_existing=existing)
-
-        user = _find_or_create_user(email, session.get("signup_profile"))
-        if not user.get("UserID"):
-            flash("สร้างบัญชีไม่สำเร็จ กรุณาลองใหม่", "error")
-            return render_template("auth_code.html", email=email, dev_code=dev_code, mailer_ready=mailer_ready, is_existing=existing)
-
-        db.execute("DELETE FROM dbo.EmailCode WHERE Email = ?", (email,))
-        session.clear()
-        session["user_id"] = user["UserID"]
-        flash(f"ยินดีต้อนรับ {user['Username']} 👋", "success")
-        return redirect(url_for("main.index"))
-
-    return render_template("auth_code.html", email=email, dev_code=dev_code, mailer_ready=mailer_ready, is_existing=existing)
 
 
 @bp.get("/logout")

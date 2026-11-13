@@ -1,4 +1,4 @@
-"""
+﻿"""
 init_db.py - creates the MusicStreamingDB database on SQL Server Express
 
 Runs 3 SQL scripts in order:
@@ -36,7 +36,7 @@ DATABASE = os.environ.get("MSSQL_DATABASE", "MusicStreamingDB")
 DRIVER = os.environ.get("MSSQL_DRIVER", "ODBC Driver 18 for SQL Server")
 
 # SQL files to run in order (order matters: the trigger lives in schema so seed can use it)
-SCRIPTS = ["01_schema.sql", "02_seed.sql", "03_views_procs.sql", "04_email_code.sql"]
+SCRIPTS = ["01_schema.sql", "02_seed.sql", "03_views_procs.sql"]
 
 # tables that must exist after a successful init
 EXPECTED_TABLES = [
@@ -249,4 +249,5 @@ def run_selected_scripts(spec: str) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
 
