@@ -103,7 +103,7 @@ Plern/
 │   ├── fetch_artwork.py       # artwork (iTunes) + artist photos (Deezer)
 │   ├── fetch_fonts.py         # self-hosted web fonts
 │   ├── gen_audio.py           # synthesize fallback .wav files
-│   ├── demo_live_db.py        # prove: change the DB → the page changes
+│   ├── demo_backend_frontend.py  # prove: DB → backend → frontend (with screenshots)
 │   ├── smoke_test.py          # 54 end-to-end checks over HTTP
 │   └── screenshot.py          # capture pages for the report
 └── docs/shots/                # screenshots
@@ -447,18 +447,22 @@ Result: **8 tables · 4 views · 5 stored procedures · 1 trigger**.
 ### 11.2 Change the database → the page changes immediately
 
 ```powershell
-python tools/demo_live_db.py     # the web server must be running
+python tools/demo_backend_frontend.py     # the web server must be running
 ```
 
-The script demonstrates, step by step:
+One command proves all four layers, and saves `docs/shots/demo_before.png` /
+`demo_after.png` as evidence:
 
-1. reads a title and play count from the database and confirms the page shows them;
-2. runs `UPDATE dbo.Song SET SongTitle = …` **directly in SQL** → reload shows the new title
-   immediately (no server restart);
-3. restores the original title;
-4. inserts one `dbo.History` row → the **trigger** increments `PlayCount` → the API and the page
-   agree on the new value;
-5. deletes the test row and restores the count.
+1. **No hard-coded data** — searches every `.html` / `.py` / `.js` file for the song title and
+   shows it appears nowhere, so the value on screen *must* come from the database.
+2. **Page matches the DB** — the rendered page contains exactly the value returned by `SELECT`.
+3. **Change the DB → the page changes** — `UPDATE dbo.Song SET SongTitle = … ★` then re-request
+   the page: the new title appears immediately, with no server restart.
+4. **The JSON API reads the DB too** — renaming a role row changes what
+   `GET /api/song/<id>` returns (the data behind the player's credits tab).
+5. **Trigger** — inserting one `dbo.History` row raises `PlayCount`, and the page shows the new
+   count.
+6. Everything is rolled back at the end, so the script is safe to run repeatedly.
 
 ### 11.3 Request path (no hardcoded data)
 

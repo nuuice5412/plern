@@ -101,7 +101,7 @@ Spi/
 │   ├── fetch_artwork.py       # ดึงปกเพลง (iTunes) + รูปศิลปิน (Deezer)
 │   ├── fetch_fonts.py         # ดาวน์โหลดฟอนต์มาเก็บในเครื่อง (self-hosted)
 │   ├── gen_audio.py           # สังเคราะห์ไฟล์เสียงสำรอง (.wav)
-│   ├── demo_live_db.py        # สาธิต: แก้ข้อมูลใน DB -> หน้าเว็บเปลี่ยนทันที
+│   ├── demo_backend_frontend.py  # prove: DB → backend → frontend (with screenshots)
 │   ├── smoke_test.py          # ทดสอบ end-to-end 55 เคส ผ่าน HTTP
 │   └── screenshot.py          # จับภาพหน้าเว็บไว้ทำรายงาน
 └── docs/shots/                # รูปหน้าเว็บ
