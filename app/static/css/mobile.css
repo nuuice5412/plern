@@ -1,0 +1,111 @@
+﻿/* =====================================================================
+   Mobile pass (<= 620px) — larger tap targets, no clipped nav, tidy player
+   ===================================================================== */
+@media (max-width: 620px) {
+  /* --- top navigation: compact, scrollable chips --- */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(8, 8, 12, .92);
+    backdrop-filter: blur(12px);
+  }
+  .brand { flex: 0 0 auto; }
+  .brand-mark { width: 34px; height: 34px; font-size: 16px; border-radius: 10px; }
+  .nav {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  /* fade at the right edge so it reads as "scrollable" */
+  .nav {
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 88%, transparent 100%);
+    mask-image: linear-gradient(90deg, #000 0, #000 88%, transparent 100%);
+  }
+  .nav-item {
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+    font-size: 13px;
+  }
+  .nav-item .ico { font-size: 14px; }
+
+  /* --- topbar: search takes the room, auth pill shrinks --- */
+  .topbar { padding: 10px 14px; gap: 10px; }
+  .search { max-width: none; }
+  .search input { padding: 9px 12px 9px 36px; font-size: 13.5px; }
+  .auth-combined {
+    padding: 9px 13px;
+    font-size: 12.5px;
+    min-height: 40px;
+  }
+  .demo-fill { min-height: 38px; }
+  .user-area { gap: 8px; }
+  .chip { padding: 6px 10px; font-size: 12.5px; }
+
+  /* --- buttons: comfortable touch size --- */
+  .btn { min-height: 42px; padding: 10px 18px; }
+  .btn-sm { min-height: 36px; padding: 8px 14px; }
+  .btn-lg { min-height: 48px; }
+  .btn-block { width: 100%; }
+  .song-actions { gap: 8px; }
+  .song-actions .btn { flex: 1 1 auto; justify-content: center; }
+  .add-inline { flex: 1 1 100%; }
+  .add-inline select { width: 100%; min-width: 0; }
+
+  /* --- player: real tap targets, play button dominant --- */
+  .player { padding: 10px 12px 12px; gap: 8px; }
+  .player .np { gap: 10px; }
+  .player .cover { width: 46px; height: 46px; font-size: 18px; }
+  .np-title { font-size: 13.5px; }
+  .np-artist { font-size: 12px; }
+  .controls { gap: 4px; justify-content: center; }
+  .ctl {
+    width: 44px;
+    height: 44px;
+    font-size: 17px;
+    display: inline-grid;
+    place-items: center;
+  }
+  .ctl-play { width: 50px; height: 50px; font-size: 17px; }
+  .progress { gap: 8px; }
+  .progress .time { font-size: 11px; }
+  .playbadge { display: none; }
+
+  /* keep the last row of content clear of the fixed player */
+  .content { padding-bottom: 150px; }
+
+  /* --- song hero: centered like a mobile music app --- */
+  .song-hero { margin: -14px -14px 20px; padding: 22px 14px 24px; }
+  .song-hero-inner { gap: 14px; align-items: center; text-align: center; }
+  .song-cover { margin: 0 auto; }
+  .song-headline { padding-bottom: 0; }
+  .song-actions { justify-content: center; }
+  .song-about { text-align: left; }
+  .song-cover { width: 132px; height: 132px; font-size: 40px; border-radius: 12px; }
+  .song-title { font-size: 26px; }
+
+  /* --- tables scroll instead of squeezing --- */
+  .table-wrap { overflow-x: auto; }
+  .tracks { min-width: 0; }
+
+  /* --- toast sits above the player --- */
+  .toast { bottom: 132px; }
+
+  /* specificity fix: .btn-sm is declared later, so re-assert the pill size */
+  .topbar .auth-combined { min-height: 40px; }
+}
+
+@media (max-width: 400px) {
+  .auth-combined { font-size: 12px; padding: 8px 11px; }
+  .nav-item { padding: 0 10px; font-size: 12.5px; }
+  .rail-card { flex-basis: 132px; }
+}
+
+

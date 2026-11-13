@@ -88,6 +88,7 @@ Spi/
 │   └── static/
 │       ├── css/style.css      # ธีมมืด
 │       ├── css/fonts.css      # @font-face (สร้างโดย tools/fetch_fonts.py)
+│       ├── css/mobile.css     # mobile overrides (<=620px): tap sizes, nav, player
 │       ├── fonts/             # Inter + Noto Sans Thai (.woff2, ~202 KB)
 │       ├── js/player.js       # ตัวเล่นเพลง (vanilla JS)
 │       ├── audio/             # song_<id>.m4a (ต้นฉบับ AAC) + manifest.json
