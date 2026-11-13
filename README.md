@@ -1,115 +1,121 @@
 # Plern — Music Streaming Web App (SQL Server + Flask)
 
-โปรเจกต์วิชา **Database**: เว็บแอปสตรีมมิ่งเพลงที่ทำงานบนฐานข้อมูล **Microsoft SQL Server**
-โดยออกแบบ schema ตาม ER Diagram ของกลุ่ม (Peter Chen) และใช้ของจริงครบทั้ง
-ตาราง, constraint, index, view, stored procedure, trigger, transaction
+**English** | [ไทย](README.th.md)
 
-> ภาพหน้าจอทั้งหมดอยู่ใน [`docs/shots/`](docs/shots) — สร้างใหม่ได้ด้วย `python tools/screenshot.py`
-> (`player.png` จับตอนกดเล่นเพลงจริง จึงไม่มีในสคริปต์)
+A **Database** course project: a music streaming web app running on **Microsoft SQL Server**.
+The schema follows the group's ER diagram (Peter Chen notation) and uses the real thing end to
+end — tables, constraints, indexes, views, stored procedures, triggers, and transactions.
+
+> All screenshots live in [`docs/shots/`](docs/shots) — regenerate with `python tools/screenshot.py`
+> (`player.png` is captured while a track is actually playing, so it is not in the script).
 
 ---
 
-## 1. ฟีเจอร์
+## 1. Features
 
-| ฝั่งผู้ใช้ | รายละเอียด |
+| Area | Details |
 |---|---|
-| หน้าแรก | เพลงยอดนิยม, รายชื่อศิลปิน, สถิติระบบ, ฟังล่าสุด, เพลย์ลิสต์ของฉัน |
-| ค้นหา | ค้นจากชื่อเพลง / ชื่อศิลปิน / บทบาท (เช่น "Singer") |
-| หน้าศิลปิน | ประวัติ, ผลงานทั้งหมดพร้อม "บทบาท" ของศิลปินในแต่ละเพลง, ศิลปินที่เคยร่วมงาน |
-| หน้าดูทั้งหมด (`/songs`, `/artists`) | ปุ่ม “ดูทั้งหมด” ของแต่ละแถวบนหน้าแรก พาไปหน้ารายการเต็ม (ตารางเพลง / กริดศิลปิน) |
-| หน้าเพลง | รายชื่อผู้เกี่ยวข้อง (นักร้อง/แต่งเพลง/โปรดิวเซอร์), สถิติ, เพิ่มเข้าเพลย์ลิสต์ |
-| เพลย์ลิสต์ | สร้าง / ลบ / เพิ่มเพลง / ลบเพลง (เฉพาะเจ้าของ), ดูของคนอื่นได้แบบอ่านอย่างเดียว |
-| ประวัติการฟัง | 100 รายการล่าสุด, เวลารวม, ศิลปินที่ฟังบ่อย (กราฟแท่ง) |
-| Player | เล่น/หยุด, ต่อเพลงอัตโนมัติ, เลือกเวลา, ระดับเสียง, **สุ่มเพลง**, **เล่นซ้ำ (ทั้งหมด/เพลงเดียว)**, **ขยายเป็นหน้าจอเต็ม** (กด ⤢ หรือคลิกที่ปก, ปิดด้วย Esc), คีย์บอร์ด Spacebar |
-| ปุ่มเล่นในรายการเพลง | ไอคอน **สีขาวล้วน ไม่มีพื้นหลัง** — ชี้แถวเห็น ▶, เพลงที่กำลังเล่นเห็นแท่งเสียง 4 แท่งเคลื่อนไหว, และชี้ที่แถวที่กำลังเล่นจะเปลี่ยนเป็น ⏸ เพื่อกดหยุด |
-| สมัคร/เข้าสู่ระบบ | **อีเมล + รหัส OTP 6 หลัก** (ไม่ต้องตั้งรหัสผ่าน) หรือรหัสผ่านเดิม (PBKDF2-HMAC-SHA256 + salt), session cookie |
+| Home | Top tracks, artists, system stats, recently played, my playlists |
+| Search | By song title / artist name / role (e.g. "Singer") |
+| Artist page | Bio, full discography **with each artist's role per song**, collaborators |
+| "View all" pages (`/songs`, `/artists`) | Each home row has a "View all" link to a full list page (track table / artist grid) |
+| Song page | Credits (singer / composer / producer), stats, add to playlist |
+| Playlists | Create / delete / add track / remove track (owner only); read-only for others |
+| Listening history | Last 100 plays, total time, most-played artists (bar chart) |
+| Player | Play/pause, auto-advance, seek, volume, **shuffle**, **repeat (all/one)**, **full-screen now-playing** (⤢ or click the cover, `Esc` to close), spacebar |
+| Row play button | **White, no background** — a ▶ appears on hover, the playing row shows four animated bars, and hovering the playing row turns it into ⏸ |
+| Sign up / sign in | **Email + 6-digit OTP** (no password to remember) or classic password (PBKDF2-HMAC-SHA256 + salt), session cookie |
 
-**บัญชีทดลอง** (รหัสผ่านทุกคน `demo1234`): `demo` · `napat` · `ploy`
-(หน้า login มีปุ่มเติมให้อัตโนมัติ)
+**Demo accounts** (password `demo1234`): `demo` · `napat` · `ploy` — the login page has one-click
+buttons that fill them in.
 
 ---
 
-## 2. เริ่มใช้งาน (3 ขั้น)
+## 2. Getting started (3 steps)
 
 ```powershell
-# 1) เปิด PowerShell ที่โฟลเดอร์โปรเจกต์
+# 1) Open PowerShell in the project folder
 cd C:\Users\IMOS\Documents\Spi
 
-# 2) รันสคริปต์เดียวจบ (ติดตั้ง venv + สร้าง DB + สร้างไฟล์เสียง + เปิดเว็บ)
+# 2) One script does everything (venv + database + audio + web server)
 powershell -ExecutionPolicy Bypass -File .\run.ps1
 ```
 
-เสร็จแล้วเปิด <http://127.0.0.1:5000>
+Then open <http://127.0.0.1:5000>
 
-ถ้าต้องการล้างฐานข้อมูลใหม่ทั้งหมด:
+To rebuild the database from scratch:
 
 ```powershell
 .\run.ps1 -Reset
 ```
 
-### เงื่อนไขของเครื่อง
-- SQL Server (ทดสอบบน **SQL Server 2025 Express**, instance `.\SQLEXPRESS`)
-- Windows Authentication (ผู้ใช้ปัจจุบันเป็น sysadmin) — เปลี่ยน instance ได้ด้วย `MSSQL_SERVER`
-- Python 3.10 ขึ้นไป, ไดรเวอร์ **ODBC Driver 18 for SQL Server**
-- ครั้งแรกต้องต่ออินเทอร์เน็ตเพื่อ `pip install` (Flask, pyodbc, requests)
+### Requirements
 
-### ถ้าไม่ใช้ run.ps1
+- SQL Server (tested on **SQL Server 2025 Express**, instance `.\SQLEXPRESS`)
+- Windows Authentication (current user is sysadmin) — change the instance with `MSSQL_SERVER`
+- Python 3.10+, **ODBC Driver 18 for SQL Server**
+- Internet access on first run so `pip install` can fetch Flask, pyodbc, requests
+
+### Without `run.ps1`
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt
-.\.venv\Scripts\python tools\init_db.py      # สร้าง/รีเซ็ตฐานข้อมูล + seed
-.\.venv\Scripts\python tools\gen_audio.py    # สร้างไฟล์เสียง (ครั้งเดียวพอ)
-.\.venv\Scripts\python run.py                # เปิดเว็บ
+.\.venv\Scripts\python tools\init_db.py      # create/reset database + seed
+.\.venv\Scripts\python tools\gen_audio.py    # generate fallback audio (once)
+.\.venv\Scripts\python run.py                # start the web server
 ```
 
 ---
 
-## 3. โครงสร้างโปรเจกต์
+## 3. Project structure
 
 ```
-Spi/
-├── run.ps1                    # เปิดเว็บ + ตั้งค่าอัตโนมัติ
-├── run.py                     # จุดเริ่มต้น Flask
+Plern/
+├── run.ps1                    # one-shot launcher
+├── run.py                     # Flask entry point (HOST / PORT / FLASK_DEBUG env vars)
 ├── requirements.txt
 ├── db/
-│   ├── 01_schema.sql          # CREATE DATABASE + 8 ตาราง + constraint + index + trigger
-│   ├── 02_seed.sql            # ข้อมูลตั้งต้น (11 ศิลปิน, 24 เพลง, 500 ประวัติฟัง)
-│   └── 03_views_procs.sql     # 4 view + 5 stored procedure
+│   ├── 01_schema.sql          # CREATE DATABASE + 8 tables + constraints + indexes + trigger
+│   ├── 02_seed.sql            # seed data (11 artists, 24 songs, 500 history rows)
+│   ├── 03_views_procs.sql     # 4 views + 5 stored procedures
+│   └── 04_email_code.sql      # EmailCode table (OTP login extension)
 ├── app/
 │   ├── __init__.py            # application factory, template filters
-│   ├── config.py              # ค่าตั้งต้น (connection string จาก env)
-│   ├── db.py                  # data access layer (query / call_proc / แปลง error ไทย)
-│   ├── auth.py                # hash/verify รหัสผ่าน + @login_required
-│   ├── routes.py              # ทุก route
-│   ├── templates/             # base, index, search, song, artist, playlist, history, ...
+│   ├── config.py              # connection string from environment variables
+│   ├── db.py                  # data access layer (query / call_proc / error translation)
+│   ├── auth.py                # password hashing + @login_required
+│   ├── mailer.py              # OTP delivery over SMTP (or console in dev mode)
+│   ├── artwork.py             # cover/artist image resolution from manifest
+│   ├── routes.py              # all routes
+│   ├── templates/             # base, index, search, song, artist, playlist, history, auth…
 │   └── static/
-│       ├── css/style.css      # ธีมมืด
-│       ├── css/fonts.css      # @font-face (สร้างโดย tools/fetch_fonts.py)
+│       ├── css/style.css      # dark theme
+│       ├── css/fonts.css      # @font-face (generated by tools/fetch_fonts.py)
 │       ├── fonts/             # Inter + Noto Sans Thai (.woff2, ~202 KB)
-│       ├── js/player.js       # ตัวเล่นเพลง (vanilla JS)
-│       ├── audio/             # song_<id>.m4a (ต้นฉบับ AAC) + manifest.json
+│       ├── js/player.js       # player (vanilla JS)
+│       ├── audio/             # song_<id>.m4a (original AAC) + manifest.json
 │       └── img/               # cover_<id>.jpg / artist_<id>.jpg + manifest.json
 ├── tools/
-│   ├── init_db.py             # รันสคริปต์ SQL ตามลำดับ (แยก batch ตาม GO)
-│   ├── sync_catalog.py        # เพิ่มศิลปิน/เพลงจาก iTunes เข้าฐานข้อมูล
-│   ├── fetch_previews.py      # ดึงพรีวิว 30 วิจาก iTunes + สร้าง manifest
-│   ├── fetch_originals.py     # ใช้ไฟล์ต้นฉบับ .m4a (คุณภาพสูงสุด ไม่แปลง)
-│   ├── compress_audio.py      # ย่อพรีวิว .m4a -> .mp3 (PyAV/ffmpeg)
-│   ├── fetch_artwork.py       # ดึงปกเพลง (iTunes) + รูปศิลปิน (Deezer)
-│   ├── fetch_fonts.py         # ดาวน์โหลดฟอนต์มาเก็บในเครื่อง (self-hosted)
-│   ├── gen_audio.py           # สังเคราะห์ไฟล์เสียงสำรอง (.wav)
-│   ├── demo_live_db.py        # สาธิต: แก้ข้อมูลใน DB -> หน้าเว็บเปลี่ยนทันที
-│   ├── smoke_test.py          # ทดสอบ end-to-end 55 เคส ผ่าน HTTP
-│   └── screenshot.py          # จับภาพหน้าเว็บไว้ทำรายงาน
-└── docs/shots/                # รูปหน้าเว็บ
+│   ├── init_db.py             # runs SQL scripts in order (splits on GO)
+│   ├── sync_catalog.py        # add artists/songs from iTunes
+│   ├── fetch_previews.py      # download 30 s previews + build manifest
+│   ├── fetch_originals.py     # download original .m4a (no transcoding)
+│   ├── compress_audio.py      # transcode previews to .mp3 (PyAV/ffmpeg)
+│   ├── fetch_artwork.py       # artwork (iTunes) + artist photos (Deezer)
+│   ├── fetch_fonts.py         # self-hosted web fonts
+│   ├── gen_audio.py           # synthesize fallback .wav files
+│   ├── demo_live_db.py        # prove: change the DB → the page changes
+│   ├── smoke_test.py          # 57 end-to-end checks over HTTP
+│   └── screenshot.py          # capture pages for the report
+└── docs/shots/                # screenshots
 ```
 
 ---
 
-## 4. ER Diagram → ตารางจริง
+## 4. ER diagram → real tables
 
-| Entity (ER) | ตาราง | คีย์ / constraint ที่สำคัญ |
+| Entity (ER) | Table | Key constraints |
 |---|---|---|
 | USER | `[User]` | PK `UserID`, UNIQUE `Username`, UNIQUE `Email`, CHECK `Gender` |
 | PLAYLIST | `Playlist` | PK `PlaylistID`, FK → `[User]` (ON DELETE CASCADE), UNIQUE (`UserID`,`PLname`) |
@@ -120,23 +126,24 @@ Spi/
 | ROLE | `[Role]` | PK `RoleID`, UNIQUE `Role` |
 | SONG_ARTIST_ROLE | `Song_Artist_Role` | PK (`SongID`,`ArtistID`,`RoleID`) — ternary relationship |
 
-**สิ่งที่ ER วาดไว้แล้วเราไม่ได้เก็บเป็นคอลัมน์**
+**Derived attributes from the ER that are not stored as columns**
 
-- `Song_Amount`, `Total_Time` บน PLAYLIST เป็น *derived attribute* (oval เส้นประ)
-  → คำนวณสดใน `vw_PlaylistSummary` ด้วย `COUNT` / `SUM`
-- `PlayCount` บน SONG เป็นค่าที่มาจาก HISTORY → เก็บเป็นคอลัมน์จริง **โดยเจตนา**
-  (denormalize) แล้วรักษาความถูกต้องด้วย trigger
+- `Song_Amount` and `Total_Time` on PLAYLIST (dashed ovals) are computed live in
+  `vw_PlaylistSummary` with `COUNT` / `SUM`.
+- `PlayCount` on SONG is derived from HISTORY, but it is **deliberately denormalized** into a
+  real column and kept correct by a trigger.
 
-> `[User]` และ `[Role]` ต้องครอบด้วยวงเล็บเหลี่ยม เพราะ `USER` เป็นคำสงวนของ T-SQL
+> `[User]` and `[Role]` must be bracketed because `USER` is a T-SQL reserved word.
 
 ---
 
-## 5. จุดออกแบบที่อธิบายในห้องสอบได้
+## 5. Design decisions worth explaining in a viva
 
-### 5.1 ทำไม `PlayCount` เก็บซ้ำได้ แต่ `Song_Amount` ไม่เก็บ
-หน้าแรกต้องเรียง "เพลงยอดนิยม" ทุกครั้งที่เปิด ถ้า `COUNT(*)` จาก `HISTORY`
-(ซึ่งโตขึ้นเรื่อย ๆ) ต้นทุนจะเพิ่มตามจำนวนประวัติ — จึงเก็บ `PlayCount` ซ้ำ
-แล้วใช้ **trigger** รักษาความถูกต้อง (เขียนแบบ set-based รองรับ insert หลายแถว):
+### 5.1 Why `PlayCount` is denormalized but `Song_Amount` is not
+
+The home page sorts top tracks on every request. Computing it with `COUNT(*)` over `HISTORY`
+(which only grows) would get slower over time — so `PlayCount` is stored and kept correct by a
+**set-based trigger** that handles multi-row inserts:
 
 ```sql
 CREATE TRIGGER dbo.trg_History_UpdatePlayCount ON dbo.History AFTER INSERT AS
@@ -149,126 +156,127 @@ BEGIN
 END
 ```
 
-ในทางกลับกัน `Song_Amount`/`Total_Time` ของเพลย์ลิสต์ถูกอ่านน้อยกว่ามาก
-และเปลี่ยนทุกครั้งที่เพิ่ม/ลบเพลง จึงปล่อยให้คำนวณสดใน view ดีกว่า (ไม่มี update anomaly)
+Playlist aggregates, by contrast, are read rarely and change on every add/remove, so computing
+them in a view is safer (no update anomaly).
 
-### 5.2 ทำไมต้องมีตาราง `Song_Artist_Role` (ternary)
-เพลงหนึ่งเพลงมีหลายคนเกี่ยวข้อง และคนเดียวกันมีหลายบทบาทในเพลงเดียว
-(เช่น Nova Lane เป็นทั้ง Singer, Composer และ Producer ใน *Paper Lanterns*)
-ถ้าเอา `ArtistID` ไปไว้ใน `Song` ตรง ๆ จะเก็บได้แค่ศิลปินคนเดียว
-และตอบคำถาม "ใครเป็นคนแต่งเพลงนี้" ไม่ได้
+### 5.2 Why the ternary `Song_Artist_Role` table is necessary
 
-ในทางกลับกัน เพลงคอลแลบจะติดศิลปินหลายคนพร้อมกันได้ เช่น
-"เขียว เหลือง แดง (Get high)" มีทั้ง `PUN` และ `The Toys` เป็น Singer
-`vw_SongDetail` จึงมีคอลัมน์ `ArtistList` (STRING_AGG ของ Singer + Featured)
-ให้หน้าเพลงแสดงชื่อได้ครบแบบ "PUN, The Toys" ขณะที่รายการเพลงยังใช้
-`MainArtistName` (ศิลปินหลักคนเดียว) เพื่อไม่ให้ตารางรก
+A song has several contributors, and one person can hold several roles on the same song
+(e.g. Nova Lane is singer, composer *and* producer on *Paper Lanterns*). A single `ArtistID`
+column on `Song` could only store one artist and could not answer "who composed this?".
 
-เครดิตศิลปินในฐานข้อมูลถูกตรวจเทียบกับ `matchedArtist` ที่ iTunes คืนมาแล้ว
-(`tools/fetch_previews.py` เก็บค่านี้ไว้ใน manifest) — เพลงคอลแลบทั้ง 6 เพลง
-และศิลปินรับเชิญที่มี `feat.` ในชื่อเพลง ถูกผูกครบแล้ว
+Collaborations also need multiple artists per song: *"เขียว เหลือง แดง (Get high)"* lists both
+`PUN` and `The Toys` as singers. `vw_SongDetail` exposes `ArtistList` (a `STRING_AGG` of singers
+and featured artists) so the song page can show "PUN, The Toys", while compact lists keep using
+`MainArtistName`.
 
-### 5.3 ลำดับเพลงในเพลย์ลิสต์ (`TrackNo`)
-- เพิ่มเพลง → ต่อท้ายด้วย `MAX(TrackNo) + 1` (ใน `usp_Playlist_AddSong`)
-- ลบเพลง → **ไม่** re-number เพราะจะชน `UNIQUE (PlaylistID, TrackNo)` ระหว่าง update
-- ช่องว่างของ `TrackNo` ถูกกลบตอนแสดงผลด้วย `ROW_NUMBER()` ใน `vw_PlaylistTrackList`
+Artist credits were cross-checked against iTunes' `matchedArtist` (stored in the manifest by
+`tools/fetch_previews.py`) — all six collaborations and every `feat.` guest are linked.
 
-### 5.4 Security ที่ทำจริง
-- รหัสผ่าน: `PBKDF2-HMAC-SHA256`, 200,000 รอบ, salt สุ่มต่อคน → เก็บในคอลัมน์ `Password`
-  รูปแบบ `pbkdf2_sha256$200000$<salt>$<hash>` (เทียบด้วย `hmac.compare_digest`)
-- SQL Injection: ทุกค่าจากผู้ใช้ส่งเป็น parameter `?` ไม่ต่อสตริง SQL
-- สิทธิ์: เพลย์ลิสต์แก้ไขได้เฉพาะเจ้าของ (403), หน้าส่วนตัวบังคับ login
-- กัน open redirect ที่ `?next=` (รับเฉพาะ path ที่เริ่มด้วย `/` เดี่ยว)
+### 5.3 Track ordering (`TrackNo`)
 
-### 5.5 index
-FK ใน SQL Server ไม่ได้สร้าง index ให้อัตโนมัติ จึงเพิ่มเองตาม query ที่ใช้จริง
-เช่น `IX_History_User_PlayedAt (UserID, Played_At DESC) INCLUDE (SongID)`
-สำหรับหน้า "ประวัติการฟัง" และ `IX_Song_PlayCount (PlayCount DESC)` สำหรับ top songs
+- Adding a track appends with `MAX(TrackNo) + 1` inside `usp_Playlist_AddSong`.
+- Removing a track does **not** renumber, because intermediate updates would collide with
+  `UNIQUE (PlaylistID, TrackNo)`.
+- Gaps are hidden at render time with `ROW_NUMBER()` in `vw_PlaylistTrackList`.
 
-### 5.6 ฟอนต์ (ทำไมไม่ใช้ฟอนต์ของ Tidal)
-Tidal ใช้ฟอนต์ proprietary ของเขาเอง เอามาแจกจ่ายในโปรเจกต์ไม่ได้ตามลิขสิทธิ์
-จึงเลือกคู่ที่ใกล้เคียงที่สุดและเป็น **SIL Open Font License**:
+### 5.4 Security actually implemented
 
-- **Inter** — ละติน (grotesque แนวเดียวกับ UI ของ Tidal)
-- **Noto Sans Thai** — ไทย (จับคู่กับ Inter ได้เนียน)
+- Passwords: `PBKDF2-HMAC-SHA256`, 200,000 iterations, random salt per user, stored as
+  `pbkdf2_sha256$200000$<salt>$<hash>` and compared with `hmac.compare_digest`.
+- SQL injection: every user value is a `?` parameter — no string concatenation.
+- Authorization: playlists are editable by their owner only (403); private pages require login.
+- Open redirect guarded on `?next=` (only single-slash-prefixed paths accepted).
 
-ติดตั้งด้วย `python tools/fetch_fonts.py` ซึ่งดาวน์โหลด `.woff2` มาเก็บที่
-`app/static/fonts/` แล้วสร้าง `app/static/css/fonts.css` ให้ — **ไม่พึ่ง CDN**
-จึงเปิดเดโมตอนไม่มีเน็ตได้และไม่ช้าลงจากการต่อ DNS ภายนอก (รวม ~202 KB)
+### 5.5 Indexes
 
-ปรับ typography ให้ใกล้ Tidal: หัวเรื่อง letter-spacing ติดลบเล็กน้อย,
-label ตัวพิมพ์ใหญ่ tracking กว้าง (`.eyebrow` = 0.24em), และเพิ่ม `line-height`
-เป็น 1.62 เพราะอักษรไทยมีสระบน/ล่างที่ต้องการพื้นที่มากกว่าละติน
+SQL Server does not index foreign keys automatically, so indexes were added to match real queries:
+`IX_History_User_PlayedAt (UserID, Played_At DESC) INCLUDE (SongID)` for the history page and
+`IX_Song_PlayCount (PlayCount DESC)` for top tracks.
 
-### 5.7 Player: แถบล่าง + หน้าจอเต็มจอ
-`player.js` จัดการสองหน้าจอพร้อมกัน (แถบเล่นเพลงด้านล่าง และหน้าจอ "กำลังเล่น" เต็มจอ)
-โดยให้ `syncUI()` เป็นที่เดียวที่อัปเดตทั้งคู่ — ปก, ชื่อเพลง, ศิลปิน, ป้ายพรีวิว, ลิงก์
-จึงไม่มีทางที่สองหน้าจอแสดงข้อมูลไม่ตรงกัน
+### 5.6 Fonts (why not Tidal's)
 
-- **ขยาย/ย่อ**: ปุ่ม ⤢ ในแถบล่าง, คลิกที่ปก, หรือกด `Esc` เพื่อย่อ
-- **เต็มหน้าจอเบราว์เซอร์**: ปุ่ม ⛶ ใช้ Fullscreen API (`requestFullscreen`)
-- **สุ่มเพลง (`shuffleOn`)**: เลือก index ถัดไปแบบสุ่มโดยไม่ซ้ำเพลงเดิม
-- **เล่นซ้ำ (`repeatMode`)**: `off → all → one` — ค่า `one` จะเล่นเพลงเดิมซ้ำเมื่อจบ
-- **คิวเพลง**: ปุ่ม ☰ เปิดแผงรายการที่กำลังเล่น (ไฮไลต์เพลงปัจจุบัน คลิกเพื่อข้ามเพลง)
-- **พื้นหลังหน้าจอเต็ม**: ใช้ปกเพลงเดียวกันทำ blur + saturate + brightness
-  แล้วซ้อน gradient มืดด้านล่าง เพื่อให้ตัวหนังสืออ่านได้ทุกสีปก
-- ลิงก์ **เปิดหน้าเพลง / เครดิต** (ชี้ไป `#credits` ซึ่งเป็นส่วน `SONG_ARTIST_ROLE`)
-- **แถบเวลา** อยู่แถวล่างใต้ปุ่มควบคุม จัดกลางกว้าง 860px (เวลาชิดหัว-ท้ายของแถบ)
-  ให้สัดส่วนใกล้แถบเล่นเพลงของ Tidal — ไม่ยืดเต็มจอจนดูยาวเกิน
-- **แท็บ "เครดิต"** เปิดดูเครดิตในหน้าจอเต็มได้เลย **ไม่ต้องออกไปหน้าเพลง**
-  (ดึงจาก `GET /api/song/<id>` ซึ่งอ่าน `SONG_ARTIST_ROLE` + ปีที่ออก + จำนวนครั้งที่เล่น)
-  แสดงเรียงแบบ Tidal: โปรดิวเซอร์ → แต่งเพลง → เนื้อร้อง → ศิลปินรับเชิญ → นักร้อง
-  กดซ้ำเพื่อปิด และ `Esc` ปิดแท็บก่อนแล้วจึงย่อหน้าจอ
-- **ระดับเสียงจำค่าไว้** ใน `localStorage` (คีย์ `plern:volume`) จึงคงอยู่แม้รีเฟรชหน้า
-  หรือปิดเบราว์เซอร์แล้วเปิดใหม่ — อ่านค่าไม่ได้ (เช่น โหมดส่วนตัว) ก็ถอยไปใช้ 0.8
-- ความคืบหน้า/ระดับเสียง ของสองหน้าจอผูกกัน (ปรับที่ไหนอีกที่หนึ่งขยับตาม)
+Tidal uses a proprietary typeface that cannot be redistributed. The closest **SIL Open Font
+License** pairing is used instead:
 
----
+- **Inter** — Latin (grotesque, same family as Tidal's UI)
+- **Noto Sans Thai** — Thai, pairs cleanly with Inter
 
-### 5.8 เข้าสู่ระบบด้วยอีเมล (OTP) — ตาราง `EmailCode`
-แอปฟังเพลงส่วนใหญ่ให้กรอกแค่อีเมลแล้วส่งรหัสมา ระบบนี้ทำแบบเดียวกัน:
+`python tools/fetch_fonts.py` downloads the `.woff2` files into `app/static/fonts/` and writes
+`app/static/css/fonts.css` — **no CDN**, so the demo works offline and avoids external DNS
+lookups (~202 KB total).
 
-1. `/register` รับ **อีเมลอย่างเดียว**
-2. ถ้าอีเมล **เคยสมัครแล้ว** → ส่งรหัสแล้วพาไปหน้ากรอกรหัสทันที (โหมดเข้าสู่ระบบ)
-   ถ้าเป็น **อีเมลใหม่** → ไปหน้า `/register/details` กรอกให้ครบตามตาราง `USER`:
-   **Username, Password (เก็บเป็น PBKDF2 hash), Gender, Date_of_Birth, Country, Tel**
-   + ยอมรับข้อกำหนด (ต้องอายุ 13 ปีขึ้นไป · Username ต้องไม่ซ้ำ · รหัสผ่าน ≥ 8 ตัว)
-3. `/auth/code` แสดงอีเมลแบบปิดบัง (`r***4@g****l.com`) + **ช่องกรอกรหัส 6 ช่อง**
-   (พิมพ์แล้วเลื่อนช่องอัตโนมัติ, Backspace ย้อนกลับ, วางทั้งชุดได้)
-   + ปุ่ม **ส่งรหัสใหม่** ที่นับถอยหลัง 60 วินาที
-4. รหัสเก็บใน `dbo.EmailCode` (1 รหัสต่ออีเมล, อายุ 10 นาที, ผิดได้ 5 ครั้ง) และถูกลบเมื่อใช้สำเร็จ
+Typography is tuned toward Tidal: slightly negative letter-spacing on headings, wide-tracked
+uppercase labels (`.eyebrow` = 0.24em), and `line-height: 1.62` because Thai upper/lower vowels
+need more vertical room than Latin.
 
-ตารางนี้อยู่นอก ER เดิม (เป็นส่วนขยายเพื่อรองรับ auth แบบไร้รหัสผ่าน)
-`01_schema.sql` ไม่ลบมัน เพราะไฟล์ `04_email_code.sql` สร้างแบบ `IF NOT EXISTS`
+### 5.7 Player: bottom bar + full-screen now playing
+
+`player.js` drives both surfaces and `syncUI()` is the single place that updates them — cover,
+title, artist, preview badge, links — so the two views cannot disagree.
+
+- **Expand / collapse:** ⤢ button, click the cover, or `Esc` to close.
+- **Browser fullscreen:** ⛶ uses the Fullscreen API (`requestFullscreen`).
+- **Shuffle:** picks the next index randomly without repeating.
+- **Repeat:** `off → all → one`.
+- **Queue panel:** ☰ opens the current queue (current track highlighted, click to jump).
+- **Backdrop:** the same cover, blurred + saturated + brightened, with a dark gradient on top so
+  text stays readable over any artwork.
+- **Credits tab** opens inside the now-playing screen — no navigation to the song page. Data comes
+  from `GET /api/song/<id>` (reads `Song_Artist_Role`, release year, play count) and is ordered
+  like Tidal: producer → composer → lyricist → featured → singer. Press again to close; `Esc`
+  closes the tab first, then the screen.
+- **Volume is persisted** in `localStorage` (`plern:volume`), falling back to 0.8 when storage is
+  unavailable (e.g. private mode).
+- Progress and volume are mirrored between the two surfaces.
+
+### 5.8 Email login (OTP) — the `EmailCode` table
+
+Music apps usually ask for an email and send a code; this project does the same:
+
+1. `/register` takes **the email only**.
+2. If the email **already has an account** → send a code and go straight to the code screen.
+   If it is **new** → `/register/details` collects the full `USER` row: **Username, Password
+   (stored as a PBKDF2 hash), Gender, Date_of_Birth, Country, Tel**, plus terms acceptance
+   (age 13+, unique username, password ≥ 8 characters).
+3. `/auth/code` shows a masked address (`r***4@g****l.com`) and **six separate input boxes**
+   (auto-advance, backspace navigation, paste supported) plus a **resend** button with a 60 s
+   cooldown.
+4. Codes live in `dbo.EmailCode` — one per email, 10-minute expiry, 5 attempts — and are deleted
+   on success.
+
+This table sits outside the original ER (it is an extension for passwordless auth).
+`01_schema.sql` does not drop it; `04_email_code.sql` creates it with `IF NOT EXISTS`.
 
 ```sql
 CREATE TABLE dbo.EmailCode (
-    Email NVARCHAR(255) PRIMARY KEY,
-    Code CHAR(6) NOT NULL,
-    ExpiresAt DATETIME2 NOT NULL,
-    Attempts INT NOT NULL DEFAULT 0,
-    CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+    Email     NVARCHAR(255) PRIMARY KEY,
+    Code      CHAR(6)       NOT NULL,
+    ExpiresAt DATETIME2     NOT NULL,
+    Attempts  INT           NOT NULL DEFAULT 0,
+    CreatedAt DATETIME2     NOT NULL DEFAULT SYSDATETIME()
 );
 ```
 
-**การส่งอีเมลจริง** — ตั้ง environment variable 4 ตัว (Gmail ต้องเปิด 2-Step
-Verification แล้วสร้าง App Password):
+**Real email delivery** — set four environment variables (Gmail requires 2-Step Verification and
+an App Password):
 
 ```powershell
 set SMTP_HOST=smtp.gmail.com
 set SMTP_PORT=587
 set SMTP_USER=you@gmail.com
-set SMTP_PASS=<App Password 16 ตัว>
+set SMTP_PASS=<16-character App Password>
 ```
 
-ถ้าไม่ตั้งค่า จะเป็น **โหมดทดสอบ**: รหัสถูกพิมพ์ลงคอนโซลของเซิร์ฟเวอร์
-(`[MAIL-DEV] รหัสสำหรับ ... = 123456`) เหมาะกับการเดโมในเครื่อง/ในห้องเรียน
+Without them the app runs in **dev mode**: the code is printed to the server console and shown on
+the code screen, which is fine for a classroom demo.
 
 ---
 
-## 6. Query ที่น่าสนใจ (ใช้ในโปรเจกต์จริง)
+## 6. Queries worth showing
 
-**ศิลปิน + จำนวนเพลง + ยอดฟัง** (ระวัง double count เพราะศิลปินมีหลายบทบาทต่อเพลง)
+**Artists with song count and total plays** (beware of double counting — an artist can hold
+several roles on one song):
 
 ```sql
 SELECT a.ArtistID, a.ArtistName, x.SongCount, x.TotalPlays
@@ -281,10 +289,10 @@ OUTER APPLY (
 ORDER BY x.TotalPlays DESC;
 ```
 
-→ ถ้า `JOIN` ตรง ๆ แล้ว `SUM(PlayCount)` ค่าจะถูกบวกซ้ำตามจำนวนบทบาท
-จึงต้อง `DISTINCT SongID` ก่อน (`COUNT(DISTINCT ...)` ใช้กับ `SUM` ไม่ได้)
+→ A plain `JOIN` would multiply `SUM(PlayCount)` by the number of roles, so `DISTINCT SongID`
+must come first (`COUNT(DISTINCT …)` does not help with `SUM`).
 
-**บทบาทของศิลปินในแต่ละเพลง** (`STRING_AGG`, SQL Server 2017+)
+**Roles per song** (`STRING_AGG`, SQL Server 2017+):
 
 ```sql
 SELECT vd.SongTitle, STRING_AGG(r.[Role], N', ') WITHIN GROUP (ORDER BY r.RoleID) AS Roles
@@ -295,7 +303,7 @@ WHERE sar.ArtistID = 1
 GROUP BY vd.SongID, vd.SongTitle;
 ```
 
-**เวลารวมของเพลย์ลิสต์ แบบ HH:MM:SS** (`vw_PlaylistSummary`)
+**Total playlist time as HH:MM:SS** (`vw_PlaylistSummary`):
 
 ```sql
 CONCAT(FLOOR(SUM(s.Duration) / 3600), N':',
@@ -303,7 +311,7 @@ CONCAT(FLOOR(SUM(s.Duration) / 3600), N':',
        RIGHT(CONCAT(N'0',  SUM(s.Duration) % 60), 2))
 ```
 
-**เรียก stored procedure ที่มี OUTPUT parameter ผ่าน pyodbc**
+**Calling a stored procedure with an OUTPUT parameter through pyodbc:**
 
 ```python
 db.call_proc("""
@@ -315,156 +323,151 @@ db.call_proc("""
 
 ---
 
-## 7. การทดสอบ
+## 7. Testing
 
 ```powershell
-# ต้องเปิดเว็บไว้ก่อน (คนละหน้าต่าง)
+# the web server must be running in another window
 .\.venv\Scripts\python tools\smoke_test.py
 ```
 
-ทดสอบ 55 เคส ครอบคลุม: หน้าเว็บทั้งหมด, สิทธิ์การเข้าถึง, login/สมัคร,
-การบันทึกการฟัง + ตรวจว่า `PlayCount` เพิ่มขึ้นจริงจาก trigger,
-สร้าง/เพิ่ม/ลบเพลย์ลิสต์ผ่าน stored procedure, และ 404/403
-จากนั้นลบข้อมูลที่ทดสอบสร้างขึ้นให้อัตโนมัติ
+57 end-to-end checks covering every page, authorization, login/signup, OTP flow, play logging
+(verifying the trigger really increments `PlayCount`), playlist create/add/remove through stored
+procedures, and 404/403 behaviour. Test data is cleaned up automatically.
 
-ผลล่าสุด: **55/55 ผ่าน**
+Latest result: **57/57 passing**
 
 ```powershell
-.\.venv\Scripts\python tools\screenshot.py    # เก็บภาพหน้าเว็บลง docs/shots
+.\.venv\Scripts\python tools\screenshot.py    # refresh docs/shots
 ```
 
 ---
 
-## 8. ไฟล์เสียง + ปกเพลง + รูปศิลปิน
+## 8. Audio, artwork and artist photos
 
-เพลงทั้ง **175 เพลง (44 ศิลปิน)** ในฐานข้อมูลเป็น **เพลงจริง** — ไทย 37 คน
-(Palmy, Cocktail, Three Man Down, Bodyslam, Klear, Tattoo Colour, Polycat,
-Getsunova, Potato, Big Ass, Slot Machine, Paradox, The Toys, Jeff Satur,
-Bowkylion, ฯลฯ) และสากล 7 คน (The Weeknd, Dua Lipa, Coldplay, Bruno Mars,
-Billie Eilish, Laufey, Phum Viphurit)
-ชื่อเพลง/ศิลปิน/ความยาว/ปีที่ออก มาจาก **iTunes Search API** โดยตรง
-จึงดึงพรีวิว 30 วินาที (ตัวเดียวกับที่ Apple Music ใช้) มาเล่นได้ตรงชื่อเพลง
+All **175 songs (44 artists)** in the database are **real tracks** — 37 Thai artists (Palmy,
+Cocktail, Three Man Down, Bodyslam, Klear, Tattoo Colour, Polycat, Getsunova, Potato, Big Ass,
+Slot Machine, Paradox, The Toys, Jeff Satur, Bowkylion, …) and 7 international (The Weeknd,
+Dua Lipa, Coldplay, Bruno Mars, Billie Eilish, Laufey, Phum Viphurit).
+Titles, artists, durations and release years come straight from the **iTunes Search API**, so the
+30-second preview is the same one Apple Music uses for that exact track.
 
 ```powershell
-.\.venv\Scripts\python tools\fetch_previews.py            # ดึงพรีวิวที่ยังไม่มี
-.\.venv\Scripts\python tools\fetch_previews.py --dry-run  # ดูผลจับคู่ก่อน ไม่โหลดไฟล์
-.\.venv\Scripts\python tools\fetch_previews.py --force    # ดึงใหม่ทับของเดิม
+.\.venv\Scripts\python tools\fetch_previews.py            # fetch missing previews
+.\.venv\Scripts\python tools\fetch_previews.py --dry-run  # preview the matching, download nothing
+.\.venv\Scripts\python tools\fetch_previews.py --force    # re-download everything
 ```
 
-สคริปต์จะ
+The script
 
-1. อ่าน `SongID`, `SongTitle`, `MainArtistName` จาก `vw_SongDetail`
-2. ค้น iTunes (`country=TH`) แล้วให้คะแนนความคล้ายของชื่อเพลง (65%) + ศิลปิน (35%)
-3. โหลดเฉพาะผลที่คะแนนถึงเกณฑ์ (default 0.68) เก็บเป็น `app/static/audio/song_<id>.m4a`
-4. เขียน `app/static/audio/manifest.json` ว่าเพลงไหนใช้ไฟล์อะไร
+1. reads `SongID`, `SongTitle`, `MainArtistName` from `vw_SongDetail`;
+2. searches iTunes (`country=TH`) and scores title similarity (65%) + artist (35%);
+3. downloads only matches above the threshold (default 0.68) to `app/static/audio/song_<id>.m4a`;
+4. writes `app/static/audio/manifest.json`.
 
-`player.js` อ่าน manifest นี้ก่อน ถ้าเพลงไหนไม่มีใน manifest จะ fallback ไปใช้
-`song_<id>.wav` ที่สร้างจาก `tools/gen_audio.py` (จึงไม่มีเพลงไหนกดเล่นแล้วเงียบ)
-เพลงที่เล่นจากพรีวิวจะมีป้าย **“พรีวิว 30 วิ”** ขึ้นในแถบเล่นเพลง
+`player.js` consults the manifest first and falls back to the synthesized `song_<id>.wav` from
+`tools/gen_audio.py`, so no track is ever silent. Preview playback shows a **"30 s preview"** badge.
 
-### ปกเพลงและรูปศิลปิน
+### Covers and artist photos
 
 ```powershell
-python tools/fetch_artwork.py                 # ดึงที่ยังไม่มี
-python tools/fetch_artwork.py --dry-run       # ดูผลจับคู่ก่อน
-python tools/fetch_artwork.py --force         # ดึงใหม่ทับ
+python tools/fetch_artwork.py                 # fetch missing
+python tools/fetch_artwork.py --dry-run       # preview matching
+python tools/fetch_artwork.py --force         # re-download
 python tools/fetch_artwork.py --cover-size 600
 ```
 
-| รูปแบบ | แหล่ง | วิธีได้มา |
+| Asset | Source | How it is resolved |
 |---|---|---|
-| ปกอัลบั้ม | **iTunes Lookup API** | ใช้ `itunesTrackId` ที่ `fetch_previews.py` บันทึกไว้ → lookup ตรงตัว ได้ปกของอัลบั้มจริง ไม่ต้องเดา (ขอขนาด 300×300 จาก URL `…100x100bb.jpg`) |
-| รูปศิลปิน | **Deezer Search Artist API** | ค้นชื่อศิลปิน → รับเฉพาะผลที่ชื่อคล้าย ≥ 0.80 → ในกลุ่มนั้นเลือกคนที่มี `nb_fan` มากที่สุด (กันศิลปินชื่อซ้ำคนละวง) → โหลด `picture_big` (500×500) |
+| Album cover | **iTunes Lookup API** | uses the `itunesTrackId` saved by `fetch_previews.py` for an exact lookup — no guessing (requests 300×300 via `…100x100bb.jpg`) |
+| Artist photo | **Deezer Search Artist API** | search by name → keep matches ≥ 0.80 → pick the one with the most `nb_fan` (avoids same-name bands) → download `picture_big` (500×500) |
 
-ไฟล์ที่ได้: `app/static/img/cover_<SongID>.jpg`, `artist_<ArtistID>.jpg` และ
-`app/static/img/manifest.json` (ปัจจุบัน **ปก 175 ไฟล์ + รูปศิลปิน 42 ไฟล์ ≈ 6.8 MB**)
+Output: `app/static/img/cover_<SongID>.jpg`, `artist_<ArtistID>.jpg` and
+`app/static/img/manifest.json` (**175 covers + 42 artist photos ≈ 6.8 MB**).
 
-`app/artwork.py` อ่าน manifest นี้แล้วส่งให้ template ผ่าน `cover_url(song_id)` /
-`artist_photo_url(artist_id)` — ถ้ารูปไหนไม่มี (เช่นศิลปินรับเชิญที่ Deezer ไม่มีข้อมูล)
-UI จะ fallback เป็น gradient + ตัวอักษรแรกโดยอัตโนมัติ **จึงไม่แตะ schema ของ ER เลย**
+`app/artwork.py` reads that manifest and exposes `cover_url(song_id)` / `artist_photo_url(artist_id)`
+to the templates; missing images fall back to a generated gradient — **the ER schema is untouched**.
 
-> **ลิขสิทธิ์**: พรีวิวและปกอัลบั้มเป็นงานมีลิขสิทธิ์ของเจ้าของสิทธิ์ ใบอนุญาตของ Apple
-> อนุญาตให้ใช้เพื่อการโปรโมต/สาธิต จึงเหมาะกับเดโมส่งอาจารย์ในเครื่อง
-> ถ้าจะเผยแพร่สาธารณะ (GitHub public / deploy จริง) ควรเปลี่ยนไปใช้เพลงและภาพ
-> CC0/CC-BY เช่น Pixabay, Jamendo, Free Music Archive แล้วชี้ `manifest.json`
-> ไปที่ไฟล์นั้นแทน
+> **Copyright:** previews and album art belong to their rights holders; Apple's license permits
+> promotional/demo use, which is fine for a local course demo. For public release (public GitHub,
+> real deployment) switch to CC0/CC-BY audio and images (Pixabay, Jamendo, Free Music Archive) and
+> point `manifest.json` at those files.
 
-`Duration` ในฐานข้อมูลคือความยาวเต็มของเพลง (เช่น 4:27) แต่ไฟล์ที่เล่นเป็นพรีวิว 30 วิ
-— player จึงแสดงเวลาจากไฟล์จริงเพื่อไม่ให้ Progress bar หลอก
+`Duration` in the database is the full track length (e.g. 4:27), while the file being played is a
+30-second preview — the player therefore shows the real file duration so the progress bar never lies.
 
 ---
 
-## 9. ขยายแคตตาล็อกเพลง
+## 9. Expanding the catalog
 
-ข้อมูลในฐานข้อมูลปัจจุบันมี **44 ศิลปิน / 175 เพลง** (ไทย 37 + สากล 7) ถ้าต้องการมากกว่านี้
-ใช้ `sync_catalog.py` ดึงเพิ่มจาก iTunes ได้เลย — ข้อมูลจะถูกต้องและพรีวิวจะตามมาครบ
+The database currently holds **44 artists / 175 songs** (37 Thai + 7 international). To add more,
+let `sync_catalog.py` pull them from iTunes — metadata stays correct and previews follow.
 
 ```powershell
-python tools/sync_catalog.py --list-artists        # ดูรายชื่อศิลปินชุดเริ่มต้น
-python tools/sync_catalog.py --dry-run             # ดูว่าจะเพิ่มอะไร ไม่เขียน DB
+python tools/sync_catalog.py --list-artists        # show the built-in artist list
+python tools/sync_catalog.py --dry-run             # show what would be added, no DB writes
 python tools/sync_catalog.py --per-artist 8 --plays 8
 python tools/sync_catalog.py --artists "Palmy,Laufey,HYBS"
-python tools/sync_catalog.py --artists "Dua Lipa" --country US   # สโตร์นอก TH
+python tools/sync_catalog.py --artists "Dua Lipa" --country US
 ```
 
-ขั้นตอนเพิ่มเพลงใหม่ (ทำครั้งเดียวจบ):
+Adding songs end to end:
 
 ```powershell
-python tools/sync_catalog.py           # 1) เพิ่มศิลปิน/เพลง + ประวัติการฟัง
-python tools/fetch_previews.py         # 2) โหลดพรีวิว 30 วิ (เฉพาะที่ยังไม่มี)
-python tools/fetch_originals.py        # 3) ใช้ไฟล์ต้นฉบับ .m4a (ไม่แปลงคุณภาพ)
-python tools/fetch_artwork.py          # 4) ดึงปกเพลง + รูปศิลปิน
+python tools/sync_catalog.py           # 1) artists/songs + listening history
+python tools/fetch_previews.py         # 2) 30 s previews (missing only)
+python tools/fetch_originals.py        # 3) original .m4a (no quality loss)
+python tools/fetch_artwork.py          # 4) covers + artist photos
 ```
 
-### เลือกคุณภาพเสียง
+### Audio quality
 
-**ค่าที่ใช้อยู่ตอนนี้: ไฟล์ต้นฉบับจาก iTunes ทั้งหมด (ไม่เข้ารหัสซ้ำ)**
+**Current setting: original iTunes files, no re-encoding.**
 
 ```powershell
-python tools/fetch_originals.py        # ดาวน์โหลดต้นฉบับ .m4a (AAC ~271 kbps)
-python tools/fetch_originals.py --force   # ดาวน์โหลดใหม่ทั้งหมด
+python tools/fetch_originals.py            # download original .m4a (AAC ~271 kbps)
+python tools/fetch_originals.py --force    # re-download everything
 ```
 
-| ทางเลือก | คำสั่ง | ขนาด (175 เพลง) | คุณภาพ |
+| Option | Command | Size (175 songs) | Quality |
 |---|---|---|---|
-| **ต้นฉบับ AAC 271 kbps** | `fetch_originals.py` | **~172 MB** | **ดีสุด — ไม่มีการเข้ารหัสซ้ำเลย** |
-| mp3 192 kbps | `compress_audio.py --kbps 192 --refetch-original` | ~123 MB | ใกล้เคียงต้นฉบับ แต่ผ่านการแปลง 1 ครั้ง |
-| mp3 128 kbps | `compress_audio.py --kbps 128 --refetch-original` | ~82 MB | พอใช้ (เคยใช้ค่านี้) |
-| mp3 64 kbps | `compress_audio.py --kbps 64 --refetch-original` | ~41 MB | เล็กสุด แต่เสียงทึบ/แตก |
+| **Original AAC 271 kbps** | `fetch_originals.py` | **~172 MB** | **best — zero re-encoding** |
+| mp3 192 kbps | `compress_audio.py --kbps 192 --refetch-original` | ~123 MB | close, but transcoded once |
+| mp3 128 kbps | `compress_audio.py --kbps 128 --refetch-original` | ~82 MB | acceptable |
+| mp3 64 kbps | `compress_audio.py --kbps 64 --refetch-original` | ~41 MB | smallest, muddy |
 
-`compress_audio.py` ใช้ **PyAV** (pip install av) ซึ่งมี FFmpeg อยู่ในตัว จึงไม่ต้อง
-ติดตั้ง ffmpeg แยก ถ้าไม่มี PyAV จะลองใช้ ffmpeg ในเครื่องให้อัตโนมัติ
+`compress_audio.py` uses **PyAV** (`pip install av`), which bundles FFmpeg — no separate install.
+Without PyAV it falls back to a local `ffmpeg`.
 
-> **สำคัญ**: การอัปเกรดคุณภาพต้อง **ดึงต้นฉบับใหม่** (`--refetch-original`) เสมอ
-> เพราะการแปลง mp3 64 kbps ไปเป็น 128 kbps ไม่ได้คืนคุณภาพที่เสียไปแล้ว — ได้แค่ไฟล์ที่ใหญ่ขึ้น
-> ส่วน `fetch_originals.py` ใช้ `previewUrl` ที่บันทึกไว้ใน manifest จึงได้ไฟล์เดิมเป๊ะ
-> ไม่ต้องค้นหา iTunes ใหม่ (ไม่มีโอกาสจับคู่ผิดเพลง)
+> **Important:** upgrading quality always requires `--refetch-original`. Converting a 64 kbps mp3
+> to 128 kbps does not restore lost audio — it only makes a bigger file. `fetch_originals.py`
+> reuses the `previewUrl` stored in the manifest, so it downloads the exact same file and can never
+> mis-match a track.
 
-> หมายเหตุ: สโตร์ iTunes ไทย (country=TH) ไม่มีเพลงของศิลปินสากลบางคน
-> ถ้าค้นแล้วไม่เจอ ให้ลอง `--country US`
-
----
-
-## 10. ข้อจำกัด / งานที่ต่อได้
-
-- **ยังไม่มีตาราง ALBUM** — ตาม ER ของกลุ่ม (เพลงผูกกับศิลปินโดยตรง)
-  ถ้าจะเพิ่ม: สร้าง `Album(AlbumID, AlbumTitle, Release_Date, ArtistID)` แล้วใส่ `AlbumID` ใน `Song`
-  (iTunes API ให้ `collectionName` มาด้วย ใช้เป็นข้อมูลตั้งต้นได้เลย)
-- **เครดิตในตาราง `Song_Artist_Role`** เป็นข้อมูลประกอบการสาธิต
-  (Singer/Composer/Producer ของศิลปินเดียวกัน) ไม่ได้อ้างอิงปกอัลบั้มจริงทุกเพลง
-  ส่วนศิลปินรับเชิญมาจากชื่อเพลงที่มี “feat.” อยู่จริง
-- ยังไม่มี pagination (ใช้ `TOP (100)`), ยังไม่มี full-text search (ใช้ `LIKE`)
-- ยังไม่มี refresh token / rate limiting (เป็นเดโมวิชาเรียน)
-- ยังไม่มี transaction หลายขั้นที่ต้อง atomic — ถ้าต้องการเพิ่ม ใช้
-  `autocommit=False` แล้ว `commit()` / `rollback()` (ดูตัวอย่างใน `app/db.py`)
+> Note: the Thai iTunes store (`country=TH`) is missing some international artists; try
+> `--country US` if a search comes up empty.
 
 ---
 
-## 11. หลักฐาน: SQL ↔ Backend ↔ Frontend ต่อกันจริง
+## 10. Limitations / next steps
 
-### 11.1 รัน SQL ตรง ๆ ได้ (ไม่ต้องผ่าน Python)
-ไฟล์ `.sql` ทั้งสามเป็น T-SQL มาตรฐาน เปิดใน SSMS แล้วกด Execute ได้เลย
-(บันทึกเป็น UTF-8 **with BOM** เพื่อให้ SSMS อ่านภาษาไทยถูกต้อง)
+- **No ALBUM table** — per the group's ER, songs attach directly to artists. To add one:
+  `Album(AlbumID, AlbumTitle, Release_Date, ArtistID)` plus `AlbumID` on `Song`
+  (the iTunes API already returns `collectionName`).
+- Credits in `Song_Artist_Role` are demo data (singer/composer/producer for the same artist), not
+  verified against real album liners; featured artists do come from real `feat.` credits.
+- No pagination (uses `TOP (100)`), no full-text search (uses `LIKE`).
+- No refresh tokens or rate limiting (course demo).
+- No multi-step atomic transactions — add `autocommit=False` with `commit()` / `rollback()`
+  (see `app/db.py`) if needed.
+
+---
+
+## 11. Proof that SQL ↔ backend ↔ frontend are really wired
+
+### 11.1 The SQL scripts run on their own
+
+All `.sql` files are standard T-SQL and execute directly in SSMS (saved as UTF-8 **with BOM** so
+Thai text is read correctly):
 
 ```powershell
 sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\01_schema.sql
@@ -472,130 +475,105 @@ sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\02_seed.sql
 sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\03_views_procs.sql
 ```
 
-ผลที่ได้: **8 ตาราง · 4 view · 5 stored procedure · 1 trigger**
+Result: **8 tables · 4 views · 5 stored procedures · 1 trigger**.
 
-### 11.2 แก้ข้อมูลในฐานข้อมูล → หน้าเว็บเปลี่ยนทันที
+### 11.2 Change the database → the page changes immediately
 
 ```powershell
-python tools/demo_live_db.py     # ต้องเปิดเว็บไว้ก่อน
+python tools/demo_live_db.py     # the web server must be running
 ```
 
-สคริปต์จะสาธิตให้เห็นทีละขั้น:
+The script demonstrates, step by step:
 
-1. อ่านชื่อเพลง/ยอดเล่นจาก DB → เปิดหน้าเว็บยืนยันว่าแสดงค่านั้น
-2. `UPDATE dbo.Song SET SongTitle = ...` จาก SQL โดยตรง → เปิดหน้าเว็บใหม่ **เห็นชื่อใหม่ทันที**
-   (ไม่ต้องรีสตาร์ตเซิร์ฟเวอร์)
-3. คืนชื่อเดิม
-4. `INSERT INTO dbo.History` 1 แถว → **trigger** บวก `PlayCount` → API และหน้าเว็บแสดงยอดใหม่ตรงกัน
-5. ลบแถวทดสอบและคืนยอดเดิม
+1. reads a title and play count from the database and confirms the page shows them;
+2. runs `UPDATE dbo.Song SET SongTitle = …` **directly in SQL** → reload shows the new title
+   immediately (no server restart);
+3. restores the original title;
+4. inserts one `dbo.History` row → the **trigger** increments `PlayCount` → the API and the page
+   agree on the new value;
+5. deletes the test row and restores the count.
 
-### 11.3 เส้นทางของข้อมูล (ไม่มีข้อมูล hardcode ในหน้าเว็บ)
+### 11.3 Request path (no hardcoded data)
 
 ```
-เบราว์เซอร์
+Browser
    │  GET /song/1
    ▼
-Flask route  (app/routes.py)          ← ไม่มีข้อมูลเพลงเขียนไว้ในโค้ด
+Flask route  (app/routes.py)          ← no song data lives in code
    │  execute("SELECT ... FROM dbo.vw_SongDetail WHERE SongID = ?")
    ▼
 pyodbc  →  SQL Server (MusicStreamingDB)
    │  view / stored procedure / trigger
    ▼
-Jinja template (app/templates/song.html)  ← แค่แสดงค่าที่ได้รับมา
+Jinja template (app/templates/song.html)  ← only renders what it receives
 ```
 
-จุดที่พิสูจน์ได้ว่าผูกกันจริง: ชื่อเพลงบนหน้าเว็บเปลี่ยนตาม `UPDATE` ทันที,
-ยอด "ครั้งที่เล่น" เปลี่ยนตาม `INSERT` ลง `HISTORY` (ผ่าน trigger),
-และทุกหน้าดึงจาก view (`vw_SongDetail`, `vw_PlaylistSummary`, `vw_TopSongs`, `vw_PlaylistTrackList`)
+Everything is read through views: `vw_SongDetail`, `vw_PlaylistSummary`, `vw_TopSongs`,
+`vw_PlaylistTrackList`.
 
 ---
 
-## 12. ให้เพื่อนทดสอบ
+## 12. Sharing the demo
 
-### วิธีที่ 1 — เพื่อนอยู่ใน Wi-Fi เดียวกัน (ง่ายที่สุด)
-เครื่องนี้เปิดให้แล้ว: bind `0.0.0.0` + เปิด Windows Firewall (เฉพาะ Private network)
-
-```
-http://192.168.1.100:5000      ← ส่งลิงก์นี้ให้เพื่อน (ใช้ได้ทั้งมือถือ/โน้ตบุ๊ก)
-```
-
-เปิดเองด้วยคำสั่ง:
+### Option 1 — same Wi-Fi (simplest)
 
 ```powershell
 set HOST=0.0.0.0
 .\.venv\Scripts\python run.py
 ```
 
-> IP อาจเปลี่ยนเมื่อรีสตาร์ตเราเตอร์ — ดูใหม่ด้วย `ipconfig` (ช่อง IPv4)
-> ถ้าเพื่อนเข้าไม่ได้ ให้เช็คว่าอยู่ Wi-Fi เดียวกัน และ firewall เปิดเฉพาะ Private
-
-ปิดช่องที่เปิดไว้ (ถ้าไม่ต้องการแล้ว):
+Then friends open `http://<your-lan-ip>:5000` (find it with `ipconfig`).
+Allow the port on the **Private** profile only, and remove the rule when done:
 
 ```powershell
 Remove-NetFirewallRule -DisplayName "Plern (Flask 5000)"
 ```
 
-### วิธีที่ 2 — ขึ้นออนไลน์ทันทีด้วย Cloudflare Tunnel (ฟรี)
+### Option 2 — public URL in seconds (Cloudflare Tunnel, free)
 
-ไบนารีอยู่ในโปรเจกต์แล้วที่ `tools/bin/cloudflared.exe` — เปิด tunnel ได้เลย:
+`cloudflared.exe` is not committed (see `.gitignore`); download it once into `tools/bin/`.
 
 ```powershell
-# หน้าต่างที่ 1: เปิดเว็บ
+# window 1: the web server
 .\.venv\Scripts\python run.py
 
-# หน้าต่างที่ 2: เปิด tunnel (เครื่องต้องออนไลน์ตลอด)
+# window 2: the tunnel (keep the machine online)
 .\tools\bin\cloudflared.exe tunnel --url http://localhost:5000
 ```
 
-จะได้ URL แบบ `https://xxxx-xxxx.trycloudflare.com` ใช้ได้จากทุกที่ในโลก
-(ปิดหน้าต่าง = ลิงก์ดับ, URL เปลี่ยนทุกครั้งที่เปิดใหม่)
+You get an `https://xxxx.trycloudflare.com` URL that works anywhere. Closing the window kills the
+link and the URL changes on the next run. Speed is limited by your home upload bandwidth
+(~175 MB of audio), and anyone with the link can sign in as `demo`.
 
-> ข้อจำกัด: เครื่องต้องเปิดทิ้งไว้ · ความเร็วขึ้นกับอินเทอร์เน็ตอัปโหลดที่บ้าน
-> (ไฟล์เสียงรวม ~170 MB) · ใครมีลิงก์ก็เข้าได้
+### Option 3 — permanent hosting
 
-### วิธีที่ 2.5 — ขึ้นออนไลน์แบบถาวร (ต้องมีที่อยู่ SQL Server)
+The blocker is that **SQL Server has no free cloud tier** (unlike MySQL/Postgres).
 
-ปัญหาหลัก: **SQL Server ไม่มี free tier บน cloud** (ต่างจาก MySQL/Postgres)
-
-| ทางเลือก | ค่าใช้จ่าย | หมายเหตุ |
+| Option | Cost | Note |
 |---|---|---|
-| **Azure for Students** + Azure SQL free tier + App Service | ฟรี (~$100 credit/ปี) | ตรงที่สุดเพราะยังเป็น SQL Server จริง |
-| Render / Railway + SQL Server container | ต้องเสียเงิน (~$7+/เดือน, RAM 2GB) | ฟรี tier ไม่พอรัน SQL Server |
-| เปลี่ยนไป PostgreSQL/MySQL | ฟรี | **ไม่แนะนำ** — ผิดโจทย์วิชา database ที่อาจารย์ตรวจ T-SQL |
+| **Azure for Students** + Azure SQL free tier + App Service | free (~$100 credit/year) | best fit — still real SQL Server |
+| Render / Railway + SQL Server container | ~$7+/month (2 GB RAM) | free tiers cannot run SQL Server |
+| Switch to PostgreSQL/MySQL | free | **not recommended** — the course grades T-SQL |
 
-### วิธีที่ 3 — ส่งไฟล์ให้เพื่อนรันเอง
+### Option 4 — hand over the files
 
-```powershell
-# บีบอัดทั้งโฟลเดอร์ ยกเว้น .venv (สร้างใหม่ได้)
-# เพื่อนต้องมี: Windows + SQL Server Express + Python 3.10+ + ODBC Driver 18 for SQL Server
-```
+Friends need Windows + SQL Server Express + Python 3.10+ + ODBC Driver 18, then run `run.ps1`.
+The audio is ~170 MB, so share it via Google Drive rather than email.
 
-แล้วเพื่อนรัน `run.ps1` — สคริปต์จะสร้าง venv / สร้างฐานข้อมูล / เปิดเว็บให้เอง
-
-> ข้อควรระวัง: ไฟล์เสียง `.m4a` 170 MB — ถ้าส่งผ่านอีเมลจะไม่ผ่าน ให้ใช้ Google Drive
-
-### วิธีที่ 4 — แค่ให้ดู ไม่ต้องรัน
-อัดวิดีโอหน้าจอ (Win + G) หรือใช้ภาพใน `docs/shots/` — เหมาะกับกรณีส่งรายงาน
-
-### บัญชีสำหรับให้เพื่อนทดสอบ
-`demo` · `napat` · `ploy` — รหัสผ่าน `demo1234` ทุกคน
-(ในหน้า login มีปุ่มเติมบัญชีให้อัตโนมัติ)
-
-> ความปลอดภัย: เป็นเดโมวิชาเรียน ทุกคนที่เข้าถึงเว็บได้จะแก้เพลย์ลิสต์ของ `demo` ได้
-> ถ้าให้ทดสอบนาน ๆ ควรเปลี่ยนรหัสผ่าน หรือสร้างผู้ใช้ใหม่ให้เพื่อนโดยเฉพาะ
+**Demo accounts:** `demo` · `napat` · `ploy` — password `demo1234`.
+Anyone with access can edit `demo`'s playlists, so change the password or create a dedicated
+account for long-running demos.
 
 ---
 
-## 13. ขึ้น Git (GitHub) — ไฟล์เพลง 175 MB ใช้ Git LFS
+## 13. Git / GitHub — 175 MB of audio via Git LFS
 
-repo ถูกติดตั้งไว้แล้ว: `git init` + `git lfs track "*.m4a" "*.wav"` + commit แรกเรียบร้อย
-
-| ส่วน | ขนาด |
+| Part | Size |
 |---|---|
-| ไฟล์โค้ด/เทมเพลต/ภาพ | **12.6 MB** |
-| ไฟล์เสียง (Git LFS) | **175.3 MB** (199 ไฟล์) |
+| Code / templates / images | **12.6 MB** |
+| Audio (Git LFS) | **175.3 MB** (199 files) |
 
-ใน commit จะเก็บเพลงเป็น **pointer** ไม่ใช่ไฟล์จริง:
+Audio is committed as **pointers**, not blobs:
 
 ```
 version https://git-lfs.github.com/spec/v1
@@ -603,68 +581,57 @@ oid sha256:0184ab60...
 size 1040903
 ```
 
-> `tools/bin/cloudflared.exe` (52 MB) และ `.venv/` ถูก ignore ไว้แล้ว
+> `tools/bin/cloudflared.exe` (52 MB) and `.venv/` are git-ignored.
 
-### ขั้นตอน push (ทำครั้งเดียว)
+### Pushing
 
 ```powershell
-# 1) สร้าง repo เปล่า ๆ บน GitHub (ไม่ต้องติ๊ก Add README)
-# 2) ผูก remote แล้ว push
 git remote add origin https://github.com/<USER>/<REPO>.git
 git push -u origin main
 ```
 
-Git LFS จะอัปโหลดเพลงขึ้นเองอัตโนมัติ (รอบแรกอาจใช้เวลาหลายนาที เพราะ ~175 MB)
+Git LFS uploads the audio automatically (the first push takes a few minutes for ~175 MB).
 
-### โควตาฟรีของ GitHub LFS
-- พื้นที่ 1 GB · แบนด์วิดท์ 1 GB/เดือน → โปรเจกต์นี้ใช้ ~175 MB
-- ถ้ามีคนโคลนบ่อย ๆ แบนด์วิดท์จะหมดเร็ว (1 โคลน ≈ 175 MB)
+### GitHub LFS free tier
 
-### คนที่โคลน repo ไปต้องมี Git LFS
+1 GB storage · 1 GB bandwidth per month — this project uses ~175 MB, so every clone consumes
+roughly that much bandwidth.
+
+### Cloning
 
 ```powershell
-git lfs install          # ติดตั้งครั้งเดียว
+git lfs install          # once per machine
 git clone https://github.com/<USER>/<REPO>.git
 ```
 
-ถ้าไม่อยากโหลดเพลงตอนโคลน: `GIT_LFS_SKIP_SMUDGE=1 git clone ...`
+Skip the audio while cloning: `GIT_LFS_SKIP_SMUDGE=1 git clone …` (then `git lfs pull` later).
 
-### ทางเลือกถ้าไม่อยากใช้ LFS
-อัปโหลดไฟล์เสียงเป็น **GitHub Release** (zip) แล้วให้สคริปต์ดาวน์โหลด — repo จะเหลือ ~13 MB
-แต่ต้องรันสคริปต์เพิ่มก่อนใช้งาน และไฟล์เสียงจะไม่ถูก track ใน git history
+### Alternative without LFS
+
+Publish the audio as a **GitHub Release** asset and download it with a script — the repo shrinks to
+~13 MB, but an extra step is required before running and the audio leaves git history.
 
 ---
 
-## 14. ภาคผนวก: เปิดฐานข้อมูลด้วยเครื่องมืออื่น
+## 14. Appendix: inspecting the database
 
 ```powershell
-# ดูตารางทั้งหมด
+# list tables
 sqlcmd -S .\SQLEXPRESS -E -C -d MusicStreamingDB -Q "SELECT name FROM sys.tables ORDER BY name"
 
-# ดู 5 เพลงยอดนิยม
+# top 5 songs
 sqlcmd -S .\SQLEXPRESS -E -C -d MusicStreamingDB -Q "SELECT TOP 5 * FROM dbo.vw_TopSongs"
 
-# ดู definition ของ view/procedure
+# view or procedure definition
 sqlcmd -S .\SQLEXPRESS -E -C -d MusicStreamingDB -Q "EXEC sp_helptext 'dbo.usp_Playlist_AddSong'"
 ```
 
-เปิดด้วย **SQL Server Management Studio (SSMS)** หรือ **Azure Data Studio**
-แล้วเชื่อมต่อ `.\SQLEXPRESS` → Databases → `MusicStreamingDB`
+Or open **SQL Server Management Studio** / **Azure Data Studio**, connect to `.\SQLEXPRESS` →
+Databases → `MusicStreamingDB`.
 
-ไฟล์ `.sql` ทั้งหมดเขียนเป็น UTF-8 และ comment ภาษาไทยอ่านได้
-(ถ้าเปิดใน SSMS แล้วภาษาเพี้ยน ให้เลือก File → Open → File… แล้วเปลี่ยน Encoding เป็น UTF-8)
-
-ถ้าแก้เฉพาะ view/procedure และไม่อยากล้างข้อมูลทั้งฐานข้อมูล:
+All `.sql` files are UTF-8; if Thai text looks wrong in SSMS use File → Open → File… and pick
+UTF-8. To update only views/procedures without wiping data:
 
 ```powershell
-python tools/init_db.py --scripts 03      # รันเฉพาะ 03_views_procs.sql
+python tools/init_db.py --scripts 03
 ```
-
-
-
-
-
-
-
-
-
