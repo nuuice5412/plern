@@ -96,7 +96,7 @@
   .tracks { min-width: 0; }
 
   /* --- toast sits above the player --- */
-  .toast { bottom: 132px; }
+  .toast { bottom: 170px; }
 
   /* specificity fix: .btn-sm is declared later, so re-assert the pill size */
   .topbar .auth-combined { min-height: 40px; }

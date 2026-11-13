@@ -99,18 +99,46 @@
     </button>
     <div class="np-meta">
       <div class="np-title" id="np-title">ยังไม่ได้เลือกเพลง</div>
-      <div class="np-artist" id="np-artist">กด ▶ ที่รายการเพลงเพื่อเริ่มเล่น</div>
+      <div class="np-artist" id="np-artist">กดปุ่มเล่นที่รายการเพลงเพื่อเริ่ม</div>
       <span class="np-tag" id="np-tag" hidden>พรีวิว 30 วิ</span>
     </div>
   </div>
 
   <div class="center">
     <div class="controls">
-      <button type="button" class="ctl" id="btn-shuffle" title="สุ่มเพลง">⤨</button>
-      <button type="button" class="ctl" id="btn-prev" title="ก่อนหน้า" disabled>⏮</button>
-      <button type="button" class="ctl ctl-play" id="btn-play" title="เล่น/หยุด" disabled>▶</button>
-      <button type="button" class="ctl" id="btn-next" title="ถัดไป" disabled>⏭</button>
-      <button type="button" class="ctl" id="btn-repeat" title="เล่นซ้ำ">↻</button>
+      <button type="button" class="ctl" id="btn-shuffle" title="สุ่มเพลง">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 7h4l10 10h4"/><path d="M3 17h4l10-10h4"/>
+          <path d="M18 4l3 3-3 3"/><path d="M18 14l3 3-3 3"/>
+        </svg>
+      </button>
+      <button type="button" class="ctl" id="btn-prev" title="ก่อนหน้า" disabled>
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <rect x="6" y="5" width="2.4" height="14" rx="1"/>
+          <path d="M19 5.6v12.8c0 .9-1 1.4-1.7.9L9.2 13c-.7-.5-.7-1.5 0-2l8.1-5.3c.7-.5 1.7 0 1.7.9z"/>
+        </svg>
+      </button>
+      <button type="button" class="ctl ctl-play" id="btn-play" title="เล่น/หยุด" disabled>
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <polygon points="8,5 21.5,12 8,19"/>
+        </svg>
+      </button>
+      <button type="button" class="ctl" id="btn-next" title="ถัดไป" disabled>
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M5 5.6v12.8c0 .9 1 1.4 1.7.9L14.8 13c.7-.5.7-1.5 0-2L6.7 4.7c-.7-.5-1.7 0-1.7.9z"/>
+          <rect x="15.6" y="5" width="2.4" height="14" rx="1"/>
+        </svg>
+      </button>
+      <button type="button" class="ctl" id="btn-repeat" title="เล่นซ้ำ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M17 2.5l3.5 3.5-3.5 3.5"/>
+          <path d="M3.5 11.5V10a4 4 0 0 1 4-4h13"/>
+          <path d="M7 21.5L3.5 18 7 14.5"/>
+          <path d="M20.5 12.5V14a4 4 0 0 1-4 4h-13"/>
+        </svg>
+      </button>
     </div>
     <div class="progress">
       <span class="time" id="cur">0:00</span>
@@ -122,7 +150,7 @@
   <div class="right">
     <span id="np-plays" class="playbadge"></span>
     <button type="button" class="ctl" id="btn-expand" title="ขยายหน้าจอเพลง">⤢</button>
-    <span class="vol-ico">🔊</span>
+    <span class="vol-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5H4z" fill="currentColor" stroke="none"/><path d="M16.6 8.8a4.6 4.6 0 0 1 0 6.4"/><path d="M19.3 6.2a8.2 8.2 0 0 1 0 11.6"/></svg></span>
     <input type="range" id="vol" min="0" max="1" step="0.01" value="0.8" title="ระดับเสียง">
   </div>
 
@@ -136,8 +164,8 @@
   <div class="np-full-top">
     <a class="np-full-link" id="npf-song-link" href="#">เปิดหน้าเพลง</a>
     <button type="button" class="np-full-tab" id="npf-credits-btn">เครดิต</button>
-    <button type="button" class="np-full-icon" id="npf-fullscreen" title="เต็มหน้าจอ">⛶</button>
-    <button type="button" class="np-full-icon" id="npf-minimize" title="ย่อกลับ">⌄</button>
+    <button type="button" class="np-full-icon" id="npf-fullscreen" title="เต็มหน้าจอ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9"/><path d="M20 9V5.5A1.5 1.5 0 0 0 18.5 4H15"/><path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20H9"/><path d="M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15"/></svg></button>
+    <button type="button" class="np-full-icon" id="npf-minimize" title="ย่อกลับ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6"/></svg></button>
   </div>
 
   <div class="np-full-stage">
@@ -167,17 +195,45 @@
 
     <div class="np-full-center">
       <div class="controls">
-        <button type="button" class="ctl" id="npf-shuffle" title="สุ่มเพลง">⤨</button>
-        <button type="button" class="ctl" id="npf-prev" title="ก่อนหน้า">⏮</button>
-        <button type="button" class="ctl ctl-play big" id="npf-play" title="เล่น/หยุด">▶</button>
-        <button type="button" class="ctl" id="npf-next" title="ถัดไป">⏭</button>
-        <button type="button" class="ctl" id="npf-repeat" title="เล่นซ้ำ">↻</button>
+        <button type="button" class="ctl" id="npf-shuffle" title="สุ่มเพลง">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 7h4l10 10h4"/><path d="M3 17h4l10-10h4"/>
+            <path d="M18 4l3 3-3 3"/><path d="M18 14l3 3-3 3"/>
+          </svg>
+        </button>
+        <button type="button" class="ctl" id="npf-prev" title="ก่อนหน้า">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <rect x="6" y="5" width="2.4" height="14" rx="1"/>
+            <path d="M19 5.6v12.8c0 .9-1 1.4-1.7.9L9.2 13c-.7-.5-.7-1.5 0-2l8.1-5.3c.7-.5 1.7 0 1.7.9z"/>
+          </svg>
+        </button>
+        <button type="button" class="ctl ctl-play big" id="npf-play" title="เล่น/หยุด">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <polygon points="8,5 21.5,12 8,19"/>
+          </svg>
+        </button>
+        <button type="button" class="ctl" id="npf-next" title="ถัดไป">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M5 5.6v12.8c0 .9 1 1.4 1.7.9L14.8 13c.7-.5.7-1.5 0-2L6.7 4.7c-.7-.5-1.7 0-1.7.9z"/>
+            <rect x="15.6" y="5" width="2.4" height="14" rx="1"/>
+          </svg>
+        </button>
+        <button type="button" class="ctl" id="npf-repeat" title="เล่นซ้ำ">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17 2.5l3.5 3.5-3.5 3.5"/>
+            <path d="M3.5 11.5V10a4 4 0 0 1 4-4h13"/>
+            <path d="M7 21.5L3.5 18 7 14.5"/>
+            <path d="M20.5 12.5V14a4 4 0 0 1-4 4h-13"/>
+          </svg>
+        </button>
       </div>
     </div>
 
     <div class="np-full-right">
-      <button type="button" class="np-full-icon" id="npf-queue-btn" title="คิวเพลง">☰</button>
-      <span class="vol-ico">🔊</span>
+      <button type="button" class="np-full-icon" id="npf-queue-btn" title="คิวเพลง"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></button>
+      <span class="vol-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5H4z" fill="currentColor" stroke="none"/><path d="M16.6 8.8a4.6 4.6 0 0 1 0 6.4"/><path d="M19.3 6.2a8.2 8.2 0 0 1 0 11.6"/></svg></span>
       <input type="range" id="npf-vol" min="0" max="1" step="0.01" value="0.8" title="ระดับเสียง">
       <span class="np-full-pill" id="npf-pill" hidden>พรีวิว 30 วิ</span>
     </div>

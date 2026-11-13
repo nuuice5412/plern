@@ -1720,3 +1720,32 @@ body.np-open { overflow: hidden; }
   .auth-split { display: none; }
   .auth-combined { display: inline-flex; }
 }
+
+
+/* =====================================================================
+   Player control icons: inline SVG (iOS renders the old Unicode glyphs
+   as blue emoji squares, so every control is an SVG now)
+   ===================================================================== */
+.ctl { position: relative; }
+.ctl svg { width: 20px; height: 20px; display: block; }
+.ctl-play svg { width: 17px; height: 17px; }
+.ctl-play.big svg { width: 21px; height: 21px; }
+.vol-ico { display: inline-grid; place-items: center; }
+.vol-ico svg { width: 18px; height: 18px; display: block; }
+
+/* repeat = one: small 1 badge in the corner */
+.ctl[data-mode="one"]::after {
+  content: "1";
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent-2);
+}
+
+
+/* icons inside the now-playing top bar and round buttons */
+.np-full-icon svg { width: 20px; height: 20px; display: block; }
+.btn svg { flex: none; }

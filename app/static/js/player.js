@@ -121,6 +121,12 @@
   const PAUSE_SVG = '<span class="ico ico-pause" aria-hidden="true"><svg viewBox="0 0 24 24">'
     + '<rect x="7" y="4.5" width="3.8" height="15" rx="1.3"/>'
     + '<rect x="13.2" y="4.5" width="3.8" height="15" rx="1.3"/></svg></span>';
+  const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+    + '<polygon points="8,5 21.5,12 8,19"/></svg>';
+  const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+    + '<rect x="7" y="5" width="4" height="14" rx="1.4"/>'
+    + '<rect x="13.5" y="5" width="4" height="14" rx="1.4"/></svg>';
+
   const EQ_ICON = '<span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
 
   function decoratePlayButtons() {
@@ -335,8 +341,9 @@
     repeatMode = repeatMode === 'off' ? 'all' : repeatMode === 'all' ? 'one' : 'off';
     setActive(mini.repeat, repeatMode !== 'off');
     setActive(full.repeat, repeatMode !== 'off');
-    if (mini.repeat) mini.repeat.textContent = repeatMode === 'one' ? '↻1' : '↻';
-    if (full.repeat) full.repeat.textContent = repeatMode === 'one' ? '↻1' : '↻';
+    [mini.repeat, full.repeat].forEach(function (btn) {
+      if (btn) btn.dataset.mode = repeatMode;
+    });
     toast(repeatMode === 'off' ? 'เล่นซ้ำ: ปิด'
         : repeatMode === 'all' ? 'เล่นซ้ำ: ทั้งอัลบั้ม/ทั้งคิว' : 'เล่นซ้ำ: เพลงนี้เพลงเดียว');
   }
@@ -480,14 +487,14 @@
   });
 
   audio.addEventListener('play', function () {
-    if (mini.play) mini.play.textContent = '⏸';
-    if (full.play) full.play.textContent = '⏸';
+    if (mini.play) mini.play.innerHTML = ICON_PAUSE;
+    if (full.play) full.play.innerHTML = ICON_PAUSE;
     setRowPlayState(true);
   });
 
   audio.addEventListener('pause', function () {
-    if (mini.play) mini.play.textContent = '▶';
-    if (full.play) full.play.textContent = '▶';
+    if (mini.play) mini.play.innerHTML = ICON_PLAY;
+    if (full.play) full.play.innerHTML = ICON_PLAY;
     setRowPlayState(false);
   });
 
@@ -503,8 +510,8 @@
     } else if (idx >= 0 && repeatMode === 'all') {
       playAt(idx);
     } else {
-      if (mini.play) mini.play.textContent = '▶';
-      if (full.play) full.play.textContent = '▶';
+      if (mini.play) mini.play.innerHTML = ICON_PLAY;
+      if (full.play) full.play.innerHTML = ICON_PLAY;
     }
   });
 
