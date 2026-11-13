@@ -586,7 +586,56 @@ Remove-NetFirewallRule -DisplayName "Spi Music (Flask 5000)"
 
 ---
 
-## 13. ภาคผนวก: เปิดฐานข้อมูลด้วยเครื่องมืออื่น
+## 13. ขึ้น Git (GitHub) — ไฟล์เพลง 175 MB ใช้ Git LFS
+
+repo ถูกติดตั้งไว้แล้ว: `git init` + `git lfs track "*.m4a" "*.wav"` + commit แรกเรียบร้อย
+
+| ส่วน | ขนาด |
+|---|---|
+| ไฟล์โค้ด/เทมเพลต/ภาพ | **12.6 MB** |
+| ไฟล์เสียง (Git LFS) | **175.3 MB** (199 ไฟล์) |
+
+ใน commit จะเก็บเพลงเป็น **pointer** ไม่ใช่ไฟล์จริง:
+
+```
+version https://git-lfs.github.com/spec/v1
+oid sha256:0184ab60...
+size 1040903
+```
+
+> `tools/bin/cloudflared.exe` (52 MB) และ `.venv/` ถูก ignore ไว้แล้ว
+
+### ขั้นตอน push (ทำครั้งเดียว)
+
+```powershell
+# 1) สร้าง repo เปล่า ๆ บน GitHub (ไม่ต้องติ๊ก Add README)
+# 2) ผูก remote แล้ว push
+git remote add origin https://github.com/<USER>/<REPO>.git
+git push -u origin main
+```
+
+Git LFS จะอัปโหลดเพลงขึ้นเองอัตโนมัติ (รอบแรกอาจใช้เวลาหลายนาที เพราะ ~175 MB)
+
+### โควตาฟรีของ GitHub LFS
+- พื้นที่ 1 GB · แบนด์วิดท์ 1 GB/เดือน → โปรเจกต์นี้ใช้ ~175 MB
+- ถ้ามีคนโคลนบ่อย ๆ แบนด์วิดท์จะหมดเร็ว (1 โคลน ≈ 175 MB)
+
+### คนที่โคลน repo ไปต้องมี Git LFS
+
+```powershell
+git lfs install          # ติดตั้งครั้งเดียว
+git clone https://github.com/<USER>/<REPO>.git
+```
+
+ถ้าไม่อยากโหลดเพลงตอนโคลน: `GIT_LFS_SKIP_SMUDGE=1 git clone ...`
+
+### ทางเลือกถ้าไม่อยากใช้ LFS
+อัปโหลดไฟล์เสียงเป็น **GitHub Release** (zip) แล้วให้สคริปต์ดาวน์โหลด — repo จะเหลือ ~13 MB
+แต่ต้องรันสคริปต์เพิ่มก่อนใช้งาน และไฟล์เสียงจะไม่ถูก track ใน git history
+
+---
+
+## 14. ภาคผนวก: เปิดฐานข้อมูลด้วยเครื่องมืออื่น
 
 ```powershell
 # ดูตารางทั้งหมด
