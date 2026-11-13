@@ -1,14 +1,14 @@
 """
-demo_live_db.py - พิสูจน์ว่า frontend ผูกกับฐานข้อมูลจริง (ไม่ใช่ข้อมูล hardcode)
+demo_live_db.py - prove the frontend is wired to the real database (not hardcoded data)
 
-สคริปต์นี้จะ
-  1. อ่านค่าจากฐานข้อมูล
-  2. แก้ข้อมูลด้วย SQL ตรง ๆ (ไม่ผ่านแอป)
-  3. เรียกหน้าเว็บ แล้วตรวจว่าเห็นค่าใหม่ทันที
-  4. คืนค่าเดิม
-  5. ทดสอบ trigger: เพิ่มประวัติการฟัง -> PlayCount เพิ่ม -> หน้าเว็บเห็นยอดใหม่
+This script will
+  1. read values from the database
+  2. change data with raw SQL (bypassing the app)
+  3. load the web page and check the new value is visible immediately
+  4. restore the original value
+  5. test the trigger: add a play history row -> PlayCount goes up -> the page shows the new count
 
-ใช้ตอนรันให้อาจารย์ดู (ต้องเปิดเว็บอยู่ที่ http://127.0.0.1:5000)
+For demoing to the instructor (the web app must be running at http://127.0.0.1:5000)
 
     python tools/demo_live_db.py
     python tools/demo_live_db.py --base http://127.0.0.1:5000 --song 1

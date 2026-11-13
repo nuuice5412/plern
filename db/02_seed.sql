@@ -1,23 +1,23 @@
-﻿/* =====================================================================
+/* =====================================================================
    Music Streaming Database
-   02_seed.sql : ข้อมูลตัวอย่างสำหรับ demo / ทดสอบ query
+   02_seed.sql : sample data for the demo / query testing
 
-   *** ข้อมูลเพลงชุดนี้เป็นเพลงจริงที่ตรวจสอบแล้วว่ามีอยู่บน iTunes Store ***
-   (ดึง metadata จาก iTunes Search API: ชื่อเพลง, ความยาว, วันที่วางจำหน่าย)
-   ทำให้ไฟล์พรีวิว 30 วินาทีที่ดึงด้วย tools/fetch_previews.py ตรงกับชื่อเพลง
-   และศิลปินในฐานข้อมูลจริง ไม่ใช่เพลงอื่นที่ชื่อคล้ายกัน
+   *** These songs are real tracks verified to exist on the iTunes Store ***
+   (metadata pulled from the iTunes Search API: title, duration, release date)
+   so the 30-second preview files fetched by tools/fetch_previews.py match the song
+   titles and artists actually in the database, not other similarly named songs
 
-   หมายเหตุความถูกต้องของข้อมูล
-   - ชื่อเพลง / ศิลปิน / ความยาว / ปีที่ออก = ข้อมูลจริงจาก iTunes
-   - "บทบาท" (Singer/Composer/Producer) เป็นข้อมูลประกอบการสาธิต
-     ไม่ได้อ้างอิงเครดิตจากปกอัลบั้มจริงทุกเพลง
-   - ศิลปินรับเชิญ (Featured) มาจากชื่อเพลงที่มี "feat." อยู่จริง
-   - ประวัติการฟัง (HISTORY) เป็นข้อมูลจำลองที่สร้างขึ้นเพื่อทดสอบสถิติ
+   Data accuracy notes
+   - Song titles / artists / durations / release years = real data from iTunes
+   - "Roles" (Singer/Composer/Producer) are illustrative demo data
+     and do not cite the real album credits for every song
+   - Featured artists come from song titles that really contain "feat."
+   - Listening history (HISTORY) is synthetic data generated to test statistics
 
-   รันหลัง 01_schema.sql (ต้องมี trigger trg_History_UpdatePlayCount แล้ว
-   เพื่อให้การ insert HISTORY ในไฟล์นี้บวก PlayCount ของ SONG ให้อัตโนมัติ)
+   Run after 01_schema.sql (the trg_History_UpdatePlayCount trigger must already exist
+   so that inserting HISTORY in this file adds to SONG.PlayCount automatically)
 
-   บัญชีทดลอง (รหัสผ่านทุกคน: demo1234)
+   Demo accounts (password for all: demo1234)
      demo   / demo@example.com
      napat  / napat@example.com
      ploy   / ploy@example.com
@@ -29,7 +29,7 @@ SET NOCOUNT ON;
 GO
 
 /* ---------------------------------------------------------------------
-   ARTIST (8 ศิลปินหลัก + 3 ศิลปินรับเชิญ)
+   ARTIST (8 main artists + 3 featured artists)
    --------------------------------------------------------------------- */
 SET IDENTITY_INSERT dbo.Artist ON;
 INSERT INTO dbo.Artist (ArtistID, ArtistName, Country, Bio) VALUES
@@ -48,7 +48,7 @@ SET IDENTITY_INSERT dbo.Artist OFF;
 GO
 
 /* ---------------------------------------------------------------------
-   ROLE (บทบาทของศิลปินต่องานเพลง)
+   ROLE (an artist's role on a song)
    --------------------------------------------------------------------- */
 SET IDENTITY_INSERT dbo.[Role] ON;
 INSERT INTO dbo.[Role] (RoleID, [Role], Role_desc) VALUES
@@ -61,9 +61,9 @@ SET IDENTITY_INSERT dbo.[Role] OFF;
 GO
 
 /* ---------------------------------------------------------------------
-   SONG (24 เพลงจริง = 8 ศิลปิน x 3 เพลง)
-   Duration เป็นความยาวจริงหน่วยวินาที (จาก iTunes trackTimeMillis)
-   PlayCount เริ่มที่ 0 แล้ว trigger จะบวกให้จาก HISTORY ด้านล่าง
+   SONG (24 real songs = 8 artists x 3 songs)
+   Duration is the real length in seconds (from iTunes trackTimeMillis)
+   PlayCount starts at 0; the trigger adds to it from the HISTORY below
    --------------------------------------------------------------------- */
 SET IDENTITY_INSERT dbo.Song ON;
 INSERT INTO dbo.Song (SongID, SongTitle, Duration, PlayCount, Released_Date) VALUES
@@ -95,11 +95,11 @@ SET IDENTITY_INSERT dbo.Song OFF;
 GO
 
 /* ---------------------------------------------------------------------
-   SONG_ARTIST_ROLE : ternary relationship (เพลง - ศิลปิน - บทบาท)
+   SONG_ARTIST_ROLE : ternary relationship (song - artist - role)
 
-   ทุกเพลงมีศิลปินหลัก 1 คนใน 3 บทบาท (Singer/Composer/Producer)
-   และเพลงที่มี "feat." มีศิลปินรับเชิญเพิ่มในบทบาท Featured
-   => เพลงหนึ่งมีหลายศิลปิน และศิลปินหนึ่งอยู่หลายเพลง = M:N จริง
+   Every song has 1 main artist in 3 roles (Singer/Composer/Producer)
+   and songs with "feat." add a featured artist in the Featured role
+   => one song has several artists and one artist is on several songs = a true M:N
    --------------------------------------------------------------------- */
 INSERT INTO dbo.Song_Artist_Role (SongID, ArtistID, RoleID) VALUES
  -- Palmy
@@ -110,19 +110,19 @@ INSERT INTO dbo.Song_Artist_Role (SongID, ArtistID, RoleID) VALUES
  ( 4, 2,1),( 4, 2,3),( 4, 2,5),
  ( 5, 2,1),( 5, 2,3),( 5, 2,5),
  ( 6, 2,1),( 6, 2,3),( 6, 2,5),
- ( 6, 9,2),                                   -- Q Flure (รับเชิญ)
+ ( 6, 9,2),                                   -- Q Flure (featured)
  -- Three Man Down
  ( 7, 3,1),( 7, 3,3),( 7, 3,5),
  ( 8, 3,1),( 8, 3,3),( 8, 3,5),
  ( 9, 3,1),( 9, 3,3),( 9, 3,5),
- ( 9,10,2),                                   -- ออม TELEx TELEXs (รับเชิญ)
+ ( 9,10,2),                                   -- Aom TELEx TELEXs (featured)
  -- Phum Viphurit
  (10, 4,1),(10, 4,3),(10, 4,5),
  (11, 4,1),(11, 4,3),(11, 4,5),
  (12, 4,1),(12, 4,3),(12, 4,5),
  -- Bodyslam
  (13, 5,1),(13, 5,3),(13, 5,5),
- (13,11,2),                                   -- แอ๊ด คาราบาว (รับเชิญ)
+ (13,11,2),                                   -- Add Carabao (featured)
  (14, 5,1),(14, 5,3),(14, 5,5),
  (15, 5,1),(15, 5,3),(15, 5,5),
  -- Klear
@@ -140,9 +140,9 @@ INSERT INTO dbo.Song_Artist_Role (SongID, ArtistID, RoleID) VALUES
 GO
 
 /* ---------------------------------------------------------------------
-   USER (3 คน)  Password = pbkdf2_sha256$<iter>$<salt>$<hash>
-   ค่า hash ถูกคำนวณล่วงหน้าจากรหัสผ่าน demo1234 ด้วย PBKDF2-HMAC-SHA256
-   200,000 รอบ (ดูวิธีตรวจสอบใน app/auth.py)
+   USER (3 people)  Password = pbkdf2_sha256$<iter>$<salt>$<hash>
+   Hashes were pre-computed from the password demo1234 with PBKDF2-HMAC-SHA256
+   200,000 iterations (see app/auth.py for how to verify)
    --------------------------------------------------------------------- */
 SET IDENTITY_INSERT dbo.[User] ON;
 INSERT INTO dbo.[User] (UserID, Username, Password, Email, Gender, Date_of_Birth, Country, Tel) VALUES
@@ -201,10 +201,10 @@ INSERT INTO dbo.Playlist_Detail (PlaylistID, SongID, Date_Added, TrackNo) VALUES
 GO
 
 /* ---------------------------------------------------------------------
-   HISTORY : ประวัติการเล่น ~500 ครั้ง กระจายย้อนหลัง 21 วัน
-   ใช้ ROW_NUMBER() จับคู่ user/song แบบ deterministic (ไม่ต้องใช้ NEWID
-   เพื่อให้รันซ้ำได้ผลเท่าเดิม และอ่านผลลัพธ์ง่าย)
-   PlayCount ของ SONG จะถูก trigger บวกให้อัตโนมัติหลังบล็อกนี้
+   HISTORY : ~500 plays spread over the past 21 days
+   ROW_NUMBER() pairs users/songs deterministically (no NEWID
+   so re-runs return the same result and the output is easy to read)
+   SONG.PlayCount is added to automatically by the trigger after this block
    --------------------------------------------------------------------- */
 DECLARE @Users TABLE (rn INT PRIMARY KEY, UserID INT NOT NULL);
 INSERT INTO @Users (rn, UserID)
@@ -223,14 +223,14 @@ DECLARE @sCount INT = (SELECT COUNT(*) FROM @Songs);
 )
 INSERT INTO dbo.History (Played_At, UserID, SongID)
 SELECT
-    DATEADD(MINUTE, -((n.k * 37) % 30240), SYSDATETIME()),   -- ย้อนหลัง ~21 วัน
+    DATEADD(MINUTE, -((n.k * 37) % 30240), SYSDATETIME()),   -- ~21 days back
     u.UserID,
     s.SongID
 FROM N AS n
 JOIN @Users AS u ON u.rn = 1 + ((n.k * 7) % @uCount)
-/* จงใจให้การกระจายเป็น long-tail (เพลงที่ SongID น้อยได้เล่นมากกว่า)
-   เพื่อให้หน้า "เพลงยอดนิยม" มีอันดับที่ดูสมจริง ไม่เท่ากันหมด
-   POWER(u, 2.2) ไปบีบให้ค่าตกไปทาง index ต่ำ ๆ */
+/* Deliberately a long-tail distribution (songs with lower SongID get played more)
+   so the "top songs" page has realistic-looking ranks, not all ties
+   POWER(u, 2.2) pushes values toward the low indexes */
 CROSS APPLY (
     SELECT 1 + CAST(POWER((n.k % 100) / 100.0, 2.2) * @sCount AS INT) AS song_rn
 ) AS w
@@ -238,7 +238,7 @@ JOIN @Songs AS s ON s.rn = w.song_rn;
 GO
 
 /* ---------------------------------------------------------------------
-   ตรวจผลหลัง seed
+   Verify results after seeding
    --------------------------------------------------------------------- */
 PRINT N'--- สรุปจำนวนแถว ---';
 SELECT N'ARTIST' AS ตาราง, COUNT(*) AS จำนวน FROM dbo.Artist

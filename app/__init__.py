@@ -1,4 +1,4 @@
-"""Application factory ของ Flask"""
+"""Flask application factory"""
 from __future__ import annotations
 
 import datetime as dt
@@ -10,8 +10,8 @@ from . import db
 from . import artwork
 from .config import Config
 
-# Windows registry อาจไม่รู้จัก .m4a ทำให้ Flask ส่ง Content-Type เป็น audio/m4a
-# ซึ่งไม่ใช่ MIME มาตรฐาน เบราว์เซอร์บางตัวจึงไม่ยอมเล่น -> บังคับเป็น audio/mp4
+# The Windows registry may not recognize .m4a, so Flask sends Content-Type audio/m4a
+# which is not a standard MIME type; some browsers refuse to play it -> force audio/mp4
 mimetypes.add_type("audio/mp4", ".m4a")
 mimetypes.add_type("audio/mpeg", ".mp3")
 mimetypes.add_type("font/woff2", ".woff2")
@@ -34,7 +34,7 @@ def create_app(config_object: type = Config) -> Flask:
     app.register_blueprint(bp)
 
     # ------------------------------------------------------------------
-    # โหลดผู้ใช้ปัจจุบันจาก session ครั้งเดียวต่อ request
+    # Load the current user from the session once per request
     # ------------------------------------------------------------------
     @app.before_request
     def load_current_user() -> None:
@@ -45,7 +45,7 @@ def create_app(config_object: type = Config) -> Flask:
                 "SELECT UserID, Username, Email, Country FROM dbo.[User] WHERE UserID = ?",
                 (user_id,),
             )
-            if g.user is None:      # user ถูกลบไปแล้ว
+            if g.user is None:      # user has been deleted
                 session.clear()
 
     # ------------------------------------------------------------------
@@ -59,7 +59,7 @@ def create_app(config_object: type = Config) -> Flask:
 
     @app.template_filter("hms")
     def hms(seconds: int | None) -> str:
-        """4980 -> '1 ชม. 23 น.'"""
+        """4980 -> '1 hr 23 min'"""
         total = int(seconds or 0)
         hours, minutes = divmod(total // 60, 60)
         if hours:
@@ -68,7 +68,7 @@ def create_app(config_object: type = Config) -> Flask:
 
     @app.template_filter("thaidate")
     def thaidate(value: dt.date | dt.datetime | None, with_time: bool = True) -> str:
-        """2025-01-15 -> '15 ม.ค. 2568' (พ.ศ. + 543)"""
+        """2025-01-15 -> '15 Jan 2568' (Buddhist Era, + 543)"""
         if value is None:
             return "-"
         buddhist_year = value.year + 543
@@ -79,12 +79,12 @@ def create_app(config_object: type = Config) -> Flask:
 
     @app.template_filter("hue")
     def hue(song_id: int | None) -> int:
-        """สร้างสีปกเพลงแบบ deterministic จาก SongID (ใช้เป็น CSS variable)"""
+        """Generate a deterministic cover color from SongID (used as a CSS variable)"""
         return ((int(song_id or 1) * 47) % 360)
 
     @app.template_filter("mask_email")
     def mask_email(value: str | None) -> str:
-        """rookstargame1234@gmail.com -> r***4@g****l.com (แบบที่ Tidal แสดง)"""
+        """rookstargame1234@gmail.com -> r***4@g****l.com (as Tidal displays it)"""
         if not value or "@" not in value:
             return value or ""
         local, domain = value.split("@", 1)
@@ -105,7 +105,7 @@ def create_app(config_object: type = Config) -> Flask:
             "app_name": app.config["APP_NAME"],
         }
 
-    # รูปปก/รูปศิลปิน (อ่านจาก static/img/manifest.json)
+    # Cover/artist images (read from static/img/manifest.json)
     app.jinja_env.globals["cover_url"] = artwork.cover_url
     app.jinja_env.globals["artist_photo_url"] = artwork.artist_photo_url
 

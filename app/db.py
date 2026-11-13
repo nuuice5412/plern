@@ -1,8 +1,8 @@
 """
-ชั้นติดต่อฐานข้อมูล (data access layer)
+Database access layer
 
-หลักการ: ทุก query รวมอยู่ที่นี่และใน routes.py แบบ parameterized (?)
-ไม่มีการต่อสตริง SQL ด้วยค่าจากผู้ใช้ => กัน SQL Injection
+Principle: all queries live here and in routes.py, using parameterized (?) calls
+No SQL string concatenation with user input => prevents SQL Injection
 """
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from flask import current_app, g
 
 
 # ---------------------------------------------------------------------------
-# connection lifecycle (1 connection ต่อ 1 request)
+# connection lifecycle (one connection per request)
 # ---------------------------------------------------------------------------
 def get_conn() -> pyodbc.Connection:
     if "db_conn" not in g:
@@ -47,7 +47,7 @@ def _rows_to_dicts(cursor: pyodbc.Cursor) -> list[dict[str, Any]]:
 
 
 def query(sql: str, params: Sequence[Any] = ()) -> list[dict[str, Any]]:
-    """SELECT หลายแถว -> list[dict]"""
+    """SELECT multiple rows -> list[dict]"""
     cursor = get_conn().cursor()
     try:
         cursor.execute(sql, tuple(params))
@@ -57,13 +57,13 @@ def query(sql: str, params: Sequence[Any] = ()) -> list[dict[str, Any]]:
 
 
 def query_one(sql: str, params: Sequence[Any] = ()) -> dict[str, Any] | None:
-    """SELECT แถวเดียว -> dict | None"""
+    """SELECT a single row -> dict | None"""
     rows = query(sql, params)
     return rows[0] if rows else None
 
 
 def execute(sql: str, params: Sequence[Any] = ()) -> int:
-    """INSERT/UPDATE/DELETE ตรง ๆ (ไม่ผ่าน procedure) -> จำนวนแถวที่กระทบ"""
+    """Direct INSERT/UPDATE/DELETE (no procedure) -> affected row count"""
     conn = get_conn()
     cursor = conn.cursor()
     try:
@@ -81,19 +81,19 @@ def execute(sql: str, params: Sequence[Any] = ()) -> int:
 
 def call_proc(batch: str, params: Sequence[Any] = ()) -> list[dict[str, Any]]:
     """
-    เรียก stored procedure ที่มี OUTPUT parameter
+    Call a stored procedure that has an OUTPUT parameter
 
-    pyodbc ไม่มี API ตรง ๆ สำหรับ output param ของ SQL Server เราจึงห่อด้วย batch:
+    pyodbc has no direct API for SQL Server output parameters, so we wrap it in a batch:
         DECLARE @out INT;
         EXEC dbo.usp_X @A = ?, @Out = @out OUTPUT;
         SELECT @out AS out;
-    แล้วอ่านค่าจาก result set สุดท้าย
+    then read the value from the final result set
     """
     conn = get_conn()
     cursor = conn.cursor()
     try:
         cursor.execute(batch, tuple(params))
-        # ข้าม result set ที่ไม่ใช่ SELECT สุดท้าย
+        # Skip result sets until the final SELECT
         while cursor.description is None:
             if not cursor.nextset():
                 return []
@@ -107,16 +107,16 @@ def call_proc(batch: str, params: Sequence[Any] = ()) -> list[dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
-# แปลง error ของ SQL Server เป็นข้อความที่เอาไปแสดงบนหน้าเว็บได้
+# Convert SQL Server errors into messages that can be shown on the web page
 # ---------------------------------------------------------------------------
 _MSG_RE = re.compile(r"\[SQL Server\](.*?)(?:\s*\(\d+\))?\s*(?:\(SQLExecDirectW\))?$", re.S)
 
 
 def db_message(exc: Exception) -> str:
     """
-    pyodbc.Error มีหน้าตาเป็น
-        ('42000', "[42000] [Microsoft][ODBC Driver 18][SQL Server]ข้อความ (50001) (SQLExecDirectW)")
-    ฟังก์ชันนี้ดึงเฉพาะ "ข้อความ" ออกมา
+    pyodbc.Error looks like
+        ('42000', "[42000] [Microsoft][ODBC Driver 18][SQL Server]message (50001) (SQLExecDirectW)")
+    This function extracts just the "message"
     """
     text = str(exc)
     match = _MSG_RE.search(text)
@@ -124,7 +124,7 @@ def db_message(exc: Exception) -> str:
         msg = match.group(1).strip()
         if msg:
             return msg
-    # fallback: เอาก้อนสุดท้ายหลัง [...] อันสุดท้าย
+    # fallback: take the last chunk after the final [...]
     chunks = re.split(r"\[[^\]]*\]", text)
     tail = chunks[-1].strip(" )'\"\n")
     return tail or "เกิดข้อผิดพลาดจากฐานข้อมูล"

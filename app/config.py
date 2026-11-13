@@ -1,4 +1,4 @@
-"""ค่าตั้งต้นของแอป — อ่านจาก environment variable เพื่อไม่ hardcode รหัสผ่าน"""
+"""Application defaults — read from environment variables to avoid hardcoding passwords"""
 from __future__ import annotations
 
 import os
@@ -27,8 +27,8 @@ class Config:
     SECRET_KEY = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
     CONNECTION_STRING = _connection_string()
 
-    # จำนวนรายการต่อหน้า (pagination แบบง่ายด้วย TOP)
+    # Items per page (simple pagination with TOP)
     PAGE_SIZE = int(os.environ.get("PAGE_SIZE", "20"))
 
-    # ชื่อแอปที่แสดงบนหัวเว็บ
+    # App name shown in the site header
     APP_NAME = os.environ.get("APP_NAME", "Plern")

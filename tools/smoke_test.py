@@ -1,13 +1,13 @@
 """
-smoke_test.py - ทดสอบเว็บแอปแบบ end-to-end ผ่าน HTTP
+smoke_test.py - end-to-end test of the web app over HTTP
 
-ต้องรันเว็บไว้ก่อน (python run.py) แล้วสั่ง
+The web server must be running first (python run.py), then run
     python tools/smoke_test.py
     python tools/smoke_test.py --base http://127.0.0.1:5000
 
-ตรวจว่า: หน้าเว็บหลักเปิดได้, ค้นหาได้, login ได้, บันทึกการฟังแล้ว PlayCount
-เพิ่มขึ้นจริง, สร้าง/เพิ่ม/ลบเพลงในเพลย์ลิสต์ผ่าน stored procedure ได้,
-สมัครสมาชิกได้, และหน้า error ทำงานถูกต้อง
+Checks that: main pages load, search works, login works, a play really bumps
+PlayCount, songs can be created/added/removed in playlists through stored
+procedures, registration works, and the error page behaves correctly
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ import time
 
 import requests
 
-# ให้ import app.config ได้ไม่ว่าจะรันจากโฟลเดอร์ไหน
+# so that app.config can be imported no matter which folder we run from
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -27,7 +27,7 @@ if str(ROOT) not in sys.path:
 PASS, FAIL = "PASS", "FAIL"
 results: list[tuple[str, bool, str]] = []
 
-# ---- ข้อมูลอ้างอิงจาก db/02_seed.sql (แก้ที่นี่ที่เดียวถ้าเปลี่ยน seed) ----
+# ---- reference data from db/02_seed.sql (edit here only if the seed changes) ----
 SAMPLE_SONG_ID = 1
 SAMPLE_SONG_TITLE = "หลุมอากาศ"
 SAMPLE_ARTIST = "Palmy"
@@ -44,7 +44,7 @@ def check(name: str, condition: bool, detail: str = "") -> None:
 
 
 def read_email_code(email: str) -> str | None:
-    """อ่านรหัส OTP ล่าสุดของอีเมลนี้จากฐานข้อมูล (ใช้ตรวจในเทสต์)"""
+    """Read this email's latest OTP code from the database (used by the tests)"""
     import pyodbc
 
     from app.config import Config
@@ -57,7 +57,7 @@ def read_email_code(email: str) -> str | None:
 
 
 def cleanup_test_data() -> str:
-    """ลบเพลย์ลิสต์/ผู้ใช้ที่ smoke test สร้างขึ้น ไม่ให้รกฐานข้อมูลจริง"""
+    """Delete playlists/users the smoke test created so the real DB stays clean"""
     import pyodbc
 
     from app.config import Config
@@ -89,7 +89,7 @@ def main() -> int:
     session = requests.Session()
     session.headers["User-Agent"] = "dsh-smoke-test"
 
-    # 1) ต้องเข้าสู่ระบบก่อนสำหรับหน้าส่วนตัว
+    # 1) private pages need a login first
     print("\n[1] หน้าเว็บสาธารณะ")
     r = session.get(base + "/", timeout=15)
     check("GET / ตอบ 200", r.status_code == 200, str(r.status_code))
@@ -109,13 +109,13 @@ def main() -> int:
     check("GET /artist/1 ตอบ 200", r.status_code == 200, str(r.status_code))
     check("หน้าศิลปินแสดงชื่อศิลปิน", SAMPLE_ARTIST in r.text)
 
-    # หน้า "ดูทั้งหมด" ที่กดจากปุ่มบนหน้าแรก
+    # the "see all" page you reach from a button on the home page
     r = session.get(base + "/songs", timeout=15)
     check("GET /songs (เพลงทั้งหมด) ตอบ 200", r.status_code == 200, str(r.status_code))
     check("หน้า /songs มีรายการเพลง", r.text.count('class="track"') >= 20,
           str(r.text.count('class="track"')))
 
-    # ปุ่ม "เล่นเพลงยอดนิยม" ต้องหาการ์ดเจอ (เคยพังตอนเปลี่ยนจากตารางเป็นการ์ด)
+    # the "play popular songs" button must find the cards (it broke when the list became cards)
     r = session.get(base + "/", timeout=15)
     check("หน้าแรกมีปุ่มเล่นทั้งรายการ", "data-play-list" in r.text)
     check("การ์ดเพลงมี data-id สำหรับเล่น", r.text.count('class="rail-card"') >= 5
@@ -126,7 +126,7 @@ def main() -> int:
     check("หน้า /artists มีการ์ดศิลปิน", r.text.count('class="artist-card"') >= 10,
           str(r.text.count('class="artist-card"')))
 
-    # regression: เครดิตศิลปินคอลแลบต้องแสดงครบ (เคยขาดหายเพราะใช้ artistName ตัวแรก)
+    # regression: collab credits must all show (they went missing when we used only the first artistName)
     r = session.get(base + "/song/68", timeout=15)
     check("เพลงคอลแลบแสดงศิลปินครบ (PUN, The Toys)",
           r.status_code == 200 and "PUN" in r.text and "The Toys" in r.text,
@@ -134,7 +134,7 @@ def main() -> int:
     r = session.get(base + "/song/101", timeout=15)
     check("เพลงที่มี feat. แสดงศิลปินรับเชิญด้วย", "Khalid" in r.text, str(r.status_code))
 
-    # API ที่หน้าจอเต็มใช้ดึงเครดิต (แท็บ "เครดิต" ไม่ต้องออกจากหน้า)
+    # API the full-screen player uses to fetch credits (the "credits" tab, no page change)
     r = session.get(base + "/api/song/68", timeout=15)
     check("GET /api/song/68 ตอบ 200", r.status_code == 200, str(r.status_code))
     payload = r.json() if r.status_code == 200 else {}
@@ -151,7 +151,7 @@ def main() -> int:
     r = session.get(base + "/song/99999", timeout=15)
     check("เพลงที่ไม่มีอยู่ ตอบ 404", r.status_code == 404, str(r.status_code))
 
-    # 2) หน้าส่วนตัวต้องถูกกันไว้
+    # 2) private pages must be blocked
     print("\n[2] การป้องกันหน้าส่วนตัว")
     r = session.get(base + "/playlists", allow_redirects=False, timeout=15)
     check("GET /playlists ตอนยังไม่ login -> redirect", r.status_code in (301, 302),
@@ -161,7 +161,7 @@ def main() -> int:
     r = session.post(base + "/api/play/1", timeout=15)
     check("POST /api/play ตอนยังไม่ login -> 401", r.status_code == 401, str(r.status_code))
 
-    # 3) เข้าสู่ระบบ
+    # 3) log in
     print("\n[3] เข้าสู่ระบบ")
     r = session.get(base + "/login", timeout=15)
     check("GET /login ตอบ 200", r.status_code == 200, str(r.status_code))
@@ -174,15 +174,15 @@ def main() -> int:
     r = session.get(base + "/", timeout=15)
     check("หลัง login หน้าแรกแสดงชื่อผู้ใช้", "demo" in r.text)
 
-    # รหัสผ่านผิดต้องถูกปฏิเสธ (ใช้ session ใหม่ เพราะ session ปัจจุบันล็อกอินแล้ว
-    # ซึ่งจะถูก redirect ไปหน้าแรกแทนที่จะเห็นฟอร์ม)
+    # a wrong password must be rejected (use a fresh session, because the current one
+    # is logged in and would be redirected home instead of showing the form)
     intruder = requests.Session()
     r = intruder.post(base + "/login",
                       data={"identity": "demo", "password": "รหัสผิด"},
                       allow_redirects=True, timeout=15)
     check("รหัสผ่านผิด ถูกปฏิเสธ", "ไม่ถูกต้อง" in r.text)
 
-    # 4) บันทึกการฟัง + PlayCount จาก trigger
+    # 4) play logging + PlayCount from the trigger
     print("\n[4] บันทึกการฟัง (HISTORY + trigger)")
     first = session.post(base + "/api/play/3", timeout=15)
     check("POST /api/play/3 ตอบ 200", first.status_code == 200, str(first.status_code))
@@ -200,7 +200,7 @@ def main() -> int:
     check("GET /history ตอบ 200", r.status_code == 200, str(r.status_code))
     check("ประวัติการฟังมีรายการ", "รายการล่าสุด" in r.text)
 
-    # 5) เพลย์ลิสต์ผ่าน stored procedure
+    # 5) playlists via stored procedure
     print("\n[5] เพลย์ลิสต์ (stored procedure)")
     name = f"ทดสอบ_{int(time.time())}"
     r = session.post(base + "/playlists/create", data={"plname": name},
@@ -220,7 +220,7 @@ def main() -> int:
         check("เพิ่มเพลงเข้าเพลย์ลิสต์ได้", r.status_code == 200, str(r.status_code))
         check("เพลย์ลิสต์แสดงเพลงที่เพิ่ม", PLAYLIST_TEST_SONG_TITLE in r.text)
 
-        # เพิ่มซ้ำ -> ต้องไม่ error และไม่สร้างแถวซ้ำ
+        # adding it again -> must not error and must not create a duplicate row
         r = session.post(base + f"/playlist/{playlist_id}/add",
                          data={"song_id": PLAYLIST_TEST_SONG},
                          allow_redirects=True, timeout=15)
@@ -240,7 +240,7 @@ def main() -> int:
                          allow_redirects=True, timeout=15)
         check("ลบเพลย์ลิสต์ได้", r.status_code == 200, str(r.status_code))
 
-    # 6) สิทธิ์การแก้ไขเพลย์ลิสต์ของคนอื่น
+    # 6) edit permission on someone else's playlist
     print("\n[6] สิทธิ์การเข้าถึง")
     r = session.post(base + "/playlist/3/add", data={"song_id": 1}, timeout=15)
     check("แก้เพลย์ลิสต์ของคนอื่น -> 403", r.status_code == 403, str(r.status_code))
@@ -248,7 +248,7 @@ def main() -> int:
     r = session.get(base + "/playlist/3", timeout=15)
     check("ดูเพลย์ลิสต์ของคนอื่นได้ (read-only)", r.status_code == 200, str(r.status_code))
 
-    # 7) สมัคร / เข้าสู่ระบบด้วยอีเมล + OTP
+    # 7) register / log in with email + OTP
     print("\n[7] สมัคร/เข้าสู่ระบบด้วยอีเมล (OTP)")
     new_email = f"smoke{int(time.time())}@example.com"
     fresh = requests.Session()
@@ -287,13 +287,13 @@ def main() -> int:
     check("อีเมลเดิม -> ข้ามไปหน้ากรอกรหัสทันที",
           "/auth/code" in r.headers.get("Location", ""), r.headers.get("Location", ""))
 
-    # 8) เก็บกวาดข้อมูลที่ทดสอบสร้างขึ้น
+    # 8) clean up the data the test created
     print("\n[8] เก็บกวาดข้อมูลทดสอบ")
     try:
         detail = cleanup_test_data()
         check("ลบข้อมูลทดสอบเรียบร้อย", True, detail)
         print(f"      {detail}")
-    except Exception as exc:  # noqa: BLE001 - รายงานแล้วไปต่อ
+    except Exception as exc:  # noqa: BLE001 - report it and carry on
         check("ลบข้อมูลทดสอบเรียบร้อย", False, str(exc))
 
     # ------------------------------------------------------------------

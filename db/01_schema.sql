@@ -1,18 +1,18 @@
-﻿/* =====================================================================
+/* =====================================================================
    Music Streaming Database
-   01_schema.sql : สร้างฐานข้อมูล + ตารางทั้งหมด + constraint + index + trigger
+   01_schema.sql : create the database + all tables + constraints + indexes + triggers
 
-   โครงสร้างตรงตาม ER Diagram ของกลุ่ม (Peter Chen):
+   Structure follows the group's ER Diagram (Peter Chen):
      USER 1---N PLAYLIST 1---N PLAYLIST_DETAIL N---1 SONG
      USER 1---N HISTORY  N---1 SONG
-     SONG M---N ARTIST  (ผ่าน SONG_ARTIST_ROLE ที่มี ROLE เป็นตัวเชื่อม)
+     SONG M---N ARTIST  (via SONG_ARTIST_ROLE with ROLE as the link)
 
-   หมายเหตุ:
-   - [User] และ [Role] เป็นคำสงวนของ T-SQL จึงต้องครอบด้วย [ ] ทุกครั้ง
-   - Song_Amount / Total_Time ใน ER เป็น derived attribute (oval เส้นประ)
-     จึงไม่เก็บเป็นคอลัมน์ แต่คำนวณใน vw_PlaylistSummary (ดู 03_views_procs.sql)
-   - PlayCount ถูกอัปเดตอัตโนมัติด้วย trigger เมื่อมีแถวใหม่ใน HISTORY
-   สคริปต์นี้รันซ้ำได้ (drop แล้วสร้างใหม่) เหมาะกับตอนพัฒนา/ส่งงาน
+   Notes:
+   - [User] and [Role] are T-SQL reserved words, so always wrap them in [ ]
+   - Song_Amount / Total_Time in the ER are derived attributes (dashed oval)
+     so they are not stored as columns but computed in vw_PlaylistSummary (see 03_views_procs.sql)
+   - PlayCount is updated automatically by a trigger when a new row lands in HISTORY
+   This script is re-runnable (drop then recreate), good for development/submission
    ===================================================================== */
 
 SET NOCOUNT ON;
@@ -28,7 +28,7 @@ USE MusicStreamingDB;
 GO
 
 /* ---------------------------------------------------------------------
-   0) ล้างของเดิม (ลำดับต้องกลับกับตอนสร้าง เพราะติด FK)
+   0) Drop existing objects (order must reverse creation because of FKs)
    --------------------------------------------------------------------- */
 IF OBJECT_ID(N'dbo.trg_History_UpdatePlayCount', N'TR') IS NOT NULL
     DROP TRIGGER dbo.trg_History_UpdatePlayCount;
@@ -58,9 +58,9 @@ GO
    1) [User]
       ER: UserID, Username, Password, Email, Gender, Date_of_Birth,
           Country, Tel
-      Password เก็บเป็น hash string รูปแบบ
+      Password is stored as a hash string in the form
           pbkdf2_sha256$<iterations>$<salt hex>$<hash hex>
-      (ไม่เก็บ plaintext — ถึงชื่อคอลัมน์จะเหมือนใน ER ก็ตาม)
+      (no plaintext stored — even though the column name matches the ER)
    ===================================================================== */
 CREATE TABLE dbo.[User]
 (
@@ -98,7 +98,7 @@ CREATE TABLE dbo.Artist
 GO
 
 /* =====================================================================
-   3) [Role]  — บทบาทของศิลปินต่องานหนึ่งเพลง
+   3) [Role]  — an artist's role on a given song
       ER: RoleID, Role, Role_desc
    ===================================================================== */
 CREATE TABLE dbo.[Role]
@@ -115,8 +115,8 @@ GO
 /* =====================================================================
    4) SONG
       ER: SongID, SongTitle, Duration, PlayCount, Released_Date
-      Duration = ความยาวหน่วยวินาที
-      PlayCount = ตัวนับ (denormalized เพื่อความเร็ว) ดูแลโดย trigger
+      Duration = length in seconds
+      PlayCount = counter (denormalized for speed) maintained by a trigger
    ===================================================================== */
 CREATE TABLE dbo.Song
 (
@@ -135,7 +135,7 @@ GO
 /* =====================================================================
    5) PLAYLIST
       ER: PlaylistID, PLname, Create_Date, UserID(FK)
-      เพลย์ลิสต์ 1 อันเป็นของ USER 1 คน (1..N) จึงบังคับ NOT NULL
+      One playlist belongs to one USER (1..N), hence NOT NULL
    ===================================================================== */
 CREATE TABLE dbo.Playlist
 (
@@ -152,9 +152,9 @@ CREATE TABLE dbo.Playlist
 GO
 
 /* =====================================================================
-   6) PLAYLIST_DETAIL  — ตารางเชื่อม PLAYLIST M---N SONG
+   6) PLAYLIST_DETAIL  — junction table for PLAYLIST M---N SONG
       ER: PlaylistID(FK), SongID(FK), Date_Added, TrackNo
-      PK ผสม (PlaylistID, SongID) => เพลงเดียวกันซ้ำในเพลย์ลิสต์เดียวไม่ได้
+      Composite PK (PlaylistID, SongID) => the same song cannot repeat in one playlist
    ===================================================================== */
 CREATE TABLE dbo.Playlist_Detail
 (
@@ -172,13 +172,13 @@ CREATE TABLE dbo.Playlist_Detail
 );
 GO
 
-/* ลำดับเพลงในเพลย์ลิสต์ต้องไม่ซ้ำกัน */
+/* Track numbers within a playlist must be unique */
 CREATE UNIQUE INDEX UQ_Playlist_Detail_TrackNo
     ON dbo.Playlist_Detail (PlaylistID, TrackNo);
 GO
 
 /* =====================================================================
-   7) HISTORY  — ประวัติการเล่น (fact table สำหรับ analytics)
+   7) HISTORY  — playback history (fact table for analytics)
       ER: HistoryID, Played_At, UserID(FK), SongID(FK)
    ===================================================================== */
 CREATE TABLE dbo.History
@@ -197,9 +197,9 @@ CREATE TABLE dbo.History
 GO
 
 /* =====================================================================
-   8) SONG_ARTIST_ROLE  — ternary relationship SONG M---N ARTIST (ผ่าน ROLE)
+   8) SONG_ARTIST_ROLE  — ternary relationship SONG M---N ARTIST (via ROLE)
       ER: SongID(FK), ArtistID(FK), RoleID(FK)
-      "ศิลปิน X ทำหน้าที่ Y ในเพลง Z"  เช่น Nova Lane เป็น Singer ใน Paper Lanterns
+      "Artist X does job Y on song Z"  e.g. Nova Lane is Singer on Paper Lanterns
    ===================================================================== */
 CREATE TABLE dbo.Song_Artist_Role
 (
@@ -218,12 +218,12 @@ CREATE TABLE dbo.Song_Artist_Role
 GO
 
 /* ---------------------------------------------------------------------
-   9) TRIGGER : รักษา Song.PlayCount ให้ตรงกับ HISTORY
+   9) TRIGGER : keep Song.PlayCount in sync with HISTORY
 
-      ทำไมไม่ใช้ COUNT(*) ทุกครั้ง: หน้าแรกของแอปต้องเรียงเพลงยอดนิยม
-      ถ้า COUNT(*) จาก HISTORY (ซึ่งโตขึ้นเรื่อย ๆ) ทุก page load จะช้า
-      เราจึงเก็บ PlayCount ซ้ำ (denormalize) แล้วใช้ trigger รักษาความถูกต้อง
-      เขียนแบบ set-based (GROUP BY inserted) เพื่อรองรับ insert หลายแถวพร้อมกัน
+      Why not COUNT(*) every time: the app's home page ranks popular songs
+      COUNT(*) over HISTORY (which keeps growing) on every page load would be slow
+      so we store PlayCount redundantly (denormalize) and use a trigger to keep it correct
+      Written set-based (GROUP BY inserted) to handle multi-row inserts
    --------------------------------------------------------------------- */
 CREATE TRIGGER dbo.trg_History_UpdatePlayCount
 ON dbo.History
@@ -241,8 +241,8 @@ END
 GO
 
 /* ---------------------------------------------------------------------
-   10) Index เสริมสำหรับ query ที่แอปใช้บ่อย
-       (FK ไม่ได้สร้าง index ให้อัตโนมัติใน SQL Server)
+   10) Extra indexes for queries the app runs often
+       (FKs do not get indexes automatically in SQL Server)
    --------------------------------------------------------------------- */
 CREATE INDEX IX_History_User_PlayedAt ON dbo.History (UserID, Played_At DESC) INCLUDE (SongID);
 CREATE INDEX IX_History_Song          ON dbo.History (SongID);

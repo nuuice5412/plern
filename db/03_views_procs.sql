@@ -1,13 +1,13 @@
-﻿/* =====================================================================
+/* =====================================================================
    Music Streaming Database
    03_views_procs.sql : VIEW (derived attributes) + STORED PROCEDURE
                        + TRIGGER (maintain PlayCount)
 
-   เหตุผลเชิงออกแบบที่อาจารย์มักถาม:
-   - Song_Amount / Total_Time เป็น derived attribute => ไม่เก็บซ้ำในตาราง
-     แต่คำนวณสด ๆ ด้วย aggregate ใน view (ไม่มีปัญหา update anomaly)
-   - PlayCount เป็น stored aggregate ที่ยอมเก็บซ้ำ *โดยเจตนา* เพื่อไม่ต้อง
-     COUNT(*) HISTORY ทุกครั้งที่เปิดหน้าแรก -> ใช้ trigger รักษาความถูกต้อง
+   Design rationale examiners often ask about:
+   - Song_Amount / Total_Time are derived attributes => not duplicated in tables
+     but computed live with aggregates in the view (no update anomaly issues)
+   - PlayCount is a stored aggregate we duplicate *on purpose* so we do not
+     COUNT(*) HISTORY on every home page load -> a trigger keeps it correct
    ===================================================================== */
 
 USE MusicStreamingDB;
@@ -17,8 +17,8 @@ GO
 
 /* =====================================================================
    VIEW 1 : vw_SongDetail
-   รวมเพลง + ศิลปินหลัก + รายชื่อศิลปิน/บทบาททั้งหมดไว้ที่เดียว
-   แอปจะเรียก view นี้แทนการ JOIN เองทุกครั้ง
+   Combines songs + main artist + full artist/role list in one place
+   The app calls this view instead of hand-writing JOINs every time
    ===================================================================== */
 CREATE OR ALTER VIEW dbo.vw_SongDetail
 AS
@@ -33,7 +33,7 @@ SELECT
     ISNULL(artists.ArtistList, N'ไม่ทราบศิลปิน') AS ArtistList,
     ISNULL(crew.ArtistRoleList, N'-')       AS ArtistRoleList
 FROM dbo.Song AS s
-/* ศิลปินหลัก = คนที่บทบาทสำคัญที่สุด (Singer > Featured > อื่น ๆ) */
+/* Main artist = the one with the most important role (Singer > Featured > others) */
 OUTER APPLY (
     SELECT TOP (1) a.ArtistID, a.ArtistName
     FROM dbo.Song_Artist_Role AS sar
@@ -44,7 +44,7 @@ OUTER APPLY (
                            WHEN N'Composer' THEN 2 ELSE 9 END,
              a.ArtistName
 ) AS main
-/* รายชื่อศิลปินทั้งหมดที่ร่วมร้อง (Singer + Featured) เช่น "PUN, The Toys" */
+/* All artists who performed vocals (Singer + Featured), e.g. "PUN, The Toys" */
 OUTER APPLY (
     SELECT STRING_AGG(a.ArtistName, N', ') WITHIN GROUP (
                ORDER BY CASE r.[Role] WHEN N'Singer' THEN 0 ELSE 1 END, a.ArtistName) AS ArtistList
@@ -66,7 +66,7 @@ GO
 
 /* =====================================================================
    VIEW 2 : vw_PlaylistSummary
-   = derived attribute Song_Amount + Total_Time ของ ER
+   = the ER's derived attributes Song_Amount + Total_Time
    ===================================================================== */
 CREATE OR ALTER VIEW dbo.vw_PlaylistSummary
 AS
@@ -91,8 +91,8 @@ GO
 
 /* =====================================================================
    VIEW 3 : vw_PlaylistTrackList
-   รายการเพลงในเพลย์ลิสต์ พร้อมลำดับที่แสดงผล (แก้ช่องว่างของ TrackNo
-   ที่เกิดจากการลบเพลง ด้วย ROW_NUMBER)
+   Songs in a playlist with a display sequence (fills the TrackNo gaps
+   left by deleted songs using ROW_NUMBER)
    ===================================================================== */
 CREATE OR ALTER VIEW dbo.vw_PlaylistTrackList
 AS
@@ -113,7 +113,7 @@ GO
 
 /* =====================================================================
    VIEW 4 : vw_TopSongs
-   เพลงยอดนิยม 100 อันดับ (view ไม่รับ parameter จึง fix TOP ไว้)
+   Top 100 popular songs (views take no parameters, so TOP is fixed)
    ===================================================================== */
 CREATE OR ALTER VIEW dbo.vw_TopSongs
 AS
@@ -125,16 +125,16 @@ ORDER BY vd.PlayCount DESC, vd.SongTitle;
 GO
 
 /* =====================================================================
-   NOTE : trigger trg_History_UpdatePlayCount อยู่ใน 01_schema.sql
-          (ย้ายไปอยู่กับ schema เพราะเป็น invariant ของตาราง Song/HISTORY
-          และต้องมีอยู่ก่อน 02_seed.sql จะได้บวก PlayCount จากข้อมูลตัวอย่าง)
+   NOTE : trigger trg_History_UpdatePlayCount lives in 01_schema.sql
+          (moved next to the schema because it is an invariant of the Song/HISTORY tables
+          and must exist before 02_seed.sql so sample data can add to PlayCount)
 
    PROCEDURE 1 : usp_User_Register
-   สมัครสมาชิก + แปลง error ของ UNIQUE ให้เป็นข้อความภาษาไทยที่แอปเอาไปแสดงได้
+   Register a user + turn UNIQUE errors into displayable messages for the app
    ===================================================================== */
 CREATE OR ALTER PROCEDURE dbo.usp_User_Register
     @Username     NVARCHAR(50),
-    @Password     NVARCHAR(255),   -- hash ที่คำนวณมาจากฝั่งแอปแล้ว
+    @Password     NVARCHAR(255),   -- hash already computed on the app side
     @Email        NVARCHAR(255),
     @Gender       NVARCHAR(10)  = NULL,
     @Date_of_Birth DATE         = NULL,
@@ -189,8 +189,8 @@ GO
 
 /* =====================================================================
    PROCEDURE 3 : usp_Playlist_AddSong
-   ต่อท้ายเพลย์ลิสต์ (TrackNo = MAX + 1) และไม่ error ถ้าเพลงซ้ำอยู่แล้ว
-   คืน @Added = 1 (เพิ่มแล้ว) / 0 (มีอยู่แล้ว)
+   Append to the end of a playlist (TrackNo = MAX + 1); no error if the song is already there
+   Returns @Added = 1 (added) / 0 (already present)
    ===================================================================== */
 CREATE OR ALTER PROCEDURE dbo.usp_Playlist_AddSong
     @PlaylistID INT,
@@ -209,7 +209,7 @@ BEGIN
 
     IF EXISTS (SELECT 1 FROM dbo.Playlist_Detail
                WHERE PlaylistID = @PlaylistID AND SongID = @SongID)
-        RETURN;   -- มีเพลงนี้อยู่แล้ว ไม่ทำอะไร
+        RETURN;   -- song already present, do nothing
 
     DECLARE @NextTrackNo INT =
         ISNULL((SELECT MAX(TrackNo) FROM dbo.Playlist_Detail WHERE PlaylistID = @PlaylistID), 0) + 1;
@@ -223,9 +223,9 @@ GO
 
 /* =====================================================================
    PROCEDURE 4 : usp_Playlist_RemoveSong
-   ลบเพลงออกจากเพลย์ลิสต์ (คืน @Removed = 1 ถ้าลบจริง)
-   หมายเหตุ: ไม่ re-number TrackNo ที่เหลือ เพราะจะชน UNIQUE index
-   ช่องว่างของ TrackNo ถูกกลบด้วย ROW_NUMBER() ใน vw_PlaylistTrackList
+   Remove a song from a playlist (returns @Removed = 1 if something was deleted)
+   Note: remaining TrackNo values are not re-numbered because that would hit the UNIQUE index
+   TrackNo gaps are masked by ROW_NUMBER() in vw_PlaylistTrackList
    ===================================================================== */
 CREATE OR ALTER PROCEDURE dbo.usp_Playlist_RemoveSong
     @PlaylistID INT,
@@ -245,7 +245,7 @@ GO
 
 /* =====================================================================
    PROCEDURE 5 : usp_History_Record
-   บันทึกการเล่น 1 ครั้ง (PlayCount จะถูกบวกโดย trigger ให้เอง)
+   Record one play (the trigger adds to PlayCount on its own)
    ===================================================================== */
 CREATE OR ALTER PROCEDURE dbo.usp_History_Record
     @UserID INT,

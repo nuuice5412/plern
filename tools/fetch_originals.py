@@ -1,20 +1,20 @@
 """
-fetch_originals.py - ใช้ไฟล์เสียง "ต้นฉบับ" จาก iTunes โดยไม่เข้ารหัสซ้ำ
+fetch_originals.py - use the "original" audio files from iTunes without re-encoding
 
-บริบท: tools/fetch_previews.py โหลดไฟล์ .m4a (AAC ~271 kbps) มาแล้ว
-ถ้าไม่ต้องการลดคุณภาพเลย ก็ใช้ไฟล์นั้นตรง ๆ ได้เลย — สคริปต์นี้จะ
-  1) ดาวน์โหลดต้นฉบับจาก previewUrl ที่เก็บไว้ใน audio/manifest.json
-     (ไม่ต้องค้นหา iTunes ใหม่ -> ไฟล์ตรงตัว ไม่มีโอกาสจับคู่ผิด)
-  2) ลบไฟล์ .mp3 ที่เคยบีบอัดไว้ของเพลงนั้น
-  3) อัปเดต manifest ให้ชี้ไปที่ไฟล์ .m4a
+Context: tools/fetch_previews.py already downloaded the .m4a files (AAC ~271 kbps).
+If you don't want any quality loss, you can use those files as-is — this script will
+  1) Download the original from the previewUrl stored in audio/manifest.json
+     (no new iTunes search -> exact file, no chance of a wrong match)
+  2) Delete the .mp3 that was previously compressed for that song
+  3) Update the manifest to point at the .m4a file
 
-ขนาดที่แลกมา: ~1 MB ต่อเพลง (175 เพลง ≈ 175 MB)
-ถ้าหนักเกินไป ใช้ tools/compress_audio.py --kbps 128 แทน (~82 MB)
+The size trade-off: ~1 MB per song (175 songs ≈ 175 MB)
+If that is too heavy, use tools/compress_audio.py --kbps 128 instead (~82 MB)
 
-ใช้
-    python tools/fetch_originals.py              # เฉพาะเพลงที่ยังไม่มี .m4a
-    python tools/fetch_originals.py --force      # ดาวน์โหลดใหม่ทั้งหมด
-    python tools/fetch_originals.py --only 1,36  # เฉพาะบางเพลง
+Usage
+    python tools/fetch_originals.py              # only songs that have no .m4a yet
+    python tools/fetch_originals.py --force      # re-download everything
+    python tools/fetch_originals.py --only 1,36  # only specific songs
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ def download(session: requests.Session, url: str, target: pathlib.Path) -> bool:
         for chunk in response.iter_content(chunk_size=128 * 1024):
             handle.write(chunk)
 
-    if tmp.stat().st_size < 20 * 1024:      # เล็กเกินกว่าจะเป็นไฟล์เสียงจริง
+    if tmp.stat().st_size < 20 * 1024:      # too small to be a real audio file
         tmp.unlink(missing_ok=True)
         return False
 
@@ -119,7 +119,7 @@ def main() -> int:
         entry["bitrateKbps"] = "original"
         print(f"  [{index:03d}] #{song_id:<4} {size / 1024:6.0f} KB  ({target.name})")
 
-        if downloaded % 20 == 0:            # เซฟเป็นระยะ เผื่อถูก Ctrl+C
+        if downloaded % 20 == 0:            # save periodically in case of Ctrl+C
             manifest["tracks"] = tracks
             MANIFEST.write_text(json.dumps(manifest, ensure_ascii=False, indent=2),
                                 encoding="utf-8")

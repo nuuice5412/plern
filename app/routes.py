@@ -1,12 +1,12 @@
-﻿"""
-ทุก route ของเว็บแอปอยู่ที่นี่
+"""
+All web app routes live here.
 
-หมายเหตุการออกแบบ query:
- - อ่านข้อมูลผ่าน VIEW (vw_SongDetail / vw_PlaylistSummary / vw_PlaylistTrackList)
-   เพื่อไม่ให้เขียน JOIN ซ้ำในหลายที่ และให้ตรงกับแนวคิด derived attribute ใน ER
- - เขียนข้อมูล (สมัครสมาชิก, สร้างเพลย์ลิสต์, เพิ่ม/ลบเพลง, บันทึกการฟัง)
-   ผ่าน STORED PROCEDURE เพื่อให้ business rule อยู่ที่ฐานข้อมูลจุดเดียว
- - ทุกค่าจากผู้ใช้ส่งเป็น parameter (?) ไม่ต่อสตริง SQL
+Query design notes:
+ - Read data through VIEWs (vw_SongDetail / vw_PlaylistSummary / vw_PlaylistTrackList)
+   to avoid rewriting JOINs in many places and to match the derived attribute idea in the ER
+ - Write data (register, create playlist, add/remove song, record a play)
+   through STORED PROCEDUREs so business rules live in one place in the database
+ - Every user value is passed as a parameter (?) — never concatenated into SQL
 """
 from __future__ import annotations
 
@@ -65,7 +65,7 @@ def _owned_playlist_or_404(playlist_id: int) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# หน้าแรก
+# Home page
 # ---------------------------------------------------------------------------
 @bp.get("/")
 def index():
@@ -129,7 +129,7 @@ def index():
 
 
 # ---------------------------------------------------------------------------
-# หน้า "ดูทั้งหมด" (แบบ View all ของ Tidal)
+# "View all" page (Tidal-style View all)
 # ---------------------------------------------------------------------------
 ARTIST_LIST_SQL = """
     SELECT a.ArtistID, a.ArtistName, a.Country, x.SongCount, x.TotalPlays
@@ -145,7 +145,7 @@ ARTIST_LIST_SQL = """
 
 @bp.get("/songs")
 def all_songs():
-    """รายการเพลงทั้งหมด — ?sort=new สำหรับเรียงตามวันออก"""
+    """All songs — ?sort=new orders by release date"""
     if (request.args.get("sort") or "top").lower() == "new":
         songs = db.query(
             """
@@ -177,7 +177,7 @@ def all_artists():
 
 
 # ---------------------------------------------------------------------------
-# ค้นหา
+# Search
 # ---------------------------------------------------------------------------
 @bp.get("/search")
 def search():
@@ -207,7 +207,7 @@ def search():
 
 
 # ---------------------------------------------------------------------------
-# เพลง
+# Songs
 # ---------------------------------------------------------------------------
 @bp.get("/song/<int:song_id>")
 def song_detail(song_id: int):
@@ -215,7 +215,7 @@ def song_detail(song_id: int):
     if song is None:
         abort(404)
 
-    # ศิลปินที่ร่วมร้อง (Singer + Featured) — ใช้แสดงชื่อแบบ "PUN, The Toys"
+    # Collaborating artists (Singer + Featured) — used to render names like "PUN, The Toys"
     artists = db.query(
         """
         SELECT a.ArtistID, a.ArtistName, r.[Role]
@@ -249,7 +249,7 @@ def song_detail(song_id: int):
         (song_id, song_id, song_id),
     )
 
-    # ข้อมูลศิลปินหลัก + เพลงอื่นของศิลปินคนนั้น (ไว้แสดงใต้หน้าเพลง)
+    # Main artist info + that artist's other songs (shown below the song page)
     main_artist = None
     other_songs = []
     if song["MainArtistID"]:
@@ -305,7 +305,7 @@ def song_detail(song_id: int):
 
 
 # ---------------------------------------------------------------------------
-# ศิลปิน
+# Artists
 # ---------------------------------------------------------------------------
 @bp.get("/artist/<int:artist_id>")
 def artist_detail(artist_id: int):
@@ -313,7 +313,7 @@ def artist_detail(artist_id: int):
     if artist is None:
         abort(404)
 
-    # STRING_AGG รวมบทบาทของศิลปินคนนี้ในแต่ละเพลง (SQL Server 2017+)
+    # STRING_AGG combines this artist's roles per song (SQL Server 2017+)
     songs = db.query(
         """
         SELECT vd.SongID, vd.SongTitle, vd.Duration, vd.PlayCount,
@@ -350,10 +350,10 @@ def artist_detail(artist_id: int):
 
 
 # ---------------------------------------------------------------------------
-# เพลย์ลิสต์
+# Playlists
 # ---------------------------------------------------------------------------
 def _playlist_covers() -> dict[int, int]:
-    """เพลย์ลิสต์ -> SongID ของเพลงแรก (ใช้ปกเพลงนั้นเป็นปกเพลย์ลิสต์)"""
+    """Playlist -> SongID of its first song (that cover art becomes the playlist cover)"""
     rows = db.query(
         """
         SELECT PlaylistID, SongID
@@ -508,14 +508,14 @@ def playlist_remove(playlist_id: int):
 @login_required
 def playlist_delete(playlist_id: int):
     row = _owned_playlist_or_404(playlist_id)
-    # Playlist_Detail ถูกลบตามด้วย ON DELETE CASCADE
+    # Playlist_Detail rows are removed by ON DELETE CASCADE
     db.execute("DELETE FROM dbo.Playlist WHERE PlaylistID = ?", (playlist_id,))
     flash(f"ลบเพลย์ลิสต์ “{row['PLname']}” แล้ว", "success")
     return redirect(url_for("main.playlists"))
 
 
 # ---------------------------------------------------------------------------
-# ประวัติการฟัง
+# Listening history
 # ---------------------------------------------------------------------------
 @bp.get("/history")
 @login_required
@@ -562,7 +562,7 @@ def history():
 
 
 # ---------------------------------------------------------------------------
-# API สำหรับ player (เรียกด้วย fetch ตอนกดเล่นเพลง / เปิดแท็บเครดิต)
+# API for the player (called via fetch when a song is played / the credits tab is opened)
 # ---------------------------------------------------------------------------
 ROLE_SHORT_LABEL = {
     "Producer": "โปรดิวเซอร์",
@@ -575,7 +575,7 @@ ROLE_SHORT_LABEL = {
 
 @bp.get("/api/song/<int:song_id>")
 def api_song(song_id: int):
-    """ข้อมูลเพลง + เครดิต (SONG_ARTIST_ROLE) สำหรับแสดงในหน้าจอเต็มโดยไม่ต้องเปลี่ยนหน้า"""
+    """Song data + credits (SONG_ARTIST_ROLE) so the full screen can render without navigation"""
     song = db.query_one("SELECT * FROM dbo.vw_SongDetail WHERE SongID = ?", (song_id,))
     if song is None:
         return jsonify(ok=False, reason="ไม่พบเพลงนี้"), 404
@@ -632,7 +632,7 @@ def api_play(song_id: int):
 
 
 # ---------------------------------------------------------------------------
-# สมัครสมาชิก / เข้าสู่ระบบ / ออก
+# Sign up / log in / log out
 # ---------------------------------------------------------------------------
 @bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -652,7 +652,7 @@ def login():
             session["user_id"] = row["UserID"]
             flash(f"ยินดีต้อนรับกลับมา {row['Username']} 👋", "success")
             nxt = request.form.get("next") or request.args.get("next")
-            # กัน open redirect: รับเฉพาะ path ภายในเว็บ
+            # Block open redirects: accept only paths inside this site
             if nxt and nxt.startswith("/") and not nxt.startswith("//"):
                 return redirect(nxt)
             return redirect(url_for("main.index"))
@@ -663,7 +663,7 @@ def login():
 
 
 # ---------------------------------------------------------------------------
-# เข้าสู่ระบบ / สมัครสมาชิกด้วยอีเมล + รหัส OTP (ไม่ต้องตั้งรหัสผ่าน)
+# Log in / sign up with email + OTP code (no password needed)
 # ---------------------------------------------------------------------------
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 CODE_TTL_MINUTES = 10
@@ -675,7 +675,7 @@ def _normalize_email(raw: str | None) -> str:
 
 
 def _issue_code(email: str) -> str:
-    """สร้างรหัส 6 หลัก เก็บลง EmailCode (1 รหัสต่ออีเมล) แล้วส่งให้ผู้ใช้"""
+    """Generate a 6-digit code, store it in EmailCode (one code per email), then send it to the user"""
     code = f"{secrets.randbelow(1000000):06d}"
     db.execute(
         "DELETE FROM dbo.EmailCode WHERE Email = ?;"
@@ -729,7 +729,7 @@ def _find_or_create_user(email: str, profile: dict | None = None) -> dict:
 
 @bp.route("/register", methods=["GET", "POST"])
 def register():
-    """ขั้นที่ 1: รับอีเมล -> ถ้าเคยสมัครแล้วไปหน้ากรอกรหัสทันที"""
+    """Step 1: take the email -> if already registered, go straight to the code screen"""
     if g.user:
         return redirect(url_for("main.index"))
 
@@ -742,14 +742,14 @@ def register():
 
         existing = db.query_one("SELECT UserID FROM dbo.[User] WHERE Email = ?", (email,))
         if existing:
-            # เคยสมัครแล้ว -> ส่งรหัสแล้วพาไปหน้ากรอกรหัส (โหมดเข้าสู่ระบบ)
+            # Already registered -> send a code and go to the code screen (login mode)
             _issue_code(email)
             session["otp_email"] = email
             session["signup_dob"] = None
             flash("อีเมลนี้มีบัญชีอยู่แล้ว — ส่งรหัสเข้าสู่ระบบให้แล้ว", "success")
             return redirect(url_for("main.verify_code"))
 
-        # ยังไม่มีบัญชี -> ไปกรอกวันเกิด + ยอมรับข้อกำหนดก่อน
+        # No account yet -> collect date of birth + accept the terms first
         session["pending_email"] = email
         return redirect(url_for("main.register_details"))
 
@@ -759,7 +759,7 @@ def register():
 
 @bp.route("/register/details", methods=["GET", "POST"])
 def register_details():
-    """ขั้นที่ 2 (เฉพาะอีเมลใหม่): กรอกข้อมูลให้ครบตามตาราง USER"""
+    """Step 2 (new emails only): fill in every field required by the USER table"""
     if g.user:
         return redirect(url_for("main.index"))
 
@@ -812,7 +812,7 @@ def register_details():
         if tel and not re.fullmatch(r"[0-9+ -]{9,20}", tel):
             return render(f, "เบอร์โทรไม่ถูกต้อง")
 
-        # เก็บโปรไฟล์ไว้ใน session (รหัสผ่านเก็บเป็น hash เท่านั้น)
+        # Keep the profile in session (the password is only ever stored as a hash)
         session["signup_profile"] = {
             "username": username,
             "password_hash": hash_password(password),
@@ -837,7 +837,7 @@ def verify_code():
         flash("กรุณากรอกอีเมลก่อนครับ", "warning")
         return redirect(url_for("main.register"))
 
-    # โหมดทดสอบ (ยังไม่ตั้งค่า SMTP): แสดงรหัสบนหน้าจอเพื่อให้เดโมได้โดยไม่มีอีเมลจริง
+    # Test mode (SMTP not configured): show the code on screen so the demo works without real email
     mailer_ready = mailer.is_configured()
     existing = db.query_one("SELECT UserID FROM dbo.[User] WHERE Email = ?", (email,)) is not None
     dev_code = None

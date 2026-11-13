@@ -1,13 +1,13 @@
 """
-screenshot.py - เก็บภาพหน้าเว็บไว้ใช้ทำรายงาน/สไลด์
+screenshot.py - capture web pages as images for reports/slides
 
-วิธีทำงาน
-  - หน้าสาธารณะ  : เปิดด้วย Chrome headless ตรง ๆ
-  - หน้าส่วนตัว  : ล็อกอินด้วย Flask test client -> ดัมพ์ HTML -> ชี้ path ของ
-    static ไปที่ไฟล์ในเครื่อง -> เปิดด้วย Chrome headless (จึงไม่ต้องมี cookie)
-  - ต้องรันเว็บไว้ก่อน: python run.py
+How it works
+  - Public pages  : opened directly with headless Chrome
+  - Private pages : log in with the Flask test client -> dump the HTML -> point
+    static paths at local files -> open with headless Chrome (so no cookies needed)
+  - The web server must be running first: python run.py
 
-ใช้
+Usage
     python tools/screenshot.py
     python tools/screenshot.py --out docs/shots --width 1440 --height 1100
 """
@@ -31,7 +31,7 @@ CHROME_CANDIDATES = [
     r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
 ]
 
-# (ชื่อไฟล์, path, ต้องล็อกอินไหม)
+# (file name, path, needs login?)
 PAGES = [
     ("home", "/", False),
     ("search", "/search?q=%E0%B8%9D%E0%B8%99", False),
@@ -103,7 +103,7 @@ def main() -> int:
                 print(f"  [SKIP] {name}: ล็อกอินไม่สำเร็จ")
                 continue
             html = client.get(path).get_data(as_text=True)
-            # ให้เบราว์เซอร์โหลด CSS/JS จากไฟล์ในเครื่องแทน URL ของเซิร์ฟเวอร์
+            # make the browser load CSS/JS from local files instead of server URLs
             html = html.replace("/static/", static_uri)
             tmp = pathlib.Path(tempfile.mkdtemp(prefix="shot-html-")) / f"{name}.html"
             tmp.write_text(html, encoding="utf-8")

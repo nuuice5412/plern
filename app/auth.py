@@ -1,12 +1,12 @@
 """
-การยืนยันตัวตน: hash/verify รหัสผ่าน + decorator บังคับ login
+Authentication: hash/verify passwords + a decorator that enforces login
 
-ทำไมไม่เก็บ plaintext ในคอลัมน์ Password:
-    ถ้าฐานข้อมูลรั่ว ผู้ใช้มักใช้รหัสเดิมกับเว็บอื่นด้วย -> เสียหายเป็นลูกโซ่
-    เราใช้ PBKDF2-HMAC-SHA256 (work factor 200,000 รอบ + salt สุ่มต่อคน)
-    ซึ่งเป็นฟังก์ชันที่มีอยู่ใน standard library ไม่ต้องลง library เพิ่ม
+Why we don't store plaintext in the Password column:
+    If the database leaks, users often reuse the same password on other sites -> the damage cascades.
+    We use PBKDF2-HMAC-SHA256 (work factor 200,000 rounds + a random salt per user),
+    which ships with the standard library, so no extra library is needed.
 
-รูปแบบที่เก็บในคอลัมน์ dbo.[User].Password
+Format stored in the dbo.[User].Password column
     pbkdf2_sha256$<iterations>$<salt hex>$<hash hex>
 """
 from __future__ import annotations
@@ -39,7 +39,7 @@ def verify_password(password: str, stored: str) -> bool:
         expected = bytes.fromhex(hash_hex)
         actual = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt,
                                      int(iterations), len(expected))
-        # compare_digest กัน timing attack
+        # compare_digest prevents timing attacks
         return hmac.compare_digest(actual, expected)
     except (ValueError, AttributeError, TypeError):
         return False

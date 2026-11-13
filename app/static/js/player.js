@@ -1,13 +1,13 @@
 /* =====================================================================
-   player.js — ตัวเล่นเพลง (frontend ล้วน ไม่ต้องใช้ library)
+   player.js — music player (pure frontend, no library needed)
 
-   หลักการทำงาน
-   1) ทุกแถวเพลงในหน้าเป็น <tr class="track"> ที่มี data-id / data-title / ...
-   2) กดเล่น -> เก็บ "queue" = ทุกแถวในตารางเดียวกัน แล้วเล่นตามลำดับ
-   3) ทุกครั้งที่เริ่มเล่น จะยิง POST /api/play/<SongID> เพื่อบันทึกการฟัง
-      ลงตาราง HISTORY (แล้ว trigger ในฐานข้อมูลจะบวก PlayCount ให้)
-   4) มีสองหน้าจอที่ต้องอัปเดตพร้อมกัน: แถบล่าง (mini) และหน้าจอเต็ม (full)
-      -> รวมไว้ที่ syncUI() ที่เดียว
+   How it works
+   1) Every song row on the page is a <tr class="track"> with data-id / data-title / ...
+   2) Press play -> build "queue" = all rows in the same table, then play in order
+   3) On every play start, POST /api/play/<SongID> to record the listen
+      into the HISTORY table (the database trigger then increments PlayCount)
+   4) Two screens must update together: the bottom bar (mini) and the full screen (full)
+      -> both are handled in a single place, syncUI()
    ===================================================================== */
 (function () {
   'use strict';
@@ -20,7 +20,7 @@
   const PLAY_URL = playerEl.dataset.playUrl || '/api/play/';
   const byId = (id) => document.getElementById(id);
 
-  // ---- แถบเล่นเพลงด้านล่าง ----
+  // ---- bottom player bar ----
   const mini = {
     play: byId('btn-play'), prev: byId('btn-prev'), next: byId('btn-next'),
     shuffle: byId('btn-shuffle'), repeat: byId('btn-repeat'),
@@ -30,7 +30,7 @@
     expand: byId('btn-expand'), expandCover: byId('np-expand-cover'),
   };
 
-  // ---- หน้าจอเต็ม ----
+  // ---- full screen ----
   const full = {
     root: byId('nowplaying'), bg: byId('np-bg'), cover: byId('npf-cover'),
     title: byId('npf-title'), artist: byId('npf-artist'), tag: byId('npf-tag'),
@@ -54,7 +54,7 @@
   let repeatMode = 'off';           // off | all | one
   let toastTimer = null;
 
-  // ---- manifest (บอกว่าเพลงไหนใช้ไฟล์เสียงอะไร) ----
+  // ---- manifest (tells which song uses which audio file) ----
   let manifest = {};
   const manifestReady = fetch(AUDIO_BASE + 'manifest.json', { cache: 'no-cache' })
     .then(function (res) { return res.ok ? res.json() : { tracks: {} }; })
@@ -98,7 +98,7 @@
   }
 
   function rowsIn(container) {
-    // รองรับทั้งตารางเพลง (tr.track) และแถวการ์ดบนหน้าแรก (.rail-card)
+    // supports both song tables (tr.track) and home-page card rows (.rail-card)
     let items = container.querySelectorAll('tr.track');
     if (!items.length) {
       items = container.querySelectorAll('.rail-card[data-id]');
@@ -110,12 +110,12 @@
     document.querySelectorAll('tr.track.is-playing').forEach(function (el) {
       el.classList.remove('is-playing');
       const btn = el.querySelector('.play-toggle');
-      if (btn) btn.classList.remove('eq-active');   // คืนไอคอน ▶ ให้แถวเก่า
+      if (btn) btn.classList.remove('eq-active');   // restore the ▶ icon on the previous row
     });
     if (row) row.classList.add('is-playing');
   }
 
-  // ไอคอนในปุ่มเล่น: ▶ / ⏸ (SVG คมชัด ปรับความหนาได้) + แท่งเสียง 4 แท่ง animated
+  // icons inside the play button: ▶ / ⏸ (crisp SVG, adjustable stroke weight) + 4 animated sound bars
   const PLAY_SVG = '<span class="ico ico-play" aria-hidden="true"><svg viewBox="0 0 24 24">'
     + '<path d="M8.6 4.3v15.4c0 .9 1 1.4 1.7 1l12-7.7c.7-.4.7-1.4 0-1.8l-12-7.7c-.7-.5-1.7 0-1.7 .8z"/></svg></span>';
   const PAUSE_SVG = '<span class="ico ico-pause" aria-hidden="true"><svg viewBox="0 0 24 24">'
@@ -190,7 +190,7 @@
     if (mini.plays && cell) mini.plays.textContent = cell.textContent.trim() + ' ครั้ง';
   }
 
-  // ------------------------------------------------------------------ เล่นเพลง
+  // ------------------------------------------------------------------ playback
   function recordPlay(songId) {
     fetch(PLAY_URL + songId, { method: 'POST' })
       .then(function (res) {
@@ -206,7 +206,7 @@
           toast(result.body.reason);
         }
       })
-      .catch(function () { /* บันทึกประวัติไม่ควรทำให้การฟังสะดุด */ });
+      .catch(function () { /* failing to log plays should never interrupt listening */ });
   }
 
   async function playAt(index) {
@@ -214,7 +214,7 @@
     cursor = index;
     const track = queue[index];
 
-    await manifestReady;          // ต้องรู้ชื่อไฟล์จริงก่อนตั้ง src
+    await manifestReady;          // the real file name must be known before setting src
 
     audio.src = sourceFor(track.id);
     audio.play().catch(function () {
@@ -257,7 +257,7 @@
     else audio.pause();
   }
 
-  // ------------------------------------------------------------------ หน้าจอเต็ม
+  // ------------------------------------------------------------------ full screen
   function openFull() {
     if (cursor < 0) { toast('เลือกเพลงก่อนแล้วค่อยขยาย'); return; }
     full.root.hidden = false;
@@ -266,7 +266,7 @@
   }
 
   function closeFull() {
-    setCreditsView(false);            // กลับไปหน้าปกเมื่อปิด
+    setCreditsView(false);            // go back to the cover when closing
     full.root.hidden = true;
     full.root.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('np-open');
@@ -305,13 +305,13 @@
 
     const singleButton = event.target.closest('[data-play-song]');
     if (singleButton) {
-      event.preventDefault();      // การ์ดเพลงอยู่ใน <a> — อย่าให้พาไปหน้าใหม่
+      event.preventDefault();      // the song card is inside an <a> — don't navigate away
       queue = [trackFromRow(singleButton)];
       playAt(0);
     }
   });
 
-  // ปุ่มควบคุม (มีทั้งแถบล่างและหน้าจอเต็ม)
+  // control buttons (exist in both the bottom bar and the full screen)
   [[mini.play, togglePlay], [full.play, togglePlay],
    [mini.next, goNext], [full.next, goNext],
    [mini.prev, goPrev], [full.prev, goPrev],
@@ -320,7 +320,7 @@
     if (pair[0]) pair[0].addEventListener('click', pair[1]);
   });
 
-  // สุ่มเพลง
+  // shuffle
   function toggleShuffle() {
     shuffleOn = !shuffleOn;
     setActive(mini.shuffle, shuffleOn);
@@ -330,7 +330,7 @@
   if (mini.shuffle) mini.shuffle.addEventListener('click', toggleShuffle);
   if (full.shuffle) full.shuffle.addEventListener('click', toggleShuffle);
 
-  // เล่นซ้ำ: ปิด -> ทั้งหมด -> เพลงเดียว
+  // repeat: off -> all -> one
   function cycleRepeat() {
     repeatMode = repeatMode === 'off' ? 'all' : repeatMode === 'all' ? 'one' : 'off';
     setActive(mini.repeat, repeatMode !== 'off');
@@ -343,7 +343,7 @@
   if (mini.repeat) mini.repeat.addEventListener('click', cycleRepeat);
   if (full.repeat) full.repeat.addEventListener('click', cycleRepeat);
 
-  // เต็มหน้าจอของเบราว์เซอร์ (ปุ่ม ⛶)
+  // browser fullscreen (⛶ button)
   if (full.fullscreen) {
     full.fullscreen.addEventListener('click', function () {
       if (document.fullscreenElement) {
@@ -356,10 +356,10 @@
     });
   }
 
-  // ---------- แท็บเครดิต (แสดงในหน้าจอเต็ม ไม่ต้องไปหน้าเพลง) ----------
+  // ---------- credits tab (shown in the full screen, no need to visit the song page) ----------
   let creditsOpen = false;
   const creditsCache = new Map();
-  // ลำดับการแสดงผลแบบ Apple Music / Tidal: ฝ่ายผลิต -> ผู้แต่ง -> นักร้อง
+  // display order matching Apple Music / Tidal: producer -> composer -> singer
   const ROLE_ORDER = { Producer: 1, Composer: 2, Lyricist: 3, Featured: 4, Singer: 5 };
 
   function setCreditsView(open) {
@@ -386,7 +386,7 @@
         return;
       }
     }
-    if (!creditsOpen) return;          // ผู้ใช้อาจปิดแท็บไปแล้วระหว่างรอ
+    if (!creditsOpen) return;          // the user may have closed the tab while waiting
     renderCredits(data);
   }
 
@@ -426,7 +426,7 @@
     full.creditsBtn.addEventListener('click', function () { setCreditsView(!creditsOpen); });
   }
 
-  // ---------- คิวเพลง ----------
+  // ---------- queue ----------
   function renderQueue() {
     if (!full.queueList) return;
     full.queueList.innerHTML = queue.map(function (track, index) {
@@ -464,7 +464,7 @@
     });
   }
 
-  // ความคืบหน้า
+  // progress
   audio.addEventListener('timeupdate', function () {
     const duration = audio.duration || 0;
     const percent = duration > 0 ? (audio.currentTime / duration) * 100 : 0;
@@ -512,7 +512,7 @@
     if (audio.src) toast('ไม่พบไฟล์เสียงของเพลงนี้');
   });
 
-  // เลื่อนตำแหน่ง + ระดับเสียง (ซิงก์กันทั้งสองหน้าจอ)
+  // seek position + volume (kept in sync across both screens)
   [mini.seek, full.seek].forEach(function (el) {
     if (!el) return;
     el.addEventListener('input', function () {
@@ -522,7 +522,7 @@
     });
   });
 
-  // ระดับเสียง: จำค่าไว้ใน localStorage เพื่อให้คงอยู่แม้รีเฟรชหน้า
+  // volume: remember the value in localStorage so it survives a page refresh
   const VOLUME_KEY = 'plern:volume';
 
   function readSavedVolume() {
@@ -532,7 +532,7 @@
       const value = Number(raw);
       return Number.isFinite(value) && value >= 0 && value <= 1 ? value : null;
     } catch (error) {
-      return null;                 // โหมดส่วนตัวบางเบราว์เซอร์ปิด localStorage
+      return null;                 // some browsers disable localStorage in private mode
     }
   }
 
@@ -540,7 +540,7 @@
     try {
       window.localStorage.setItem(VOLUME_KEY, String(value));
     } catch (error) {
-      /* เก็บไม่ได้ก็ไม่เป็นไร แค่ไม่จำค่า */
+      /* if it can't be stored, that's fine — the value just isn't remembered */
     }
   }
 
@@ -562,10 +562,10 @@
   const savedVolume = readSavedVolume();
   applyVolume(savedVolume === null ? (mini.vol ? Number(mini.vol.value) : 0.8) : savedVolume);
 
-  // คีย์บอร์ด: Space = เล่น/หยุด, Esc = ย่อหน้าจอเต็ม
+  // keyboard: Space = play/pause, Esc = collapse the full screen
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape' && full.root && !full.root.hidden) {
-      if (creditsOpen) setCreditsView(false);   // ปิดแท็บเครดิตก่อน
+      if (creditsOpen) setCreditsView(false);   // close the credits tab first
       else closeFull();
       return;
     }

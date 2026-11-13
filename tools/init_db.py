@@ -1,21 +1,21 @@
-﻿"""
-init_db.py - สร้างฐานข้อมูล MusicStreamingDB บน SQL Server Express
+"""
+init_db.py - creates the MusicStreamingDB database on SQL Server Express
 
-รันสคริปต์ SQL 3 ไฟล์ตามลำดับ:
-    01_schema.sql       -> สร้าง DB + ตาราง + constraint + index + trigger
-    02_seed.sql         -> ข้อมูลตัวอย่าง
-    03_views_procs.sql  -> view + stored procedure
+Runs 3 SQL scripts in order:
+    01_schema.sql       -> creates DB + tables + constraints + indexes + trigger
+    02_seed.sql         -> sample data
+    03_views_procs.sql  -> views + stored procedures
 
-วิธีใช้
-    python tools/init_db.py                # สร้าง/รีเซ็ตฐานข้อมูล
-    python tools/init_db.py --check        # ตรวจว่าเชื่อมต่อได้ + นับแถว
-    python tools/init_db.py --server "."   # ระบุ instance อื่น
+Usage
+    python tools/init_db.py                # create/reset the database
+    python tools/init_db.py --check        # verify connectivity + count rows
+    python tools/init_db.py --server "."   # target a different instance
 
-ค่าที่ใช้เชื่อมต่ออ่านจาก environment variable ได้:
+Connection settings can be read from environment variables:
     MSSQL_SERVER   (default: .\\SQLEXPRESS)
     MSSQL_DATABASE (default: MusicStreamingDB)
     MSSQL_DRIVER   (default: ODBC Driver 18 for SQL Server)
-    MSSQL_TRUSTED  (default: yes -> ใช้ Windows Authentication)
+    MSSQL_TRUSTED  (default: yes -> uses Windows Authentication)
 """
 
 from __future__ import annotations
@@ -35,10 +35,10 @@ SERVER = os.environ.get("MSSQL_SERVER", r".\SQLEXPRESS")
 DATABASE = os.environ.get("MSSQL_DATABASE", "MusicStreamingDB")
 DRIVER = os.environ.get("MSSQL_DRIVER", "ODBC Driver 18 for SQL Server")
 
-# ไฟล์ SQL ที่ต้องรันตามลำดับ (ลำดับสำคัญ: trigger อยู่ใน schema เพื่อให้ seed ใช้ได้)
+# SQL files to run in order (order matters: the trigger lives in schema so seed can use it)
 SCRIPTS = ["01_schema.sql", "02_seed.sql", "03_views_procs.sql", "04_email_code.sql"]
 
-# ตารางที่ต้องมีหลัง init สำเร็จ
+# tables that must exist after a successful init
 EXPECTED_TABLES = [
     "User",
     "Playlist",
@@ -66,7 +66,7 @@ def connection_string(database: str | None = DATABASE) -> str:
 
 
 def split_batches(sql: str) -> list[str]:
-    """แยกไฟล์ .sql เป็น batch ตามตัว GO ที่อยู่บนบรรทัดของตัวเอง"""
+    """Split a .sql file into batches on GO keywords that sit on their own line."""
     batches, current = [], []
     for line in sql.splitlines():
         if re.fullmatch(r"\s*GO\s*(?:--.*)?", line, flags=re.IGNORECASE):
@@ -89,7 +89,7 @@ def run_script(cursor, path: pathlib.Path) -> None:
     for i, batch in enumerate(batches, start=1):
         try:
             cursor.execute(batch)
-            # ต้องอ่านผลลัพธ์ให้หมดก่อน execute ตัวถัดไป
+            # all result sets must be consumed before the next execute
             while cursor.nextset():
                 pass
         except pyodbc.Error as exc:
@@ -146,7 +146,7 @@ def init(force: bool) -> int:
     print(f"เป้าหมาย: {SERVER} / {DATABASE}")
     print(f"ไดรเวอร์: {DRIVER}\n")
 
-    # 1) ต่อกับ master เพื่อ ... ไม่ต้องสร้าง DB ที่นี่ ปล่อยให้ 01_schema.sql ทำ
+    # 1) connect to master only; do not create the DB here, let 01_schema.sql do it
     try:
         conn = pyodbc.connect(connection_string(database="master"), timeout=15, autocommit=True)
     except pyodbc.Error as exc:
@@ -165,7 +165,7 @@ def init(force: bool) -> int:
             return 2
 
         if force:
-            # ปิด connection ที่ค้างอยู่กับ DB เป้าหมาย แล้ว drop ทิ้งเพื่อเริ่มใหม่สะอาด ๆ
+            # kill connections still attached to the target DB, then drop it for a clean restart
             cur.execute(
                 f"""
                 IF DB_ID(N'{DATABASE}') IS NOT NULL
@@ -177,7 +177,7 @@ def init(force: bool) -> int:
             )
             print(f"เตรียมฐานข้อมูล {DATABASE} ใหม่ (drop ของเดิมถ้ามี)\n")
 
-    # 2) รันสคริปต์ schema/seed/views ทั้งหมดใน connection เดียว
+    # 2) run all schema/seed/views scripts on a single connection
     conn = pyodbc.connect(connection_string(database="master"), timeout=15, autocommit=True)
     with conn:
         cur = conn.cursor()
@@ -220,7 +220,7 @@ def main() -> int:
 
 
 def run_selected_scripts(spec: str) -> int:
-    """รันไฟล์ SQL ที่เลือก โดยไม่ drop ฐานข้อมูล (สำหรับแก้ view/procedure)"""
+    """Run the selected SQL files without dropping the database (for fixing views/procedures)."""
     wanted: list[pathlib.Path] = []
     for token in spec.split(","):
         token = token.strip()

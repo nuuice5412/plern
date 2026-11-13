@@ -1,9 +1,9 @@
 /* =====================================================================
    Music Streaming Database
-   04_email_code.sql : ตารางเก็บรหัส OTP สำหรับเข้าสู่ระบบด้วยอีเมล
+   04_email_code.sql : table storing OTP codes for signing in by email
 
-   เป็นส่วนขยายนอก ER เดิม (เพิ่มเพื่อรองรับการสมัคร/ล็อกอินด้วยอีเมล)
-   เก็บรหัสชั่วคราว 1 รหัสต่ออีเมล อายุ 10 นาที (กำหนดที่ฝั่งแอป)
+   An extension outside the original ER (added to support email sign-up/sign-in)
+   Stores one temporary code per email, valid for 10 minutes (enforced app side)
    ===================================================================== */
 
 USE MusicStreamingDB;

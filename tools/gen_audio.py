@@ -1,17 +1,17 @@
 """
-gen_audio.py - สร้างไฟล์เสียงตัวอย่าง (.wav) ให้ทุกเพลงในตาราง SONG
+gen_audio.py - generate sample audio files (.wav) for every song in the SONG table
 
-ทำไมต้องมี: โปรเจกต์นี้เป็น music streaming ถ้ากดเล่นแล้วไม่มีเสียง demo
-จะดูไม่จบ เราเลยสังเคราะห์เสียงเองด้วย standard library ของ Python
-(ไม่ต้องโหลด mp3 จากที่ไหน ไม่ติดลิขสิทธิ์ และรันซ้ำได้ทุกเครื่อง)
+Why this exists: this project is a music streaming app. If pressing play gives no demo
+audio to hear, the demo falls flat, so we synthesize it ourselves with Python's standard
+library (nothing downloaded, no licensing issues, and repeatable on any machine).
 
-ชื่อไฟล์ผูกกับ SongID: app/static/audio/song_<SongID>.wav
-=> ไม่ต้องเพิ่มคอลัมน์ AudioUrl ในตาราง SONG (schema ยังตรงกับ ER เดิม)
+The file name is tied to SongID: app/static/audio/song_<SongID>.wav
+=> no need to add an AudioUrl column to SONG (schema still matches the original ER)
 
-วิธีใช้
-    python tools/gen_audio.py            # สร้างทุกเพลง (default 24 เพลง)
+Usage
+    python tools/gen_audio.py            # generate all songs (24 by default)
     python tools/gen_audio.py --count 24
-    python tools/gen_audio.py --force    # เขียนทับของเดิม
+    python tools/gen_audio.py --force    # overwrite existing files
 """
 
 from __future__ import annotations
@@ -25,10 +25,10 @@ import wave
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "app" / "static" / "audio"
 
-SAMPLE_RATE = 16_000        # 16 kHz mono ก็พอสำหรับ demo (ไฟล์เล็ก)
-DURATION = 10.0             # วินาที ต่อเพลง
+SAMPLE_RATE = 16_000        # 16 kHz mono is plenty for a demo (small files)
+DURATION = 10.0             # seconds per song
 
-# คอร์ด 4 คอร์ดต่อเพลง (semitone offset จาก root) — 3 progression สลับกันไป
+# 4 chords per song (semitone offset from the root) — 3 progressions cycle through
 PROGRESSIONS = [
     [(0, 4, 7), (7, 11, 14), (9, 12, 16), (5, 9, 12)],      # I - V - vi - IV
     [(0, 3, 7), (8, 12, 15), (3, 7, 10), (10, 14, 17)],     # i - VI - III - VII
@@ -43,7 +43,7 @@ def midi_to_freq(note: int) -> float:
 
 def render_note(buf: list[float], start_sec: float, freq: float, dur: float,
                 amp: float, decay: float = 2.2) -> None:
-    """ผสมโน้ต 1 ตัว (sine + harmonic เล็กน้อย) ลงใน buffer แบบ additive"""
+    """Mix one note (sine + a little harmonic) into the buffer, additively"""
     start = int(start_sec * SAMPLE_RATE)
     n = min(int(dur * SAMPLE_RATE), len(buf) - start)
     if n <= 0:
@@ -61,7 +61,7 @@ def render_note(buf: list[float], start_sec: float, freq: float, dur: float,
             env = max(0.0, (n - k) / release)
         else:
             env = 1.0
-        env *= math.exp(-decay * k / n)             # ให้เสียงจางลงแบบ pluck
+        env *= math.exp(-decay * k / n)             # fade out like a pluck
         s = math.sin(w1 * k) + 0.22 * math.sin(w2 * k)
         buf[start + k] += amp * env * s
 
@@ -70,28 +70,28 @@ def build_song(song_id: int) -> list[float]:
     total = int(DURATION * SAMPLE_RATE)
     buf = [0.0] * total
 
-    # แต่ละเพลงคนละคีย์ เพื่อให้ฟังดูต่างกัน
+    # a different key per song, so they sound distinct
     root = 45 + (song_id * 5) % 12                    # A2 .. G#3
     prog = PROGRESSIONS[(song_id - 1) % len(PROGRESSIONS)]
     chord_dur = DURATION / len(prog)
 
     for idx, chord in enumerate(prog):
         t0 = idx * chord_dur
-        # --- pad: โน้ตคอร์ดค้าง ---
+        # --- pad: sustained chord notes ---
         for semi in chord:
             render_note(buf, t0, midi_to_freq(root + semi), chord_dur * 0.98,
                         amp=0.16, decay=0.35)
-        # --- bass: รากคอร์ดลงไป 1 อ็อกเทฟ ---
+        # --- bass: chord root one octave down ---
         render_note(buf, t0, midi_to_freq(root - 12 + chord[0]), chord_dur * 0.5,
                     amp=0.22, decay=1.2)
-        # --- melody: อาร์เปจโน้ตคอร์ดขึ้นไป 1 อ็อกเทฟ ---
+        # --- melody: chord arpeggio one octave up ---
         step = chord_dur / 4.0
         arp = [chord[0], chord[1], chord[2], chord[1] + 12]
         for j, semi in enumerate(arp):
             render_note(buf, t0 + j * step, midi_to_freq(root + semi + 12),
                         step * 0.95, amp=0.11, decay=3.0)
 
-    # normalize กัน clipping + fade in/out หัวท้าย
+    # normalize against clipping + fade in/out at both ends
     peak = max((abs(x) for x in buf), default=1.0) or 1.0
     gain = 0.85 / peak
     fade = int(0.25 * SAMPLE_RATE)

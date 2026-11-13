@@ -1,21 +1,21 @@
 """
-compress_audio.py - แปลงไฟล์พรีวิวให้เป็น mp3 ที่คุณภาพ/ขนาดตามต้องการ
+compress_audio.py - convert preview files to mp3 at the quality/size you want
 
-บริบท: iTunes ให้ไฟล์ 30 วินาทีมาเป็น AAC ~271 kbps (~1 MB/เพลง)
-ถ้าเก็บต้นฉบับทุกเพลง 119 เพลงจะกิน ~116 MB จึงต้องเข้ารหัสใหม่
+Context: iTunes provides 30-second files as AAC ~271 kbps (~1 MB/song).
+Keeping the original of every song, 119 songs would take ~116 MB, so re-encoding is required
 
-โหมดการทำงาน
-  1) ปกติ            : แปลงไฟล์ .m4a ที่มีอยู่ในเครื่อง -> .mp3
-  2) --refetch-original : ดาวน์โหลดต้นฉบับจาก previewUrl ใน audio/manifest.json
-                         แล้วค่อยแปลง (ใช้ตอนอยาก "อัปเกรด" จากไฟล์ที่เคยบีบอัดแรงแล้ว
-                         เช่น จาก 64 kbps เป็น 128 kbps — แปลงซ้ำจากของเดิมไม่ได้
-                         เพราะคุณภาพที่เสียไปแล้วกู้คืนไม่ได้)
+Modes
+  1) Default            : convert the .m4a files already on disk -> .mp3
+  2) --refetch-original : download the original from previewUrl in audio/manifest.json
+                         then convert (used when you want to "upgrade" a heavily
+                         compressed file, e.g. from 64 kbps to 128 kbps — you cannot
+                         re-encode the old file, the quality already lost is gone)
 
-ใช้ PyAV (มี FFmpeg อยู่ในตัว) จึงไม่ต้องติดตั้ง ffmpeg แยก
+Uses PyAV (FFmpeg is bundled), so no separate ffmpeg install is needed
 
-ตัวอย่าง
-    python tools/compress_audio.py --kbps 128                       # แปลงไฟล์ในเครื่อง
-    python tools/compress_audio.py --kbps 128 --refetch-original    # ดึงต้นฉบับใหม่แล้วแปลง
+Examples
+    python tools/compress_audio.py --kbps 128                       # convert files on disk
+    python tools/compress_audio.py --kbps 128 --refetch-original    # refetch originals, then convert
     python tools/compress_audio.py --kbps 192 --refetch-original
     python tools/compress_audio.py --dry-run
 """
@@ -96,7 +96,7 @@ def download_original(session, url: str, target: pathlib.Path) -> bool:
         with target.open("wb") as handle:
             for chunk in response.iter_content(chunk_size=64 * 1024):
                 handle.write(chunk)
-    except Exception:  # noqa: BLE001 - เน็ตสะดุดให้ข้ามเพลงนี้
+    except Exception:  # noqa: BLE001 - a network hiccup just skips this song
         return False
     return target.exists() and target.stat().st_size > 20 * 1024
 
@@ -151,7 +151,7 @@ def main() -> int:
             old_size = current.stat().st_size if current.exists() else 0
             before += old_size
 
-            # --- หาไฟล์ต้นทาง ---
+            # --- find the source file ---
             source: pathlib.Path | None = None
             temp_file: pathlib.Path | None = None
 
@@ -201,7 +201,7 @@ def main() -> int:
                 continue
 
             new_size = target.stat().st_size
-            # ลบไฟล์เดิมถ้าคนละนามสกุล (เช่น .m4a เดิม)
+            # delete the old file if the extension is different (e.g. an old .m4a)
             if current.exists() and current.suffix.lower() != ".mp3":
                 current.unlink(missing_ok=True)
 

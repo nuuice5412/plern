@@ -1,17 +1,17 @@
 """
-sync_catalog.py - เพิ่มศิลปิน/เพลงจาก iTunes Search API เข้าฐานข้อมูล
+sync_catalog.py - adds artists/songs from the iTunes Search API to the database
 
-สองโหมดการทำงาน
-  1) โหมดค้นหา (ค่าเริ่มต้น)  : เอาผลค้นยอดนิยม top-N ต่อศิลปิน
-  2) โหมด --full             : ดึง "ทั้งดิสโคกราฟี" ของศิลปิน (lookup by artistId)
+Two working modes
+  1) search mode (default)    : take the top-N popular results per artist
+  2) --full mode             : pull the artist's "entire discography" (lookup by artistId)
 
-ข้อมูลที่ได้ (ชื่อเพลง, ความยาว, วันออก, ศิลปินร่วม) มาจาก iTunes โดยตรง
-จึงรับประกันว่า tools/fetch_previews.py จะหาพรีวิว 30 วินาทีเจอแบบคะแนนเต็ม
+The returned data (track titles, duration, release date, featured artists) comes straight from iTunes,
+so tools/fetch_previews.py is guaranteed to find the 30-second preview with a full score.
 
-ใช้
-    python tools/sync_catalog.py --list-artists          # ดูรายชื่อศิลปินชุดเริ่มต้น
-    python tools/sync_catalog.py --dry-run               # ดูว่าจะเพิ่มอะไร ไม่เขียน DB
-    python tools/sync_catalog.py                         # เพิ่มตามรายการเริ่มต้น
+Usage
+    python tools/sync_catalog.py --list-artists          # show the default artist list
+    python tools/sync_catalog.py --dry-run               # show what would be added, no DB writes
+    python tools/sync_catalog.py                         # add from the default list
     python tools/sync_catalog.py --artists "PURPEECH,Only Monday" --full
     python tools/sync_catalog.py --artists "PURPEECH" --full --include-variants
     python tools/sync_catalog.py --per-artist 8 --plays 8
@@ -39,7 +39,7 @@ USER_AGENT = "SpiMusicCourseProject/1.0 (educational demo)"
 PAUSE = 2.0
 TIMEOUT = 30
 
-# ศิลปินชุดเริ่มต้น: ไทย 10 + สากล 6 (เพิ่ม/ลดได้ตามใจ)
+# default artist set: 10 Thai + 6 international (add or remove freely)
 DEFAULT_ARTISTS: list[tuple[str, str]] = [
     ("Tattoo Colour", "TH"),
     ("Polycat", "TH"),
@@ -59,13 +59,13 @@ DEFAULT_ARTISTS: list[tuple[str, str]] = [
     ("Laufey", "IS"),
 ]
 
-# คำที่บ่งชี้ว่าไม่ใช่เพลงต้นฉบับ (คาราโอเกะ/cover/tribute)
+# words that mark a result as not the original song (karaoke/cover/tribute)
 NOISE_WORDS = (
     "karaoke", "cover version", "tribute", "made famous", "originally performed",
     "instrumental", "backing track", "in the style of", "sing along",
 )
 
-# คำที่บ่งชี้ว่าเป็นเวอร์ชันอื่นของเพลงเดียวกัน (ข้ามได้ถ้าไม่ใช้ --include-variants)
+# words that mark another version of the same song (skippable unless --include-variants)
 VARIANT_WORDS = ("live", "acoustic", "session", "remix", "demo", "sped up", "slowed")
 
 
@@ -98,8 +98,8 @@ def is_variant(result: dict) -> bool:
 
 def title_key(title: str) -> tuple[str, str]:
     """
-    แยกชื่อเพลงเป็น (ชื่อหลัก, ป้ายเวอร์ชัน) เพื่อตัด "recording เดียวกัน" ที่มาจาก
-    ทั้งซิงเกิลและอัลบั้ม แตายังเก็บเวอร์ชันที่ตั้งชื่อต่างกันไว้ (เช่น (Live), (Acoustic))
+    Split a song title into (base title, version tag) to drop "the same recording" coming from
+    both a single and an album, while still keeping differently named versions (e.g. (Live), (Acoustic))
 
         'ทิ้งไป'                  -> ('ทิ้งไป', '')
         'หากจะเพียงขอ (Sincare)' -> ('หากจะเพียงขอ', 'sincare')
@@ -111,13 +111,13 @@ def title_key(title: str) -> tuple[str, str]:
 
 
 def split_artists(artist_name: str) -> list[str]:
-    """'The Weeknd, JENNIE & Lily Rose Depp' -> 3 ชื่อ"""
+    """'The Weeknd, JENNIE & Lily Rose Depp' -> 3 names"""
     parts = re.split(r"\s*(?:,|&|\bfeat\.|\bft\.|\sx\s)\s*", artist_name or "")
     return [p.strip() for p in parts if p.strip()]
 
 
 def feat_from_title(title: str) -> list[str]:
-    """ดึงชื่อศิลปินรับเชิญจาก '(feat. X)' หรือ '[feat. X]' ในชื่อเพลง"""
+    """Extract featured artist names from '(feat. X)' or '[feat. X]' in the song title."""
     found = re.findall(r"[\(\[]\s*(?:feat\.|ft\.)\s*([^\)\]]+)", title or "", flags=re.IGNORECASE)
     names = []
     for chunk in found:
@@ -341,7 +341,7 @@ def main() -> int:
             time.sleep(PAUSE)
             continue
 
-        # กรอง/ตัดเพลงซ้ำ (recording เดียวกันที่ถูกรวมในอัลบั้มและซิงเกิล)
+        # filter out duplicate songs (the same recording bundled in both an album and a single)
         picked: list[dict] = []
         seen: set[tuple[str, str]] = set()
         for item in catalog:
@@ -369,7 +369,7 @@ def main() -> int:
             continue
 
         for item in picked:
-            # ศิลปินหลัก/รับเชิญจาก artistName + feat. ในชื่อเพลง
+            # primary/featured artists from artistName + feat. in the title
             names = split_artists(item.get("artistName") or artist_name)
             if not names:
                 names = [artist_name]

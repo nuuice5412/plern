@@ -1,15 +1,15 @@
 """
-mailer.py - ส่งรหัส OTP ทางอีเมล
+mailer.py - send OTP codes by email
 
-รองรับ 2 โหมด
-  1) SMTP จริง  : ตั้ง environment variable 4 ตัว
+Supports 2 modes
+  1) Real SMTP  : set 4 environment variables
         set SMTP_HOST=smtp.gmail.com
         set SMTP_PORT=587
         set SMTP_USER=you@gmail.com
-        set SMTP_PASS=<App Password 16 ตัวของ Gmail>
-     (Gmail ต้องเปิด 2-Step Verification แล้วสร้าง App Password)
-  2) โหมดทดสอบ : ถ้าไม่ได้ตั้งค่า จะพิมพ์รหัสลงคอนโซล + คืนค่า "console"
-     เพื่อให้เดโมได้โดยไม่ต้องมีอีเมลจริง
+        set SMTP_PASS=<16-character Gmail App Password>
+     (Gmail requires 2-Step Verification enabled, then create an App Password)
+  2) Test mode : if not configured, print the code to the console + return "console"
+     so demos work without a real email account
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ def is_configured() -> bool:
 
 
 def send_code(to_email: str, code: str) -> str:
-    """ส่งรหัส แล้วคืนค่าช่องทางที่ใช้จริง: 'smtp' หรือ 'console'"""
+    """Send the code and return the channel actually used: 'smtp' or 'console'"""
     if not is_configured():
         print(f"[MAIL-DEV] รหัสสำหรับ {to_email} = {code}")
         return "console"

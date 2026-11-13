@@ -1,24 +1,24 @@
 """
-fetch_artwork.py - ดึง "ปกเพลง" และ "รูปศิลปิน" มาเก็บไว้ใช้ใน UI
+fetch_artwork.py - fetch "song covers" and "artist photos" to use in the UI
 
-แหล่งข้อมูล
-  ปกเพลง   : iTunes Lookup API (lookup?id=<trackId>) ได้ artwork ของอัลบั้มจริง
-             ใช้ trackId ที่ tools/fetch_previews.py บันทึกไว้ใน
-             app/static/audio/manifest.json -> ไม่ต้องเดา/จับคู่ชื่อให้ผิดพลาด
-  รูปศิลปิน : Deezer Search Artist API (picture_big 500x500) — ไม่ต้องมี key
-             เลือกผลที่ชื่อคล้ายที่สุด แล้วในกลุ่มนั้นเลือกคนที่มีแฟนมากสุด
-             (กันกรณีมีศิลปินชื่อซ้ำแต่เป็นวงอื่น)
+Sources
+  Covers     : iTunes Lookup API (lookup?id=<trackId>) gives the real album artwork
+             uses the trackId that tools/fetch_previews.py saved in
+             app/static/audio/manifest.json -> no guessing or mismatched names
+  Artist pic : Deezer Search Artist API (picture_big 500x500) — no key required
+             picks the closest-matching name, then the one with the most fans
+             (guards against same-named artists that are a different band)
 
-ไม่แตะ schema ของฐานข้อมูล: เก็บไฟล์ + manifest.json เหมือนไฟล์เสียง
+Doesn't touch the database schema: stores files + manifest.json like the audio files
     app/static/img/cover_<SongID>.jpg
     app/static/img/artist_<ArtistID>.jpg
     app/static/img/manifest.json
 
-ใช้
-    python tools/fetch_artwork.py                # ดึงที่ยังไม่มี
-    python tools/fetch_artwork.py --force        # ดึงใหม่ทับ
-    python tools/fetch_artwork.py --dry-run      # ดูผลจับคู่ ไม่โหลดไฟล์
-    python tools/fetch_artwork.py --only-artists # เฉพาะรูปศิลปิน
+Usage
+    python tools/fetch_artwork.py                # fetch what's missing
+    python tools/fetch_artwork.py --force        # re-fetch and overwrite
+    python tools/fetch_artwork.py --dry-run      # preview matches, download nothing
+    python tools/fetch_artwork.py --only-artists # artist photos only
     python tools/fetch_artwork.py --cover-size 600
 """
 
@@ -81,7 +81,7 @@ def load_artists() -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# ดาวน์โหลดไฟล์รูป
+# download image files
 # ---------------------------------------------------------------------------
 def download(session: requests.Session, url: str, target: pathlib.Path) -> bool:
     response = session.get(url, timeout=TIMEOUT, stream=True)
@@ -95,7 +95,7 @@ def download(session: requests.Session, url: str, target: pathlib.Path) -> bool:
     with tmp.open("wb") as handle:
         for chunk in response.iter_content(chunk_size=32 * 1024):
             handle.write(chunk)
-    if tmp.stat().st_size < 1024:            # เล็กเกินกว่าจะเป็นรูปจริง
+    if tmp.stat().st_size < 1024:            # too small to be a real image
         tmp.unlink(missing_ok=True)
         return False
     tmp.replace(target)
@@ -103,7 +103,7 @@ def download(session: requests.Session, url: str, target: pathlib.Path) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# ปกเพลง: iTunes lookup ด้วย trackId
+# covers: iTunes lookup by trackId
 # ---------------------------------------------------------------------------
 def fetch_covers(session: requests.Session, cover_size: int, force: bool,
                  dry_run: bool, manifest: dict) -> tuple[int, int, int]:
@@ -134,7 +134,7 @@ def fetch_covers(session: requests.Session, cover_size: int, force: bool,
         print(f"  ... รวม {len(todo)} เพลง (dry-run ไม่โหลด)")
         return 0, len(pairs) - len(todo), 0
 
-    # lookup ทีละชุด (iTunes รับ id หลายตัวคั่นด้วย comma)
+    # lookup in batches (iTunes accepts several ids separated by commas)
     cover_urls: dict[int, str] = {}
     id_to_song = {str(tid): sid for sid, tid in todo.items()}
     ids = list(id_to_song)
@@ -184,16 +184,16 @@ def fetch_covers(session: requests.Session, cover_size: int, force: bool,
 
 
 # ---------------------------------------------------------------------------
-# รูปศิลปิน: Deezer
+# artist photos: Deezer
 # ---------------------------------------------------------------------------
 def pick_deezer_artist(name: str, candidates: list[dict]) -> tuple[dict | None, float]:
     """
-    เลือกศิลปินจากผลค้นหา:
-      1) ต้องมีรูปจริง และชื่อคล้ายกัน >= 0.90
-      2) เอาคะแนนความคล้ายของชื่อเป็นหลัก (ชื่อตรงสุดชนะ) — ไม่ใช่แฟนมากสุด
-         เพราะศิลปินชื่อคล้ายกันแต่คนละวงมักมีแฟนเยอะกว่า เช่น
-         "Only Monday" (94 แฟน) vs "Okay Monday" (734 แฟน)
-      3) ใช้จำนวนแฟนเป็นตัวตัดสินเฉพาะเมื่อชื่อใกล้เคียงกันมากจนแยกไม่ออก
+    Pick an artist from the search results:
+      1) Must have a real picture, and the name must be similar >= 0.90
+      2) Name similarity is the main criterion (closest name wins) — not most fans,
+         because a similarly named but different band often has more fans, e.g.
+         "Only Monday" (94 fans) vs "Okay Monday" (734 fans)
+      3) Fan count only breaks the tie when the names are too close to tell apart
     """
     scored = []
     for candidate in candidates:

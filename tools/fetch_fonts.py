@@ -1,15 +1,15 @@
 """
-fetch_fonts.py - ดาวน์โหลดฟอนต์ (Google Fonts) มาเก็บไว้ในเครื่อง
+fetch_fonts.py - download fonts (Google Fonts) and store them locally
 
-ทำไมไม่ใช้ <link> ไปที่ fonts.googleapis.com ตรง ๆ:
-  - เปิดเว็บตอนไม่มีเน็ตแล้วฟอนต์หาย (เดโมในห้องสอบอาจไม่มี wifi)
-  - ช้าขึ้นเพราะต้องต่อ DNS เพิ่ม
-  - เก็บในเครื่องทำให้โปรเจกต์ self-contained ส่งงานได้ทั้งโฟลเดอร์
+Why not use <link> straight to fonts.googleapis.com:
+  - the fonts vanish when the site is opened without internet (an exam room may have no wifi)
+  - slower, because an extra DNS lookup is needed
+  - keeping them locally makes the project self-contained, so the whole folder can be submitted
 
-ฟอนต์ที่ใช้: Inter (Latin) + Noto Sans Thai (ไทย) — ทั้งคู่เป็น SIL Open Font License
-ใช้แทนกันได้ถูกต้องตามกฎหมาย (ต่างจากฟอนต์ proprietary ของ Tidal)
+Fonts used: Inter (Latin) + Noto Sans Thai (Thai) — both are SIL Open Font License
+and can be substituted legally (unlike Tidal's proprietary font)
 
-วิธีใช้
+How to use
     python tools/fetch_fonts.py
     python tools/fetch_fonts.py --weights 400,500,600,700,800
 """
@@ -28,11 +28,11 @@ FONT_DIR = ROOT / "app" / "static" / "fonts"
 CSS_OUT = ROOT / "app" / "static" / "css" / "fonts.css"
 
 CSS_URL = "https://fonts.googleapis.com/css2"
-# UA ที่ทันสมัย -> Google จะคืนไฟล์ woff2 (เล็กที่สุด)
+# a modern UA -> Google returns woff2 files (the smallest)
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
-# เก็บเฉพาะ subset ที่ใช้จริง (ไทย + ละติน) เพื่อลดขนาด
+# keep only the subsets actually used (Thai + Latin) to reduce size
 KEEP_SUBSETS = {"thai", "latin", "latin-ext"}
 
 
@@ -57,7 +57,7 @@ def main() -> int:
     FONT_DIR.mkdir(parents=True, exist_ok=True)
     CSS_OUT.parent.mkdir(parents=True, exist_ok=True)
 
-    # แยกบล็อก @font-face พร้อม comment ระบุ subset เช่น /* thai */
+    # split out @font-face blocks together with their subset comment, e.g. /* thai */
     blocks = re.findall(r"(/\*\s*([\w-]+)\s*\*/\s*@font-face\s*\{[^}]*\})", css)
     if not blocks:
         blocks = [("", "all", m) for m in re.findall(r"(@font-face\s*\{[^}]*\})", css)]
