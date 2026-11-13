@@ -312,6 +312,21 @@
     const singleButton = event.target.closest('[data-play-song]');
     if (singleButton) {
       event.preventDefault();      // the song card is inside an <a> — don't navigate away
+      const clickedId = Number(singleButton.dataset.id);
+
+      // Build the queue from the surrounding collection so prev/next work,
+      // instead of a one-track queue that makes those buttons look broken.
+      const collection = singleButton.closest('.rail-track, tbody, ol, ul');
+      if (collection) {
+        const items = rowsIn(collection);
+        const position = items.findIndex(function (t) { return t.id === clickedId; });
+        if (items.length > 1 && position >= 0) {
+          queue = items;
+          playAt(position);
+          return;
+        }
+      }
+
       queue = [trackFromRow(singleButton)];
       playAt(0);
     }
