@@ -1749,3 +1749,30 @@ body.np-open { overflow: hidden; }
 /* icons inside the now-playing top bar and round buttons */
 .np-full-icon svg { width: 20px; height: 20px; display: block; }
 .btn svg { flex: none; }
+
+/* =====================================================================
+   Touch devices have no hover: controls that only appear on :hover are
+   invisible and untappable. Always show them where hover is unavailable.
+   ===================================================================== */
+@media (hover: none), (pointer: coarse) {
+  /* tables: show the play button instead of the row number */
+  tr.track .play-toggle { display: inline-block; }
+  tr.track .rowno { display: none; }
+
+  /* cards: show the round play button permanently */
+  .rail-play,
+  .coll-play {
+    opacity: 1;
+    transform: none;
+  }
+  .rail-play { width: 40px; height: 40px; }
+  .coll-play { width: 44px; height: 44px; }
+
+  /* no hover-only colour change */
+  .rail-card:hover .rail-title,
+  .coll-card:hover .coll-name { color: inherit; }
+
+  /* the playing row keeps its sound bars (no hover swap to pause) */
+  .play-toggle.eq-active:hover .eq { display: inline-flex; }
+  .play-toggle.eq-active:hover .ico-pause { display: none; }
+}
