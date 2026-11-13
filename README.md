@@ -1,4 +1,4 @@
-# Spi Music — Music Streaming Web App (SQL Server + Flask)
+# Plern — Music Streaming Web App (SQL Server + Flask)
 
 โปรเจกต์วิชา **Database**: เว็บแอปสตรีมมิ่งเพลงที่ทำงานบนฐานข้อมูล **Microsoft SQL Server**
 โดยออกแบบ schema ตาม ER Diagram ของกลุ่ม (Peter Chen) และใช้ของจริงครบทั้ง
@@ -219,7 +219,7 @@ label ตัวพิมพ์ใหญ่ tracking กว้าง (`.eyebrow` 
   (ดึงจาก `GET /api/song/<id>` ซึ่งอ่าน `SONG_ARTIST_ROLE` + ปีที่ออก + จำนวนครั้งที่เล่น)
   แสดงเรียงแบบ Tidal: โปรดิวเซอร์ → แต่งเพลง → เนื้อร้อง → ศิลปินรับเชิญ → นักร้อง
   กดซ้ำเพื่อปิด และ `Esc` ปิดแท็บก่อนแล้วจึงย่อหน้าจอ
-- **ระดับเสียงจำค่าไว้** ใน `localStorage` (คีย์ `spi-music:volume`) จึงคงอยู่แม้รีเฟรชหน้า
+- **ระดับเสียงจำค่าไว้** ใน `localStorage` (คีย์ `plern:volume`) จึงคงอยู่แม้รีเฟรชหน้า
   หรือปิดเบราว์เซอร์แล้วเปิดใหม่ — อ่านค่าไม่ได้ (เช่น โหมดส่วนตัว) ก็ถอยไปใช้ 0.8
 - ความคืบหน้า/ระดับเสียง ของสองหน้าจอผูกกัน (ปรับที่ไหนอีกที่หนึ่งขยับตาม)
 
@@ -532,7 +532,7 @@ set HOST=0.0.0.0
 ปิดช่องที่เปิดไว้ (ถ้าไม่ต้องการแล้ว):
 
 ```powershell
-Remove-NetFirewallRule -DisplayName "Spi Music (Flask 5000)"
+Remove-NetFirewallRule -DisplayName "Plern (Flask 5000)"
 ```
 
 ### วิธีที่ 2 — ขึ้นออนไลน์ทันทีด้วย Cloudflare Tunnel (ฟรี)

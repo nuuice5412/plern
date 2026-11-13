@@ -36,11 +36,11 @@ def send_code(to_email: str, code: str) -> str:
     sender = os.environ.get("SMTP_FROM") or os.environ["SMTP_USER"]
 
     message = EmailMessage()
-    message["Subject"] = f"Spi Music — รหัสเข้าสู่ระบบของคุณคือ {code}"
+    message["Subject"] = f"Plern — รหัสเข้าสู่ระบบของคุณคือ {code}"
     message["From"] = sender
     message["To"] = to_email
     message.set_content(
-        f"รหัสเข้าสู่ระบบ Spi Music ของคุณคือ {code}\n"
+        f"รหัสเข้าสู่ระบบ Plern ของคุณคือ {code}\n"
         "รหัสนี้ใช้ได้ 10 นาที\n\n"
         "หากคุณไม่ได้เป็นผู้ขอรหัสนี้ ไม่ต้องทำอะไรครับ"
     )

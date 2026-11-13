@@ -523,7 +523,7 @@
   });
 
   // ระดับเสียง: จำค่าไว้ใน localStorage เพื่อให้คงอยู่แม้รีเฟรชหน้า
-  const VOLUME_KEY = 'spi-music:volume';
+  const VOLUME_KEY = 'plern:volume';
 
   function readSavedVolume() {
     try {

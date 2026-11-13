@@ -31,4 +31,4 @@ class Config:
     PAGE_SIZE = int(os.environ.get("PAGE_SIZE", "20"))
 
     # ชื่อแอปที่แสดงบนหัวเว็บ
-    APP_NAME = os.environ.get("APP_NAME", "Spi Music")
+    APP_NAME = os.environ.get("APP_NAME", "Plern")
