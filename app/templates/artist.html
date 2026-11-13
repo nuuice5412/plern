@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% from "macros.html" import cover, artist_avatar %}
+
+{% block title %}{{ artist.ArtistName }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<section class="detail-head">
+  {{ artist_avatar(artist.ArtistID, artist.ArtistName, 'avatar avatar-xl') }}
+
+  <div class="detail-body">
+    <span class="eyebrow">ศิลปิน{% if artist.Country %} · {{ artist.Country }}{% endif %}</span>
+    <h1>{{ artist.ArtistName }}</h1>
+    {% if artist.Bio %}<p class="muted">{{ artist.Bio }}</p>{% endif %}
+    <p class="muted small">{{ songs|length }} เพลงในระบบ</p>
+  </div>
+</section>
+
+<section class="block">
+  <div class="block-head">
+    <h2>ผลงาน</h2>
+    <span class="muted small">คอลัมน์ “บทบาท” คือบทบาทของศิลปินคนนี้ในเพลงนั้น</span>
+  </div>
+
+  {% if songs %}
+  <table class="tracks" id="artist-tracks">
+    <thead>
+      <tr>
+        <th class="col-idx">#</th>
+        <th>เพลง</th>
+        <th>บทบาทของศิลปิน</th>
+        <th class="col-right">ฟัง</th>
+        <th class="col-right">เวลา</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for song in songs %}
+      <tr class="track"
+          data-id="{{ song.SongID }}"
+          data-title="{{ song.SongTitle }}"
+          data-artist="{{ song.MainArtistName }}"
+          data-duration="{{ song.Duration }}">
+        <td class="col-idx">
+          <span class="rowno">{{ loop.index }}</span>
+          <button type="button" class="play-toggle" title="เล่นเพลง">▶</button>
+        </td>
+        <td class="col-title">
+          <a class="title-link" href="{{ url_for('main.song_detail', song_id=song.SongID) }}">
+            {{ cover(song.SongID, 'cover-sm') }}
+            <span class="tt">
+              <span class="title">{{ song.SongTitle }}</span>
+              <span class="sub">{{ song.Released_Date|thaidate(false) if song.Released_Date else 'ไม่ระบุปี' }}</span>
+            </span>
+          </a>
+        </td>
+        <td><span class="tag">{{ song.Roles }}</span></td>
+        <td class="col-right plays">{{ song.PlayCount }}</td>
+        <td class="col-right dur">{{ song.Duration|mmss }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="empty">ยังไม่มีเพลงของศิลปินคนนี้ในระบบ</p>
+  {% endif %}
+</section>
+
+{% if collaborators %}
+<section class="block">
+  <div class="block-head"><h2>ร่วมงานด้วย</h2></div>
+  <div class="chip-row">
+    {% for mate in collaborators %}
+      <a class="chip chip-link" href="{{ url_for('main.artist_detail', artist_id=mate.ArtistID) }}">
+        {{ mate.ArtistName }} · {{ mate.SharedSongs }} เพลง
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% from "macros.html" import cover, song_row %}
+
+{% block title %}{{ song.SongTitle }} — {{ song.ArtistList }}{% endblock %}
+
+{% block content %}
+{% set hero_img = cover_url(song.SongID) %}
+
+{# ---------------- hero แบบหน้าเพลงสตรีมมิ่ง ---------------- #}
+<section class="song-hero" {% if hero_img %}style="--hero-img:url('{{ hero_img }}')"{% endif %}>
+  <div class="song-hero-inner">
+    {{ cover(song.SongID, 'song-cover') }}
+
+    <div class="song-headline">
+      <span class="eyebrow">เพลง</span>
+      <h1 class="song-title">{{ song.SongTitle }}</h1>
+
+      <p class="song-artists">
+        {% for a in artists %}
+          <a href="{{ url_for('main.artist_detail', artist_id=a.ArtistID) }}">{{ a.ArtistName }}</a>{% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </p>
+
+      <p class="song-meta">
+        {% if song.Released_Date %}{{ song.Released_Date|thaidate(false) }} · {% endif %}
+        {{ song.Duration|mmss }} นาที · {{ song.PlayCount }} ครั้งที่เล่น
+        {% if song.Released_Date %} · พรีวิว 30 วิ{% endif %}
+      </p>
+
+      <div class="song-actions">
+        <button type="button" class="btn btn-lg btn-play-lg" data-play-song
+                data-id="{{ song.SongID }}"
+                data-title="{{ song.SongTitle }}"
+                data-artist="{{ song.ArtistList }}"
+                data-duration="{{ song.Duration }}"
+                data-cover="{{ cover_url(song.SongID) or '' }}"
+                data-href="{{ url_for('main.song_detail', song_id=song.SongID) }}">▶ เล่นพรีวิว</button>
+
+        {% if current_user and addable %}
+          <form class="inline-form add-inline" method="post"
+                action="{{ url_for('main.playlist_add', playlist_id=addable[0].PlaylistID) }}"
+                id="add-form"
+                data-base="{{ url_for('main.playlist_add', playlist_id=0).rsplit('/', 2)[0] }}/">
+            <select id="pl-select" aria-label="เลือกเพลย์ลิสต์">
+              {% for pl in addable %}
+                <option value="{{ pl.PlaylistID }}">{{ pl.PLname }}</option>
+              {% endfor %}
+            </select>
+            <input type="hidden" name="song_id" value="{{ song.SongID }}">
+            <button class="btn btn-ghost" type="submit">+ เพิ่มเข้าเพลย์ลิสต์</button>
+          </form>
+        {% elif not current_user %}
+          <a class="btn btn-ghost" href="{{ url_for('main.login') }}">เข้าสู่ระบบเพื่อเพิ่มลงเพลย์ลิสต์</a>
+        {% endif %}
+      </div>
+
+      {% if main_artist and main_artist.Bio %}
+        <p class="song-about">{{ main_artist.Bio }}</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% if current_user and addable %}
+<script>
+  // เปลี่ยน action ของฟอร์มตามเพลย์ลิสต์ที่เลือก
+  (function () {
+    const form = document.getElementById('add-form');
+    const select = document.getElementById('pl-select');
+    if (!form || !select) return;
+    function sync() { form.action = form.dataset.base + select.value + '/add'; }
+    select.addEventListener('change', sync);
+    sync();
+  })();
+</script>
+{% endif %}
+
+{# ---------------- ศิลปิน/บทบาท + สถิติ ---------------- #}
+<div class="two-col song-cols">
+  <section class="block" id="credits">
+    <div class="block-head"><h2>ศิลปินและบทบาท</h2></div>
+    <p class="muted small">
+      ข้อมูลจาก <code>SONG_ARTIST_ROLE</code> — ความสัมพันธ์แบบ M:N ระหว่างเพลงกับศิลปิน
+      โดยมี “บทบาท” เป็นตัวกำหนด
+    </p>
+    <div class="role-list">
+      {% for role in roles %}
+        <div class="role-item">
+          <a class="link strong" href="{{ url_for('main.artist_detail', artist_id=role.ArtistID) }}">
+            {{ role.ArtistName }}
+          </a>
+          <span class="tag">{{ role.Role }}</span>
+          <span class="muted small">{{ role.Role_desc }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>สถิติเพลง</h2></div>
+    <ul class="stat-list">
+      <li><span>จำนวนครั้งที่ถูกเล่น</span><strong>{{ counts.Plays }}</strong></li>
+      <li><span>จำนวนผู้ฟัง (ไม่ซ้ำ)</span><strong>{{ counts.Listeners }}</strong></li>
+      <li><span>อยู่ในเพลย์ลิสต์</span><strong>{{ counts.InPlaylists }} แห่ง</strong></li>
+      <li><span>ความยาวเต็ม</span><strong>{{ song.Duration|mmss }} นาที</strong></li>
+    </ul>
+
+    {% if current_user %}
+      <div class="block-head"><h3>เพลย์ลิสต์ของคุณที่มีเพลงนี้</h3></div>
+      {% if in_playlists %}
+        <ul class="pl-list compact">
+          {% for pl in in_playlists %}
+            <li>
+              <a class="pl-item" href="{{ url_for('main.playlist_detail', playlist_id=pl.PlaylistID) }}">
+                <span class="pl-icon">♪</span>
+                <span class="pl-body">
+                  <span class="pl-name">{{ pl.PLname }}</span>
+                  <span class="sub">{{ pl.Song_Amount }} เพลง</span>
+                </span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="muted small">ยังไม่ได้อยู่ในเพลย์ลิสต์ของคุณ</p>
+      {% endif %}
+    {% endif %}
+  </section>
+</div>
+
+{# ---------------- เพลงอื่นของศิลปิน ---------------- #}
+{% if other_songs %}
+<section class="block">
+  <div class="block-head">
+    <h2>เพลงอื่นของ {{ main_artist.ArtistName if main_artist else song.MainArtistName }}</h2>
+    <a class="link small" href="{{ url_for('main.artist_detail', artist_id=song.MainArtistID) }}">ดูทั้งหมด</a>
+  </div>
+  <table class="tracks" id="other-tracks">
+    <thead>
+      <tr>
+        <th class="col-idx">#</th>
+        <th>เพลง</th>
+        <th class="col-right">ฟัง</th>
+        <th class="col-right">เวลา</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in other_songs %}
+        {{ song_row(item, loop.index) }}
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

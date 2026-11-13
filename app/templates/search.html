@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "macros.html" import song_row, artist_card %}
+
+{% block title %}ค้นหา{% if q %} “{{ q }}”{% endif %} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<header class="page-hero">
+  <span class="eyebrow">ค้นหา</span>
+  <h1>{% if q %}ผลลัพธ์สำหรับ “{{ q }}”{% else %}ค้นหา{% endif %}</h1>
+  <form class="pill-form" action="{{ url_for('main.search') }}" method="get">
+    <input type="search" name="q" value="{{ q }}"
+           placeholder="ชื่อเพลง หรือชื่อศิลปิน…" autofocus
+           style="width: min(520px, 78vw);">
+    <button class="btn" type="submit">ค้นหา</button>
+  </form>
+</header>
+
+{% if not q %}
+  <p class="empty">พิมพ์ชื่อเพลงหรือศิลปินที่ต้องการค้นหา</p>
+{% else %}
+
+  <section class="block">
+    <div class="block-head">
+      <h2>เพลง</h2>
+      <span class="muted small">{{ songs|length }} ผลลัพธ์</span>
+    </div>
+    {% if songs %}
+    <table class="tracks" id="search-tracks">
+      <thead>
+        <tr>
+          <th class="col-idx">#</th>
+          <th>เพลง</th>
+          <th class="col-right">ฟัง</th>
+          <th class="col-right">เวลา</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for song in songs %}
+          {{ song_row(song, loop.index) }}
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="empty">ไม่พบเพลงที่ตรงกับ “{{ q }}”</p>
+    {% endif %}
+  </section>
+
+  {% if artists %}
+  <section class="block">
+    <div class="block-head"><h2>ศิลปิน</h2></div>
+    <div class="artist-grid">
+      {% for artist in artists %}
+        {{ artist_card(artist) }}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+{% endif %}
+{% endblock %}

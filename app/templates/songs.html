@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "macros.html" import song_row %}
+
+{% block title %}{{ heading }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<header class="page-hero">
+  <span class="eyebrow">ดูทั้งหมด</span>
+  <h1>{{ heading }}</h1>
+  <p class="page-hero-sub">{{ subtitle }}</p>
+</header>
+
+<table class="tracks" id="all-tracks">
+  <thead>
+    <tr>
+      <th class="col-idx">#</th>
+      <th>เพลง</th>
+      <th>ศิลปิน</th>
+      <th class="col-right">ฟัง</th>
+      <th class="col-right">เวลา</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for song in songs %}
+    <tr class="track"
+        data-id="{{ song.SongID }}"
+        data-title="{{ song.SongTitle }}"
+        data-artist="{{ song.MainArtistName }}"
+        data-duration="{{ song.Duration }}">
+      <td class="col-idx">
+        <span class="rowno">{{ loop.index }}</span>
+        <button type="button" class="play-toggle" title="เล่นเพลง">▶</button>
+      </td>
+      <td class="col-title">
+        <a class="title-link" href="{{ url_for('main.song_detail', song_id=song.SongID) }}">
+          <span class="cover cover-sm" style="--h:{{ song.SongID|hue }}">
+            {%- if cover_url(song.SongID) -%}
+              <img src="{{ cover_url(song.SongID) }}" alt="" loading="lazy">
+            {%- else -%}<span>♪</span>{%- endif -%}
+          </span>
+          <span class="tt">
+            <span class="title">{{ song.SongTitle }}</span>
+          </span>
+        </a>
+      </td>
+      <td class="muted">{{ song.MainArtistName }}</td>
+      <td class="col-right plays">{{ song.PlayCount }}</td>
+      <td class="col-right dur">{{ song.Duration|mmss }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

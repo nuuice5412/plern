@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}{{ code }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="error-wrap">
+  <div class="error-code">{{ code }}</div>
+  <h1>{{ message }}</h1>
+  <div class="hero-actions">
+    <a class="btn" href="{{ url_for('main.index') }}">กลับหน้าแรก</a>
+    <a class="btn btn-ghost" href="{{ url_for('main.search') }}">ค้นหาเพลง</a>
+  </div>
+</div>
+{% endblock %}

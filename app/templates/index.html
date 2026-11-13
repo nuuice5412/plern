@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% from "macros.html" import cover, artist_avatar, play_icon %}
+
+{% block title %}{{ app_name }} — ฟังเพลงออนไลน์{% endblock %}
+
+{# การ์ดเพลงในแถวเลื่อนแนวนอน (แบบ Tidal) #}
+{% macro rail_song(song) -%}
+<a class="rail-card" href="{{ url_for('main.song_detail', song_id=song.SongID) }}"
+   data-id="{{ song.SongID }}"
+   data-title="{{ song.SongTitle }}"
+   data-artist="{{ song.MainArtistName }}"
+   data-duration="{{ song.Duration }}"
+   data-cover="{{ cover_url(song.SongID) or '' }}"
+   data-href="{{ url_for('main.song_detail', song_id=song.SongID) }}">
+  <span class="rail-art">
+    {{ cover(song.SongID, 'rail-cover') }}
+    <button type="button" class="rail-play" title="เล่นเพลง"
+            data-play-song
+            data-id="{{ song.SongID }}"
+            data-title="{{ song.SongTitle }}"
+            data-artist="{{ song.MainArtistName }}"
+            data-duration="{{ song.Duration }}"
+            data-cover="{{ cover_url(song.SongID) or '' }}"
+            data-href="{{ url_for('main.song_detail', song_id=song.SongID) }}">{{ play_icon() }}</button>
+  </span>
+  <span class="rail-title">{{ song.SongTitle }}</span>
+  <span class="rail-sub">{{ song.MainArtistName }}</span>
+</a>
+{%- endmacro %}
+
+{% macro rail_artist(artist) -%}
+<a class="rail-card rail-card-artist"
+   href="{{ url_for('main.artist_detail', artist_id=artist.ArtistID) }}">
+  <span class="rail-art rail-art-round">
+    {{ artist_avatar(artist.ArtistID, artist.ArtistName, 'avatar rail-avatar') }}
+  </span>
+  <span class="rail-title">{{ artist.ArtistName }}</span>
+  <span class="rail-sub">{{ artist.SongCount or 0 }} เพลง</span>
+</a>
+{%- endmacro %}
+
+{% block content %}
+<header class="page-hero">
+  <span class="eyebrow">หน้าแรก</span>
+  <h1>ฟังเพลงที่คุณชอบ</h1>
+  <p class="page-hero-sub">
+    {% if stats %}{{ stats.Songs }} เพลง · {{ stats.Artists }} ศิลปิน · {{ stats.Plays }} ครั้งที่ถูกเล่น{% endif %}
+  </p>
+  <div class="page-hero-actions">
+    <button type="button" class="btn btn-light" data-play-list="#rail-top">▶ เล่นเพลงยอดนิยม</button>
+  </div>
+</header>
+
+{# ---------------- เพลงยอดนิยม ---------------- #}
+<section class="block">
+  <div class="rail-head">
+    <h2>เพลงยอดนิยม</h2>
+    <a class="rail-more" href="{{ url_for('main.all_songs') }}">ดูทั้งหมด</a>
+  </div>
+
+  <div class="rail" data-rail>
+    <div class="rail-track" id="rail-top">
+      {% for song in top_songs %}{{ rail_song(song) }}{% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ---------------- เพลงออกใหม่ ---------------- #}
+{% if new_releases %}
+<section class="block">
+  <div class="rail-head">
+    <h2>เพลงออกใหม่</h2>
+    <a class="rail-more" href="{{ url_for('main.all_songs', sort='new') }}">ดูทั้งหมด</a>
+  </div>
+
+  <div class="rail" data-rail>
+    <div class="rail-track" id="rail-new">
+      {% for song in new_releases %}{{ rail_song(song) }}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ---------------- ศิลปิน ---------------- #}
+<section class="block">
+  <div class="rail-head">
+    <h2>ศิลปิน</h2>
+    <a class="rail-more" href="{{ url_for('main.all_artists') }}">ดูทั้งหมด</a>
+  </div>
+
+  <div class="rail" data-rail>
+    <div class="rail-track" id="rail-artists">
+      {% for artist in artists %}{{ rail_artist(artist) }}{% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ---------------- ฟังล่าสุด (เฉพาะผู้ใช้ที่ล็อกอิน) ---------------- #}
+{% if current_user %}
+<section class="block">
+  <div class="rail-head">
+    <h2>ฟังล่าสุด</h2>
+    <a class="rail-more" href="{{ url_for('main.history') }}">ดูทั้งหมด</a>
+  </div>
+
+  {% if recent %}
+  <div class="rail" data-rail>
+    <div class="rail-track" id="rail-recent">
+      {% for song in recent %}{{ rail_song(song) }}{% endfor %}
+    </div>
+  </div>
+  {% else %}
+    <p class="empty">ยังไม่มีประวัติการฟัง — กด ▶ ที่การ์ดเพลงเพื่อเริ่มเลย</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}
+

@@ -1,0 +1,34 @@
+"""ค่าตั้งต้นของแอป — อ่านจาก environment variable เพื่อไม่ hardcode รหัสผ่าน"""
+from __future__ import annotations
+
+import os
+import secrets
+
+
+def _connection_string() -> str:
+    driver = os.environ.get("MSSQL_DRIVER", "ODBC Driver 18 for SQL Server")
+    server = os.environ.get("MSSQL_SERVER", r".\SQLEXPRESS")
+    database = os.environ.get("MSSQL_DATABASE", "MusicStreamingDB")
+    trusted = os.environ.get("MSSQL_TRUSTED", "yes").lower() in ("1", "yes", "true")
+
+    parts = [
+        f"DRIVER={{{driver}}}",
+        f"SERVER={server}",
+        f"DATABASE={database}",
+        "Trusted_Connection=yes" if trusted else "",
+        "TrustServerCertificate=yes",
+        "Encrypt=yes",
+        "APP=dsh-music-web",
+    ]
+    return ";".join(p for p in parts if p) + ";"
+
+
+class Config:
+    SECRET_KEY = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
+    CONNECTION_STRING = _connection_string()
+
+    # จำนวนรายการต่อหน้า (pagination แบบง่ายด้วย TOP)
+    PAGE_SIZE = int(os.environ.get("PAGE_SIZE", "20"))
+
+    # ชื่อแอปที่แสดงบนหัวเว็บ
+    APP_NAME = os.environ.get("APP_NAME", "Spi Music")

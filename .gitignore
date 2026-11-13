@@ -1,0 +1,30 @@
+# ---------- Python ----------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# ---------- Flask ----------
+instance/
+.flaskenv
+.env
+
+# ---------- Editor / OS ----------
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+*.log
+
+# ---------- เครื่องมือที่ดาวน์โหลดมา (ติดตั้งใหม่ได้ ไม่ต้องเก็บใน git) ----------
+tools/bin/
+
+# ---------- ไฟล์ชั่วคราว ----------
+*.bak
+*.tmp
+docs/shots/_*.png
+
+# ---------- หมายเหตุเรื่องเพลง ----------
+# ไฟล์เสียง .m4a / .wav ถูกเก็บด้วย Git LFS (ดู .gitattributes)
+# GitHub ให้พื้นที่ฟรี 1 GB — โปรเจกต์นี้ใช้ ~180 MB

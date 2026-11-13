@@ -1,0 +1,73 @@
+﻿{% extends "base.html" %}
+
+{% block title %}สมัครสมาชิก — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card auth-card-wide">
+    <div class="auth-brand">
+      <span class="brand-mark">♪</span>
+      <span>{{ app_name }}</span>
+    </div>
+    <h1>สมัครสมาชิก</h1>
+    <p>สร้างบัญชีเพื่อเก็บเพลย์ลิสต์และประวัติการฟังของคุณ</p>
+
+    <form method="post" class="form">
+      <div class="form-grid">
+        <label class="field">
+          <span>ชื่อผู้ใช้ *</span>
+          <input type="text" name="username" required minlength="3" maxlength="50"
+                 value="{{ form.username }}">
+        </label>
+
+        <label class="field">
+          <span>อีเมล *</span>
+          <input type="email" name="email" required maxlength="255" value="{{ form.email }}">
+        </label>
+
+        <label class="field">
+          <span>รหัสผ่าน * <em class="muted small">(อย่างน้อย 8 ตัวอักษร)</em></span>
+          <input type="password" name="password" required minlength="8">
+        </label>
+
+        <label class="field">
+          <span>ยืนยันรหัสผ่าน *</span>
+          <input type="password" name="confirm" required minlength="8">
+        </label>
+
+        <label class="field">
+          <span>เพศ</span>
+          <select name="gender">
+            <option value="">— ไม่ระบุ —</option>
+            <option value="Male"   {{ 'selected' if form.gender == 'Male' }}>ชาย</option>
+            <option value="Female" {{ 'selected' if form.gender == 'Female' }}>หญิง</option>
+            <option value="Other"  {{ 'selected' if form.gender == 'Other' }}>อื่น ๆ</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>วันเกิด</span>
+          <input type="date" name="date_of_birth" value="{{ form.date_of_birth }}">
+        </label>
+
+        <label class="field">
+          <span>ประเทศ</span>
+          <input type="text" name="country" maxlength="60" value="{{ form.country }}">
+        </label>
+
+        <label class="field">
+          <span>เบอร์โทร</span>
+          <input type="tel" name="tel" maxlength="20" value="{{ form.tel }}">
+        </label>
+      </div>
+
+      <button class="btn btn-lg btn-block btn-light" type="submit">สมัครสมาชิก</button>
+    </form>
+
+    <p class="muted small center">
+      มีบัญชีแล้ว? <a class="link" href="{{ url_for('main.login') }}">เข้าสู่ระบบ</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+

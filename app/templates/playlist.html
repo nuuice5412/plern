@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% from "macros.html" import cover %}
+
+{% block title %}{{ summary.PLname }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<section class="detail-head">
+  <div class="pl-art" style="--h:{{ (summary.PlaylistID * 53) % 360 }}">
+    {{ summary.Song_Amount }}
+  </div>
+
+  <div class="detail-body">
+    <span class="eyebrow">เพลย์ลิสต์{% if not is_owner %} · ของ {{ summary.Username }}{% endif %}</span>
+    <h1>{{ summary.PLname }}</h1>
+    <p class="detail-sub">
+      {{ summary.Song_Amount }} เพลง · {{ summary.Total_Time_Text }} ·
+      สร้างเมื่อ {{ summary.Create_Date|thaidate(false) }}
+    </p>
+
+    <div class="detail-actions">
+      {% if tracks %}
+        <button type="button" class="btn btn-lg" data-play-list="#pl-tracks">▶ เล่นทั้งหมด</button>
+      {% endif %}
+      {% if is_owner %}
+        <form method="post" action="{{ url_for('main.playlist_delete', playlist_id=summary.PlaylistID) }}"
+              onsubmit="return confirm('ลบเพลย์ลิสต์นี้ทั้งหมด?');">
+          <button class="btn btn-ghost btn-sm" type="submit">ลบเพลย์ลิสต์</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="block-head">
+    <h2>รายการเพลง</h2>
+    <span class="muted small">ลำดับที่แสดงคำนวณจาก <code>ROW_NUMBER()</code> ตาม TrackNo</span>
+  </div>
+
+  {% if tracks %}
+  <table class="tracks" id="pl-tracks">
+    <thead>
+      <tr>
+        <th class="col-idx">#</th>
+        <th>เพลง</th>
+        <th class="col-right">ฟัง</th>
+        <th class="col-right">เวลา</th>
+        {% if is_owner %}<th class="col-right">จัดการ</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in tracks %}
+      <tr class="track"
+          data-id="{{ t.SongID }}"
+          data-title="{{ t.SongTitle }}"
+          data-artist="{{ t.MainArtistName }}"
+          data-duration="{{ t.Duration }}">
+        <td class="col-idx">
+          <span class="rowno">{{ t.DisplayNo }}</span>
+          <button type="button" class="play-toggle" title="เล่นเพลง">▶</button>
+        </td>
+        <td class="col-title">
+          <a class="title-link" href="{{ url_for('main.song_detail', song_id=t.SongID) }}">
+            {{ cover(t.SongID, 'cover-sm') }}
+            <span class="tt">
+              <span class="title">{{ t.SongTitle }}</span>
+              <span class="sub">{{ t.MainArtistName }} · เพิ่มเมื่อ {{ t.Date_Added|thaidate(false) }}</span>
+            </span>
+          </a>
+        </td>
+        <td class="col-right plays">{{ t.PlayCount }}</td>
+        <td class="col-right dur">{{ t.Duration|mmss }}</td>
+        {% if is_owner %}
+        <td class="col-right">
+          <form method="post" action="{{ url_for('main.playlist_remove', playlist_id=summary.PlaylistID) }}">
+            <input type="hidden" name="song_id" value="{{ t.SongID }}">
+            <button class="icon-btn" type="submit" title="ลบออกจากเพลย์ลิสต์">✕</button>
+          </form>
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="empty">
+      ยังไม่มีเพลงในเพลย์ลิสต์นี้{% if is_owner %} — เพิ่มจากรายการแนะนำด้านล่างได้เลย{% endif %}
+    </p>
+  {% endif %}
+</section>
+
+{% if is_owner and suggestions %}
+<section class="block">
+  <div class="block-head">
+    <h2>แนะนำให้เพิ่ม</h2>
+    <span class="muted small">เพลงที่ยังไม่อยู่ในเพลย์ลิสต์นี้</span>
+  </div>
+  <ul class="suggest-list">
+    {% for s in suggestions %}
+    <li class="suggest-item">
+      {{ cover(s.SongID, 'cover-sm') }}
+      <span class="tt">
+        <a class="title" href="{{ url_for('main.song_detail', song_id=s.SongID) }}">{{ s.SongTitle }}</a>
+        <span class="sub">{{ s.MainArtistName }} · {{ s.PlayCount }} ครั้ง</span>
+      </span>
+      <form method="post" action="{{ url_for('main.playlist_add', playlist_id=summary.PlaylistID) }}">
+        <input type="hidden" name="song_id" value="{{ s.SongID }}">
+        <button class="btn btn-sm btn-ghost" type="submit">+ เพิ่ม</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

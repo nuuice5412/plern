@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "macros.html" import artist_card %}
+
+{% block title %}ศิลปินทั้งหมด — {{ app_name }}{% endblock %}
+
+{% block content %}
+<header class="page-hero">
+  <span class="eyebrow">ดูทั้งหมด</span>
+  <h1>ศิลปิน</h1>
+  <p class="page-hero-sub">{{ subtitle }}</p>
+</header>
+
+<div class="artist-grid">
+  {% for artist in artists %}
+    {{ artist_card(artist) }}
+  {% endfor %}
+</div>
+{% endblock %}

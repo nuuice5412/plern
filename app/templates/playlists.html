@@ -1,0 +1,77 @@
+﻿{% extends "base.html" %}
+{% from "macros.html" import cover, play_icon %}
+
+{% block title %}คลังเพลย์ลิสต์ — {{ app_name }}{% endblock %}
+
+{% block content %}
+<header class="page-hero">
+  <span class="eyebrow">คอลเลกชันของฉัน</span>
+  <h1>คลังเพลย์ลิสต์</h1>
+  <p class="page-hero-sub">
+    {{ playlists|length }} เพลย์ลิสต์ของ <strong>{{ current_user.Username }}</strong>
+    · จำนวนเพลงและเวลารวมคำนวณสด ๆ จาก view <code>vw_PlaylistSummary</code>
+  </p>
+  <div class="page-hero-actions">
+    <form class="pill-form" method="post" action="{{ url_for('main.playlist_create') }}">
+      <input type="text" name="plname" maxlength="120" placeholder="ตั้งชื่อเพลย์ลิสต์ใหม่" required>
+      <button class="btn btn-sm" type="submit">+ สร้าง</button>
+    </form>
+  </div>
+</header>
+
+<section class="block">
+  <div class="block-head">
+    <h2>เพลย์ลิสต์ของฉัน</h2>
+    <span class="muted small">{{ playlists|length }} รายการ</span>
+  </div>
+
+  {% if playlists %}
+  <div class="coll-grid">
+    {% for pl in playlists %}
+    {% set cover_song = covers.get(pl.PlaylistID) %}
+    <a class="coll-card" href="{{ url_for('main.playlist_detail', playlist_id=pl.PlaylistID) }}">
+      <div class="coll-art">
+        {% if cover_song %}
+          {{ cover(cover_song, 'coll-cover') }}
+        {% else %}
+          <div class="cover coll-cover" style="--h:{{ (pl.PlaylistID * 53) % 360 }}"><span>♪</span></div>
+        {% endif %}
+        <span class="coll-play" aria-hidden="true">{{ play_icon() }}</span>
+      </div>
+      <div class="coll-name">{{ pl.PLname }}</div>
+      <div class="coll-sub">{{ pl.Song_Amount }} เพลง · {{ pl.Total_Time_Text }}</div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="empty">ยังไม่มีเพลย์ลิสต์ — พิมพ์ชื่อแล้วกด “+ สร้าง” ด้านบนได้เลย</p>
+  {% endif %}
+</section>
+
+{% if public_playlists %}
+<section class="block">
+  <div class="block-head">
+    <h2>จากผู้ใช้คนอื่น</h2>
+    <span class="muted small">เปิดดูได้ แต่แก้ไขได้เฉพาะเจ้าของ</span>
+  </div>
+  <div class="coll-grid">
+    {% for pl in public_playlists %}
+    {% set cover_song = covers.get(pl.PlaylistID) %}
+    <a class="coll-card" href="{{ url_for('main.playlist_detail', playlist_id=pl.PlaylistID) }}">
+      <div class="coll-art">
+        {% if cover_song %}
+          {{ cover(cover_song, 'coll-cover') }}
+        {% else %}
+          <div class="cover coll-cover" style="--h:{{ (pl.PlaylistID * 53) % 360 }}"><span>♪</span></div>
+        {% endif %}
+        <span class="coll-play" aria-hidden="true">{{ play_icon() }}</span>
+      </div>
+      <div class="coll-name">{{ pl.PLname }}</div>
+      <div class="coll-sub">โดย {{ pl.Username }} · {{ pl.Song_Amount }} เพลง</div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+

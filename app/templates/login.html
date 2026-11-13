@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}เข้าสู่ระบบด้วยรหัสผ่าน — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-mark">♪</span>
+      <span>{{ app_name }}</span>
+    </div>
+    <h1>เข้าสู่ระบบด้วยรหัสผ่าน</h1>
+    <p>สำหรับบัญชีที่ตั้งรหัสผ่านไว้แล้ว</p>
+
+    <form method="post" class="form">
+      <input type="hidden" name="next" value="{{ next }}">
+
+      <label class="field">
+        <span>ชื่อผู้ใช้ หรืออีเมล</span>
+        <input type="text" name="identity" required autofocus
+               value="{{ request.form.get('identity', '') }}">
+      </label>
+
+      <label class="field">
+        <span>รหัสผ่าน</span>
+        <input type="password" name="password" required>
+      </label>
+
+      <button class="btn btn-lg btn-block btn-light" type="submit">เข้าสู่ระบบ</button>
+    </form>
+
+    <p class="muted small center" style="margin-top:14px">
+      <a class="link" href="{{ url_for('main.register') }}">← ใช้อีเมลอย่างเดียว (ไม่ต้องใช้รหัสผ่าน)</a>
+    </p>
+
+    <div class="demo-box">
+      <strong>บัญชีทดลอง</strong>
+      <div class="demo-rows">
+        <button type="button" class="demo-fill" data-user="demo" data-pass="demo1234">demo / demo1234</button>
+        <button type="button" class="demo-fill" data-user="napat" data-pass="demo1234">napat / demo1234</button>
+        <button type="button" class="demo-fill" data-user="ploy" data-pass="demo1234">ploy / demo1234</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ปุ่มเติมบัญชีทดลองให้อัตโนมัติ (สะดวกตอน demo ให้อาจารย์ดู)
+  document.querySelectorAll('.demo-fill').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelector('input[name="identity"]').value = btn.dataset.user;
+      document.querySelector('input[name="password"]').value = btn.dataset.pass;
+    });
+  });
+</script>
+{% endblock %}
+
+

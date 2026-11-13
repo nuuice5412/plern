@@ -1,0 +1,115 @@
+﻿{% extends "base.html" %}
+
+{% block title %}ตรวจสอบอีเมล — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card auth-card-center">
+    <div class="auth-brand">
+      <span class="brand-mark">♪</span>
+      <span>{{ app_name }}</span>
+    </div>
+
+    <h1>ตรวจสอบอีเมลของคุณ</h1>
+    <p>เราส่งรหัส 6 หลักไปที่ <strong>{{ email|mask_email }}</strong></p>
+
+    {% if not mailer_ready and dev_code %}
+      <div class="dev-code">
+        <span class="dev-code-label">โหมดทดสอบ (ยังไม่ตั้งค่า SMTP)</span>
+        <strong>{{ dev_code }}</strong>
+        <span class="muted small">รหัสนี้แสดงบนหน้าจอแทนการส่งอีเมล</span>
+      </div>
+    {% endif %}
+
+    <form method="post" class="form" id="otp-form">
+      <div class="otp-boxes" id="otp-boxes">
+        {% for i in range(6) %}
+          <input class="otp-box" type="text" inputmode="numeric" maxlength="1"
+                 pattern="[0-9]" aria-label="หลักที่ {{ i + 1 }}"
+                 {% if loop.first %}autofocus autocomplete="one-time-code"{% endif %}>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="code" id="otp-value">
+
+      <button class="btn btn-lg btn-block btn-light" type="submit">
+        {{ 'เข้าสู่ระบบ' if is_existing else 'สร้างบัญชี' }}
+      </button>
+    </form>
+
+    <div class="auth-alt">
+      <form method="post" action="{{ url_for('main.register') }}" class="resend-form">
+        <input type="hidden" name="email" value="{{ email }}">
+        <button class="link-btn" id="resend-btn" type="submit" disabled>ส่งรหัสใหม่</button>
+      </form>
+    </div>
+
+    <p class="muted small center" style="margin-top:10px">
+      <a class="link" href="{{ url_for('main.login') }}">เข้าสู่ระบบด้วยรหัสผ่าน</a>
+    </p>
+    <p class="muted small center">
+      <a class="link" href="{{ url_for('main.register') }}">ใช้อีเมลอื่น</a>
+    </p>
+  </div>
+</div>
+
+<script>
+  // ---- ช่องกรอกรหัส 6 ช่อง: เลื่อนอัตโนมัติ / ลบย้อนกลับ / วางทั้งชุด ----
+  (function () {
+    var boxes = Array.from(document.querySelectorAll('.otp-box'));
+    var hidden = document.getElementById('otp-value');
+    var form = document.getElementById('otp-form');
+
+    function focusAt(i) { if (boxes[i]) boxes[i].focus(); }
+
+    boxes.forEach(function (box, i) {
+      box.addEventListener('input', function () {
+        box.value = box.value.replace(/\D/g, '').slice(0, 1);
+        if (box.value) focusAt(i + 1);
+      });
+      box.addEventListener('keydown', function (event) {
+        if (event.key === 'Backspace' && !box.value && i > 0) {
+          event.preventDefault();
+          boxes[i - 1].value = '';
+          focusAt(i - 1);
+        }
+        if (event.key === 'ArrowLeft' && i > 0) focusAt(i - 1);
+        if (event.key === 'ArrowRight' && i < 5) focusAt(i + 1);
+      });
+      box.addEventListener('paste', function (event) {
+        var text = (event.clipboardData || window.clipboardData).getData('text') || '';
+        var digits = text.replace(/\D/g, '').slice(0, 6);
+        if (!digits) return;
+        event.preventDefault();
+        digits.split('').forEach(function (d, k) { if (boxes[k]) boxes[k].value = d; });
+        focusAt(Math.min(digits.length, 5));
+      });
+    });
+
+    form.addEventListener('submit', function (event) {
+      var code = boxes.map(function (b) { return b.value; }).join('');
+      hidden.value = code;
+      if (code.length !== 6) {
+        event.preventDefault();
+        boxes.find(function (b) { return !b.value; }).focus();
+      }
+    });
+
+    // ---- ปุ่มส่งรหัสใหม่: นับถอยหลัง 60 วินาที ----
+    var btn = document.getElementById('resend-btn');
+    var left = 60;
+    function tick() {
+      if (left > 0) {
+        btn.disabled = true;
+        btn.textContent = 'ส่งรหัสใหม่ (' + left + ' วินาที)';
+        left -= 1;
+        setTimeout(tick, 1000);
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'ส่งรหัสใหม่';
+      }
+    }
+    tick();
+  })();
+</script>
+{% endblock %}
+

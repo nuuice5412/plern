@@ -1,0 +1,77 @@
+{# macros.html - ชิ้นส่วน HTML ที่ใช้ซ้ำหลายหน้า #}
+
+{# ไอคอนเล่น (SVG) — ใช้ร่วมกันทุกที่ที่อยากให้สามเหลี่ยมดูอยู่กลางวง
+   สามเหลี่ยมชี้ขวาจะ "หนัก" ไปทางซ้าย จึงเลื่อนจุดยอดให้ centroid = 13 (ขวากลาง 1 หน่วย)
+   เพื่อให้ตาดูสมดุล #}
+{% macro play_icon() -%}
+<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="8,5 21.5,12 8,19"/></svg>
+{%- endmacro %}
+
+{#
+  ปกเพลง: ใช้รูปจริงถ้ามี (static/img/cover_<id>.jpg จาก tools/fetch_artwork.py)
+  ถ้าไม่มี จะ fallback เป็น gradient ที่คำนวณสีจาก SongID + เครื่องหมาย ♪
+#}
+{% macro cover(song_id, extra_class='') -%}
+  {%- set url = cover_url(song_id) -%}
+  <div class="cover {{ extra_class }}" style="--h:{{ song_id|hue }}">
+    {%- if url -%}
+      <img src="{{ url }}" alt="" loading="lazy" decoding="async">
+    {%- else -%}
+      <span>♪</span>
+    {%- endif -%}
+  </div>
+{%- endmacro %}
+
+{#
+  รูปศิลปิน: รูปจริงจาก Deezer (static/img/artist_<id>.jpg) หรือตัวอักษรแรก + gradient
+#}
+{% macro artist_avatar(artist_id, artist_name, extra_class='avatar') -%}
+  {%- set url = artist_photo_url(artist_id) -%}
+  <div class="{{ extra_class }}" style="--h:{{ (artist_id * 61) % 360 }}">
+    {%- if url -%}
+      <img src="{{ url }}" alt="{{ artist_name }}" loading="lazy" decoding="async">
+    {%- else -%}
+      {{ artist_name[:1] }}
+    {%- endif -%}
+  </div>
+{%- endmacro %}
+
+{#
+  แถวเพลง 1 แถว
+  data-* ถูกอ่านโดย player.js เพื่อสร้าง queue ในหน้า
+  ต้องส่ง song ที่มี SongID, SongTitle, MainArtistName, Duration, PlayCount
+#}
+{% macro song_row(song, rowno) -%}
+<tr class="track"
+    data-id="{{ song.SongID }}"
+    data-title="{{ song.SongTitle }}"
+    data-artist="{{ song.MainArtistName }}"
+    data-duration="{{ song.Duration }}">
+  <td class="col-idx">
+    <span class="rowno">{{ rowno }}</span>
+    <button type="button" class="play-toggle" title="เล่นเพลง" aria-label="เล่น {{ song.SongTitle }}">▶</button>
+  </td>
+  <td class="col-title">
+    <a class="title-link" href="{{ url_for('main.song_detail', song_id=song.SongID) }}">
+      {{ cover(song.SongID, 'cover-sm') }}
+      <span class="tt">
+        <span class="title">{{ song.SongTitle }}</span>
+        <span class="sub">{{ song.MainArtistName }}</span>
+      </span>
+    </a>
+  </td>
+  <td class="col-right plays">{{ song.PlayCount }}</td>
+  <td class="col-right dur">{{ song.Duration|mmss }}</td>
+</tr>
+{%- endmacro %}
+
+{% macro artist_card(artist) -%}
+<a class="artist-card" href="{{ url_for('main.artist_detail', artist_id=artist.ArtistID) }}">
+  {{ artist_avatar(artist.ArtistID, artist.ArtistName) }}
+  <div class="artist-name">{{ artist.ArtistName }}</div>
+  <div class="artist-meta">
+    {% if artist.Country %}{{ artist.Country }}{% endif %}
+    {% if artist.SongCount %} · {{ artist.SongCount }} เพลง{% endif %}
+  </div>
+</a>
+{%- endmacro %}

@@ -1,0 +1,197 @@
+{#
+  base.html - โครงหน้าหลักทุกหน้า
+  ประกอบด้วย: sidebar (เมนู) + topbar (ค้นหา/ผู้ใช้) + content + player bar
+#}
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎧</text></svg>">
+</head>
+<body>
+<div class="app">
+
+  {# ---------------- sidebar ---------------- #}
+  <aside class="sidebar">
+    <a class="brand" href="{{ url_for('main.index') }}">
+      <span class="brand-mark">♪</span>
+      <span class="brand-text">{{ app_name }}</span>
+    </a>
+
+    <nav class="nav">
+      <a class="nav-item {{ 'active' if request.endpoint == 'main.index' }}" href="{{ url_for('main.index') }}">
+        <span class="ico">⌂</span> หน้าแรก
+      </a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'main.playlists' }}" href="{{ url_for('main.playlists') }}">
+        <span class="ico">☰</span> คลังเพลย์ลิสต์
+      </a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'main.history' }}" href="{{ url_for('main.history') }}">
+        <span class="ico">◷</span> ประวัติการฟัง
+      </a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="hint">
+        <strong>Database Project</strong><br>
+        SQL Server · Flask · pyodbc
+      </div>
+    </div>
+  </aside>
+
+  {# ---------------- main column ---------------- #}
+  <div class="main">
+    <header class="topbar">
+      <form class="search" role="search" action="{{ url_for('main.search') }}" method="get">
+        <span class="search-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>
+        </span>
+        <input type="search" name="q" placeholder="ค้นหาเพลง หรือศิลปิน…"
+               value="{{ request.args.get('q', '') }}" autocomplete="off">
+      </form>
+
+      <div class="user-area">
+        {% if current_user %}
+          <span class="chip">👤 {{ current_user.Username }}</span>
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('main.logout') }}">ออกจากระบบ</a>
+        {% else %}
+          <span class="auth-split">
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('main.register', intent='login') }}">เข้าสู่ระบบ</a>
+            <a class="btn btn-light btn-sm" href="{{ url_for('main.register', intent='signup') }}">สมัครสมาชิกฟรี</a>
+          </span>
+          {# จอแคบ: รวมเป็นปุ่มเดียวแบบ Tidal #}
+          <a class="btn btn-light btn-sm auth-combined"
+             href="{{ url_for('main.register') }}">เข้าสู่ระบบ / สมัครสมาชิกฟรี</a>
+        {% endif %}
+      </div>
+    </header>
+
+    <main class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flashes">
+            {% for category, message in messages %}
+              <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+{# ---------------- player bar (fixed bottom) ---------------- #}
+<div class="player" id="player" data-idle="true"
+     data-audio-base="{{ url_for('static', filename='audio/') }}"
+     data-play-url="{{ url_for('main.api_play', song_id=0).rsplit('/', 1)[0] }}/">
+
+  <div class="np">
+    <button type="button" class="np-cover-btn" id="np-expand-cover" title="ขยายหน้าจอเพลง">
+      <div class="cover cover-sm" id="np-cover" style="--h:260"><span>♪</span></div>
+      <span class="expand-hint">⤢</span>
+    </button>
+    <div class="np-meta">
+      <div class="np-title" id="np-title">ยังไม่ได้เลือกเพลง</div>
+      <div class="np-artist" id="np-artist">กด ▶ ที่รายการเพลงเพื่อเริ่มเล่น</div>
+      <span class="np-tag" id="np-tag" hidden>พรีวิว 30 วิ</span>
+    </div>
+  </div>
+
+  <div class="center">
+    <div class="controls">
+      <button type="button" class="ctl" id="btn-shuffle" title="สุ่มเพลง">⤨</button>
+      <button type="button" class="ctl" id="btn-prev" title="ก่อนหน้า" disabled>⏮</button>
+      <button type="button" class="ctl ctl-play" id="btn-play" title="เล่น/หยุด" disabled>▶</button>
+      <button type="button" class="ctl" id="btn-next" title="ถัดไป" disabled>⏭</button>
+      <button type="button" class="ctl" id="btn-repeat" title="เล่นซ้ำ">↻</button>
+    </div>
+    <div class="progress">
+      <span class="time" id="cur">0:00</span>
+      <input type="range" id="seek" min="0" max="100" value="0" step="0.1" disabled>
+      <span class="time" id="total">0:00</span>
+    </div>
+  </div>
+
+  <div class="right">
+    <span id="np-plays" class="playbadge"></span>
+    <button type="button" class="ctl" id="btn-expand" title="ขยายหน้าจอเพลง">⤢</button>
+    <span class="vol-ico">🔊</span>
+    <input type="range" id="vol" min="0" max="1" step="0.01" value="0.8" title="ระดับเสียง">
+  </div>
+
+  <audio id="audio" preload="none"></audio>
+</div>
+
+{# ---------------- now playing (เต็มจอ) ---------------- #}
+<div class="np-full" id="nowplaying" hidden aria-hidden="true">
+  <div class="np-full-bg" id="np-bg"></div>
+
+  <div class="np-full-top">
+    <a class="np-full-link" id="npf-song-link" href="#">เปิดหน้าเพลง</a>
+    <button type="button" class="np-full-tab" id="npf-credits-btn">เครดิต</button>
+    <button type="button" class="np-full-icon" id="npf-fullscreen" title="เต็มหน้าจอ">⛶</button>
+    <button type="button" class="np-full-icon" id="npf-minimize" title="ย่อกลับ">⌄</button>
+  </div>
+
+  <div class="np-full-stage">
+    <div class="cover np-full-cover" id="npf-cover"><span>♪</span></div>
+
+    {# แท็บเครดิต — แสดงในหน้านี้เลย ไม่ต้องไปหน้าเพลง #}
+    <div class="np-credits" id="np-credits" hidden>
+      <div class="np-credits-art cover" id="npc-art"><span>♪</span></div>
+      <div class="np-credits-list" id="npc-list"></div>
+    </div>
+  </div>
+
+  <div class="np-queue" id="np-queue" hidden>
+    <div class="np-queue-head">
+      <span>คิวเพลง</span>
+      <button type="button" class="np-full-icon" id="np-queue-close" title="ปิด">✕</button>
+    </div>
+    <ol class="np-queue-list" id="np-queue-list"></ol>
+  </div>
+
+  <div class="np-full-bottom">
+    <div class="np-full-info">
+      <a class="np-full-title" id="npf-title" href="#">ยังไม่ได้เลือกเพลง</a>
+      <div class="np-full-artist" id="npf-artist">—</div>
+      <div class="np-full-source" id="npf-source" hidden>♫ พรีวิว 30 วินาที · iTunes</div>
+    </div>
+
+    <div class="np-full-center">
+      <div class="controls">
+        <button type="button" class="ctl" id="npf-shuffle" title="สุ่มเพลง">⤨</button>
+        <button type="button" class="ctl" id="npf-prev" title="ก่อนหน้า">⏮</button>
+        <button type="button" class="ctl ctl-play big" id="npf-play" title="เล่น/หยุด">▶</button>
+        <button type="button" class="ctl" id="npf-next" title="ถัดไป">⏭</button>
+        <button type="button" class="ctl" id="npf-repeat" title="เล่นซ้ำ">↻</button>
+      </div>
+    </div>
+
+    <div class="np-full-right">
+      <button type="button" class="np-full-icon" id="npf-queue-btn" title="คิวเพลง">☰</button>
+      <span class="vol-ico">🔊</span>
+      <input type="range" id="npf-vol" min="0" max="1" step="0.01" value="0.8" title="ระดับเสียง">
+      <span class="np-full-pill" id="npf-pill" hidden>พรีวิว 30 วิ</span>
+    </div>
+  </div>
+
+  {# แถบเวลาเต็มความกว้าง (แบบ Tidal: เวลาชิดซ้าย/ขวาของจอ) #}
+  <div class="np-full-progress">
+    <span class="time" id="npf-cur">0:00</span>
+    <input type="range" id="npf-seek" min="0" max="100" value="0" step="0.1">
+    <span class="time" id="npf-total">0:00</span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="{{ url_for('static', filename='js/player.js') }}"></script>
+</body>
+</html>

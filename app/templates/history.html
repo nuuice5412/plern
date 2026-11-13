@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% from "macros.html" import cover %}
+
+{% block title %}ประวัติการฟัง — {{ app_name }}{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <header class="page-hero">
+    <span class="eyebrow">ฟังล่าสุด</span>
+    <h1>ประวัติการฟัง</h1>
+    <p class="page-hero-sub">
+      ข้อมูลจากตาราง <code>HISTORY</code> — แสดง 100 รายการล่าสุด
+      {% if summary %}· รวม {{ summary.TotalPlays }} ครั้ง{% endif %}
+    </p>
+  </header>
+</section>
+
+{% if summary %}
+<div class="stat-grid stat-grid-3">
+  <div class="stat">
+    <span class="stat-num">{{ summary.TotalPlays }}</span>
+    <span class="stat-label">ครั้งที่เล่นทั้งหมด</span>
+  </div>
+  <div class="stat">
+    <span class="stat-num">{{ summary.DistinctSongs }}</span>
+    <span class="stat-label">เพลงที่ฟัง (ไม่ซ้ำ)</span>
+  </div>
+  <div class="stat">
+    <span class="stat-num">{{ summary.TotalSeconds|hms }}</span>
+    <span class="stat-label">เวลารวม</span>
+  </div>
+</div>
+{% endif %}
+
+{% if top_artists %}
+<section class="block">
+  <div class="block-head"><h2>ศิลปินที่คุณฟังบ่อย</h2></div>
+  <div class="bar-list">
+    {% set max_plays = top_artists[0].Plays %}
+    {% for a in top_artists %}
+      <div class="bar-row">
+        <span class="bar-label">{{ a.MainArtistName }}</span>
+        <span class="bar-track">
+          <span class="bar-fill" style="width: {{ (a.Plays / max_plays * 100)|round(1) }}%"></span>
+        </span>
+        <span class="bar-value">{{ a.Plays }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="block">
+  <div class="block-head"><h2>รายการล่าสุด</h2></div>
+  {% if rows %}
+  <table class="tracks" id="history-tracks">
+    <thead>
+      <tr>
+        <th class="col-idx">#</th>
+        <th>เพลง</th>
+        <th>เวลาที่เล่น</th>
+        <th class="col-right">เวลาเพลง</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr class="track"
+          data-id="{{ row.SongID }}"
+          data-title="{{ row.SongTitle }}"
+          data-artist="{{ row.MainArtistName }}"
+          data-duration="{{ row.Duration }}">
+        <td class="col-idx">
+          <span class="rowno">{{ loop.index }}</span>
+          <button type="button" class="play-toggle" title="เล่นอีกครั้ง">▶</button>
+        </td>
+        <td class="col-title">
+          <a class="title-link" href="{{ url_for('main.song_detail', song_id=row.SongID) }}">
+            {{ cover(row.SongID, 'cover-sm') }}
+            <span class="tt">
+              <span class="title">{{ row.SongTitle }}</span>
+              <span class="sub">{{ row.MainArtistName }}</span>
+            </span>
+          </a>
+        </td>
+        <td class="muted">{{ row.Played_At|thaidate }}</td>
+        <td class="col-right dur">{{ row.Duration|mmss }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="empty">ยังไม่มีประวัติการฟัง — กดเล่นเพลงเพื่อเริ่มบันทึก</p>
+  {% endif %}
+</section>
+{% endblock %}
