@@ -132,16 +132,6 @@ code {
 .nav-item.active { background: var(--panel-3); color: var(--text); }
 .nav-item.active .ico { color: var(--accent-2); }
 
-.sidebar-foot { margin-top: auto; }
-.hint {
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.7;
-}
-.hint strong { color: var(--text); }
 
 .main { min-width: 0; padding-bottom: calc(var(--player-h) + 24px); }
 
@@ -863,8 +853,7 @@ input[type="range"]:disabled { opacity: .4; cursor: default; }
   }
   .nav { flex-direction: row; gap: 2px; }
   .nav-item { padding: 8px 11px; white-space: nowrap; }
-  .sidebar-foot { display: none; }
-  .hero { grid-template-columns: 1fr; }
+    .hero { grid-template-columns: 1fr; }
   .two-col { grid-template-columns: 1fr; }
   .player { grid-template-columns: 1fr auto; height: auto; padding: 10px 14px; gap: 10px; }
   .player .right { display: none; }
