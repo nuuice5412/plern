@@ -66,6 +66,7 @@
     if (!colour) return;
 
     const rect = target.getBoundingClientRect();
+    // fall back to the card centre until the pointer actually moves
     const x = (rect.left + rect.width / 2) / window.innerWidth * 100;
     const y = (rect.top + Math.min(rect.height, 280) / 2) / window.innerHeight * 100;
 
@@ -81,6 +82,22 @@
     current = target;
     show(target);
   });
+
+  // the glow chases the pointer instead of sitting on the element centre
+  let frame = 0;
+  let pointer = { x: 0, y: 0 };
+
+  document.addEventListener('mousemove', (event) => {
+    pointer.x = event.clientX / window.innerWidth * 100;
+    pointer.y = event.clientY / window.innerHeight * 100;
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      if (!layer.classList.contains('is-on')) return;
+      layer.style.setProperty('--ambient-x', `${pointer.x.toFixed(1)}%`);
+      layer.style.setProperty('--ambient-y', `${pointer.y.toFixed(1)}%`);
+    });
+  }, { passive: true });
 
   document.addEventListener('mouseout', (event) => {
     const target = event.target.closest(HOVER_SELECTOR);

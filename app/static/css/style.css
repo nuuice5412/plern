@@ -340,7 +340,10 @@ code {
   vertical-align: middle;
 }
 .tracks tbody tr.track { transition: background .12s; }
-.tracks tbody tr.track:hover { background: rgba(255, 255, 255, .045); }
+.tracks tbody tr.track:hover {
+  background: rgba(255, 255, 255, .045);
+  box-shadow: inset 2px 0 0 rgba(255, 255, 255, .55);
+}
 .tracks tbody tr.is-playing { background: rgba(255, 255, 255, .06); }
 
 .col-idx { width: 52px; position: relative; }
@@ -1974,12 +1977,12 @@ kbd {
   opacity: 0;
   transition: opacity .35s ease;
   background:
-    radial-gradient(620px 480px at var(--ambient-x, 50%) var(--ambient-y, 40%),
+    radial-gradient(760px 560px at var(--ambient-x, 50%) var(--ambient-y, 40%),
                     var(--ambient-color, transparent), transparent 72%);
-  filter: blur(40px) saturate(1.15);
+  filter: blur(46px) saturate(1.25);
   mix-blend-mode: screen;
 }
-.ambient.is-on { opacity: .28; }
+.ambient.is-on { opacity: .40; }
 
 /* keep the fixed bars above the ambient layer (do NOT touch their position) */
 .app { position: relative; z-index: 1; }
