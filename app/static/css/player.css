@@ -63,12 +63,16 @@
   transition: color .15s, transform .12s;
 }
 .ctl:hover:not(:disabled) { color: var(--text); }
+
+/* prev / play / next stand out: brighter and bigger than shuffle/repeat */
+.ctl-main { color: var(--text); }
+.ctl-main:hover:not(:disabled) { color: #fff; }
 .ctl:disabled { opacity: .35; cursor: not-allowed; }
 .ctl-play {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   background: transparent;      /* ไอคอนล้วน เหมือนปุ่มอื่น */
   color: var(--text);
   font-size: 14px;
@@ -379,7 +383,8 @@ input[type="range"]:disabled { opacity: .4; cursor: default; }
 .np-full-center { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
 .np-full .controls { gap: 24px; }
 .np-full .ctl { font-size: 17px; }
-.ctl-play.big { width: 56px; height: 56px; font-size: 17px; }
+.np-full .ctl-main { color: var(--text); }
+.ctl-play.big { width: 64px; height: 64px; font-size: 17px; }
 
 /* full-width progress bar — times pinned to the left/right edges like Tidal */
 .np-full-progress {

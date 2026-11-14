@@ -603,9 +603,10 @@
    as blue emoji squares, so every control is an SVG now)
    ===================================================================== */
 .ctl { position: relative; }
-.ctl svg { width: 20px; height: 20px; display: block; }
-.ctl-play svg { width: 20px; height: 20px; }
-.ctl-play.big svg { width: 26px; height: 26px; }
+.ctl svg { width: 18px; height: 18px; display: block; }
+.ctl-main svg { width: 22px; height: 22px; }
+.ctl-play svg { width: 24px; height: 24px; }
+.ctl-play.big svg { width: 32px; height: 32px; }
 .vol-ico { display: inline-grid; place-items: center; }
 .vol-ico svg { width: 18px; height: 18px; display: block; }
 
