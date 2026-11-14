@@ -47,7 +47,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "password.new": "รหัสผ่านใหม่",
         "password.confirm": "ยืนยันรหัสผ่านใหม่",
         "password.submit": "เปลี่ยนรหัสผ่าน",
-        "password.go_hint": "กดปุ่มเพื่อไปหน้าเปลี่ยนรหัสผ่าน",
         "password.hint": "อย่างน้อย 8 ตัวอักษร",
 
         "edit.title": "แก้ไขข้อมูลบัญชี",
@@ -120,7 +119,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "password.new": "New password",
         "password.confirm": "Confirm new password",
         "password.submit": "Change password",
-        "password.go_hint": "Open the page to change your password",
         "password.hint": "At least 8 characters",
 
         "edit.title": "Edit account",
