@@ -1,0 +1,51 @@
+[
+  {
+    "db_name": "แอ๊ด คาราบาว",
+    "deezer_name": "แอ๊ด คาราบาว",
+    "fans": 1955,
+    "file": "artist_11.jpg",
+    "exact_match": true
+  },
+  {
+    "db_name": "Daft Punk",
+    "deezer_name": "Daft Punk",
+    "fans": 5237420,
+    "file": "artist_33.jpg",
+    "exact_match": true
+  },
+  {
+    "db_name": "Saran",
+    "deezer_name": "Saran",
+    "fans": 213,
+    "file": "artist_38.jpg",
+    "exact_match": true
+  },
+  {
+    "db_name": "ปั๊บ Potato",
+    "deezer_name": "ปั๊บ Potato",
+    "fans": 97,
+    "file": "artist_41.jpg",
+    "exact_match": true
+  },
+  {
+    "db_name": "Oat Pramote",
+    "deezer_name": "Oat Pramote",
+    "fans": 93,
+    "file": "artist_44.jpg",
+    "exact_match": true
+  },
+  {
+    "db_name": "Q Flure",
+    "deezer_name": "คิว ฟลัวร์",
+    "fans": 5,
+    "file": "artist_9.jpg",
+    "exact_match": true
+  },
+  {
+    "db_name": "ออม TELEx TELEXs",
+    "deezer_name": "Telex Telexs",
+    "fans": 538,
+    "file": "artist_10.jpg",
+    "exact_match": true
+  }
+]
