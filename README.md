@@ -22,6 +22,20 @@ Needs Windows, SQL Server Express, Python 3.10+ and ODBC Driver 18 — see [§2]
 
 ---
 
+## Screenshots
+
+![Home — rails, ambient light on hover](docs/shots/home_new.png)
+
+![Full-screen player — cover tinted by the artwork](docs/shots/player_full_desktop.png)
+
+![Artists — 224 performers, real photos](docs/shots/artists_new.png)
+
+![All songs — infinite scroll, 50 rows per request](docs/shots/songs_infinite.png)
+
+<sub>Amber glow on hover is taken from the cover art itself (`app/static/js/ambient.js`).</sub>
+
+---
+
 ## 1. Features
 
 | Area | Details |
@@ -38,7 +52,7 @@ Needs Windows, SQL Server Express, Python 3.10+ and ODBC Driver 18 — see [§2]
 | Artist photos | from Deezer (500×500); artists without a trustworthy photo show a neutral person icon |
 | Theme | Pure greyscale (no accent hue) · **ambient light** that takes the colour of the cover you hover |
 | PWA | Installable on a phone (`manifest.webmanifest` + service worker); the static shell is cached, HTML is always fresh |
-| Pagination | `/songs` shows 50 per page with a pager (787 songs total) |
+| Pagination | `/songs` shows 50 per page with a pager (784 songs total) |
 | Row play button | **White, no background** — a ▶ appears on hover, the playing row shows four animated bars, and hovering the playing row turns it into ⏸ |
 | Sign up / sign in | Single password-based form (PBKDF2-HMAC-SHA256 + salt), session cookie |
 
@@ -338,7 +352,7 @@ Latest result: **54/54 passing**
 
 ## 8. Audio, artwork and artist photos
 
-All **787 songs (226 artists)** in the database are **real tracks** — Thai artists (Palmy,
+All **784 songs (226 artists)** in the database are **real tracks** — Thai artists (Palmy,
 Cocktail, Three Man Down, Bodyslam, Klear, Tattoo Colour, Polycat, Getsunova, Potato, Big Ass,
 Slot Machine, Paradox, The Toys, Jeff Satur, Bowkylion, …) and 7 international (The Weeknd,
 Dua Lipa, Coldplay, Bruno Mars, Billie Eilish, Laufey, Phum Viphurit).
@@ -399,7 +413,7 @@ to the templates; missing images fall back to a generated gradient — **the ER 
 
 ## 9. Expanding the catalog
 
-The database currently holds **226 artists / 787 songs** (Thai + international). To add more,
+The database currently holds **226 artists / 784 songs** (Thai + international). To add more,
 let `sync_catalog.py` pull them from iTunes — metadata stays correct and previews follow.
 
 ```powershell
@@ -428,7 +442,7 @@ python tools/fetch_originals.py            # download original .m4a (AAC ~271 kb
 python tools/fetch_originals.py --force    # re-download everything
 ```
 
-| Option | Command | Size (787 songs) | Quality |
+| Option | Command | Size (784 songs) | Quality |
 |---|---|---|---|
 | **Original AAC 271 kbps** | `fetch_originals.py` | **~172 MB** | **best — zero re-encoding** |
 | mp3 192 kbps | `compress_audio.py --kbps 192 --refetch-original` | ~123 MB | close, but transcoded once |

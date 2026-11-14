@@ -78,3 +78,15 @@ code {
   color: var(--muted);
   text-align: center;
 }
+
+/* Keyboard focus: visible ring for buttons/links (inputs already style :focus) */
+:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.nav-item:focus-visible,
+.chip-link:focus-visible,
+.pager-btn:focus-visible { outline-offset: 3px; }
+.player :focus-visible,
+.np-full :focus-visible { outline-color: #ffffff; }

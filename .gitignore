@@ -31,3 +31,7 @@ docs/shots/_*.png
 
 # Spotify API credentials (local only)
 .spotify.env
+
+# ---------- database backups ----------
+backups/
+*.bak
