@@ -129,6 +129,23 @@ def main() -> int:
     r = st.get(base + "/settings/nope", timeout=15)
     check("แท็บที่ไม่มีอยู่ -> 404", r.status_code == 404, str(r.status_code))
 
+    r = st.get(base + "/settings/account/change-password", timeout=15)
+    check("GET /settings/account/change-password ตอบ 200", r.status_code == 200, str(r.status_code))
+    check("หน้ารหัสผ่านมีฟอร์ม", "password-form" in r.text)
+
+    r = st.get(base + "/settings/password", timeout=15)
+    check("GET /settings/password -> 404 (ไม่ใช่แท็บ)", r.status_code == 404, str(r.status_code))
+
+    r = st.post(base + "/settings/account/change-password",
+                data={"current": "wrong-password", "new": "abcdefgh", "confirm": "abcdefgh"},
+                allow_redirects=True, timeout=20)
+    check("รหัสผ่านปัจจุบันผิด ถูกปฏิเสธ", "รหัสผ่านปัจจุบันไม่ถูกต้อง" in r.text)
+
+    r = st.post(base + "/settings/account/change-password",
+                data={"current": "demo1234", "new": "abcdefgh", "confirm": "zzzzzzzz"},
+                allow_redirects=True, timeout=20)
+    check("ยืนยันรหัสผ่านไม่ตรง ถูกปฏิเสธ", "ไม่ตรงกัน" in r.text)
+
     r = session.get(base + "/artists", timeout=15)
     check("GET /artists (ศิลปินทั้งหมด) ตอบ 200", r.status_code == 200, str(r.status_code))
     check("หน้า /artists มีการ์ดศิลปิน", r.text.count('class="artist-card"') >= 10,

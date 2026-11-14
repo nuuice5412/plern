@@ -28,6 +28,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "settings.sub": "ข้อมูลบัญชี การใช้งาน และการตั้งค่าทั่วไป",
         "settings.tab.general": "ทั่วไป",
         "settings.tab.account": "บัญชี",
+        "settings.tab.password": "รหัสผ่าน",
         "settings.tab.about": "เกี่ยวกับ",
         "settings.playback": "การเล่นเพลง",
         "settings.playback_note": "ระดับเสียงถูกจำไว้ในเบราว์เซอร์ของคุณ (localStorage) จึงคงอยู่แม้รีเฟรชหน้า",
@@ -46,6 +47,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "password.new": "รหัสผ่านใหม่",
         "password.confirm": "ยืนยันรหัสผ่านใหม่",
         "password.submit": "เปลี่ยนรหัสผ่าน",
+        "password.go_hint": "กดปุ่มเพื่อไปหน้าเปลี่ยนรหัสผ่าน",
         "password.hint": "อย่างน้อย 8 ตัวอักษร",
 
         "edit.title": "แก้ไขข้อมูลบัญชี",
@@ -99,6 +101,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "settings.sub": "Account details, usage and general preferences",
         "settings.tab.general": "General",
         "settings.tab.account": "Account",
+        "settings.tab.password": "Password",
         "settings.tab.about": "About",
         "settings.playback": "Playback",
         "settings.playback_note": "Volume is remembered in your browser (localStorage), so it survives a refresh.",
@@ -117,6 +120,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "password.new": "New password",
         "password.confirm": "Confirm new password",
         "password.submit": "Change password",
+        "password.go_hint": "Open the page to change your password",
         "password.hint": "At least 8 characters",
 
         "edit.title": "Edit account",

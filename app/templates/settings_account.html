@@ -17,30 +17,13 @@
 </section>
 
 <section class="settings-card">
-  <h2>{{ t('password.title') }}</h2>
-  <form method="post" action="{{ url_for('main.change_password') }}" class="form password-form">
-    <div class="field-row">
-      <label class="field">
-        <span>{{ t('password.current') }}</span>
-        <input type="password" name="current" required autocomplete="current-password">
-      </label>
-      <label class="field">
-        <span>{{ t('password.new') }}</span>
-        <input type="password" name="new" required minlength="8" autocomplete="new-password"
-               placeholder="{{ t('password.hint') }}">
-      </label>
-    </div>
-    <div class="field-row">
-      <label class="field">
-        <span>{{ t('password.confirm') }}</span>
-        <input type="password" name="confirm" required minlength="8" autocomplete="new-password">
-      </label>
-      <div class="field field-submit">
-        <span>&nbsp;</span>
-        <button class="btn btn-light" type="submit">{{ t('password.submit') }}</button>
-      </div>
-    </div>
-  </form>
+  <div class="card-head">
+    <h2>{{ t('password.title') }}</h2>
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('main.change_password_page') }}">
+      {{ t('password.submit') }}
+    </a>
+  </div>
+  <p class="muted">{{ t('password.go_hint') }}</p>
 </section>
 
 <section class="settings-card">

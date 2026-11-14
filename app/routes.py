@@ -766,7 +766,21 @@ def logout():
 # ---------------------------------------------------------------------------
 # Profile menu pages: account settings, help, legal
 # ---------------------------------------------------------------------------
-SETTINGS_TABS = ("general", "account", "about")
+SETTINGS_TABS = ("general", "account", "password", "about")
+
+
+def _settings_tabs(active: str) -> list[dict]:
+    """Tab bar entries: (slug, url, i18n key)"""
+    return [
+        {"slug": "general", "url": url_for("main.settings_tab", tab="general"),
+         "label": "settings.tab.general"},
+        {"slug": "account", "url": url_for("main.settings_tab", tab="account"),
+         "label": "settings.tab.account"},
+        {"slug": "password", "url": url_for("main.change_password_page"),
+         "label": "settings.tab.password"},
+        {"slug": "about", "url": url_for("main.settings_tab", tab="about"),
+         "label": "settings.tab.about"},
+    ], active
 
 
 def _settings_context(tab: str) -> dict:
@@ -792,7 +806,8 @@ def _settings_context(tab: str) -> dict:
         """,
         (g.user["UserID"],) * 4,
     )
-    return {"user": user, "stats": stats, "tab": tab, "tabs": SETTINGS_TABS}
+    entries, _ = _settings_tabs(tab)
+    return {"user": user, "stats": stats, "tab": tab, "tabs": entries}
 
 
 @bp.get("/settings")
@@ -805,7 +820,7 @@ def settings():
 @bp.get("/settings/<tab>")
 @login_required
 def settings_tab(tab: str):
-    if tab not in SETTINGS_TABS:
+    if tab not in ("general", "account", "about"):
         abort(404)
     return render_template(f"settings_{tab}.html", **_settings_context(tab))
 
@@ -904,30 +919,34 @@ def account_edit():
     return render(form)
 
 
-@bp.post("/settings/account/password")
+@bp.route("/settings/account/change-password", methods=["GET", "POST"])
 @login_required
-def change_password():
-    """Change password from its own card on the account tab"""
-    row = db.query_one("SELECT Password FROM dbo.[User] WHERE UserID = ?",
-                       (g.user["UserID"],))
-    current = request.form.get("current") or ""
-    new = request.form.get("new") or ""
-    confirm = request.form.get("confirm") or ""
+def change_password_page():
+    """Its own page (and tab) for changing the password"""
+    if request.method == "POST":
+        row = db.query_one("SELECT Password FROM dbo.[User] WHERE UserID = ?",
+                           (g.user["UserID"],))
+        current = request.form.get("current") or ""
+        new = request.form.get("new") or ""
+        confirm = request.form.get("confirm") or ""
 
-    if row is None:
-        abort(404)
-    if not verify_password(current, row["Password"]):
-        flash("รหัสผ่านปัจจุบันไม่ถูกต้อง", "error")
-    elif len(new) < 8:
-        flash("รหัสผ่านใหม่ต้องยาวอย่างน้อย 8 ตัวอักษร", "error")
-    elif new != confirm:
-        flash("รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน", "error")
-    else:
-        db.execute("UPDATE dbo.[User] SET Password = ? WHERE UserID = ?",
-                   (hash_password(new), g.user["UserID"]))
-        flash("เปลี่ยนรหัสผ่านแล้ว", "success")
+        if row is None:
+            abort(404)
+        if not verify_password(current, row["Password"]):
+            flash("รหัสผ่านปัจจุบันไม่ถูกต้อง", "error")
+        elif len(new) < 8:
+            flash("รหัสผ่านใหม่ต้องยาวอย่างน้อย 8 ตัวอักษร", "error")
+        elif new != confirm:
+            flash("รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน", "error")
+        else:
+            db.execute("UPDATE dbo.[User] SET Password = ? WHERE UserID = ?",
+                       (hash_password(new), g.user["UserID"]))
+            flash("เปลี่ยนรหัสผ่านแล้ว", "success")
+            return redirect(url_for("main.settings_tab", tab="account"))
 
-    return redirect(url_for("main.settings_tab", tab="account"))
+    entries, _ = _settings_tabs("password")
+    return render_template("settings_password.html", tab="password", tabs=entries,
+                           user=g.user, stats=None)
 
 
 @bp.post("/settings/language")

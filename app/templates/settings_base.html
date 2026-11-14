@@ -9,9 +9,9 @@
 </header>
 
 <nav class="settings-tabs">
-  {% for name in tabs %}
-    <a class="settings-tab {{ 'active' if tab == name }}"
-       href="{{ url_for('main.settings_tab', tab=name) }}">{{ t('settings.tab.' ~ name) }}</a>
+  {% for item in tabs %}
+    <a class="settings-tab {{ 'active' if tab == item.slug }}"
+       href="{{ item.url }}">{{ t(item.label) }}</a>
   {% endfor %}
 </nav>
 
