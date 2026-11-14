@@ -10,9 +10,14 @@
 
   Bump CACHE_VERSION when you want to drop the old cache entirely.
 */
-const CACHE_VERSION = 'plern-v2';
+const CACHE_VERSION = 'plern-v3';
 const SHELL = [
-  '/static/css/style.css',
+  '/static/css/base.css',
+  '/static/css/layout.css',
+  '/static/css/components.css',
+  '/static/css/forms.css',
+  '/static/css/player.css',
+  '/static/css/pages.css',
   '/static/css/mobile.css',
   '/static/css/fonts.css',
   '/static/js/player.js',

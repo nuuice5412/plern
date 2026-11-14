@@ -1,0 +1,916 @@
+/* Plern — page-specific bits (settings, pager, ambient, avatars)
+   Loaded after base.css; order matters for the cascade. */
+
+  .np-full-right { justify-content: center; }
+}
+
+
+
+
+/* ---- extra bits of the full screen (Tidal style) ---- */
+.np-full-source { color: rgba(255, 255, 255, .55); font-size: 12px; }
+.np-full-pill {
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .28);
+  background: rgba(0, 0, 0, .35);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.np-full-pill[hidden] { display: none; }
+
+.np-queue {
+  position: absolute;
+  right: 28px;
+  bottom: 120px;
+  z-index: 3;
+  width: 340px;
+  max-height: 52vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(16, 16, 24, .97);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.np-queue[hidden] { display: none; }
+.np-queue-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 8px 10px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.np-queue-list { list-style: none; margin: 0; padding: 6px; overflow-y: auto; }
+.np-queue-list li {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  padding: 7px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+.np-queue-list li:hover { background: rgba(255, 255, 255, .06); }
+.np-queue-list li.active { background: rgba(255, 255, 255, .2); }
+.q-cover { grid-row: 1 / span 2; width: 34px; height: 34px; border-radius: 5px; font-size: 13px; }
+.q-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-artist { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* =====================================================================
+   "Credits" tab in the full screen (rendered right on this page)
+   ===================================================================== */
+.np-full-tab {
+  padding: 7px 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, .74);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.np-full-tab:hover { color: #fff; background: rgba(255, 255, 255, .1); }
+.np-full-tab.is-active {
+  background: #fff;
+  color: #08080c;
+  border-color: #fff;
+}
+
+.np-credits {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 46%) minmax(0, 54%);
+  align-items: center;
+  gap: 56px;
+  max-width: 1500px;
+  margin: 0 auto;
+  z-index: 1;
+}
+.np-credits[hidden] { display: none; }
+/* .cover sets display:grid, which overrides the browser's [hidden] -> must hide it explicitly */
+.np-full-cover[hidden] { display: none; }
+.np-credits-art {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  max-width: min(56vh, 620px);
+  justify-self: end;
+  border-radius: 6px;
+  font-size: 72px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .45);
+}
+.np-credits-list {
+  max-height: 100%;
+  overflow-y: auto;
+  padding-right: 12px;
+}
+.np-credit-group { margin-bottom: 22px; }
+.np-credit-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 3px;
+}
+.np-credit-value {
+  font-size: 13px;
+  color: rgba(255, 255, 255, .72);
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .np-credits { grid-template-columns: 1fr; gap: 20px; align-content: start; overflow-y: auto; }
+  .np-credits-art { max-width: min(38vh, 320px); justify-self: center; }
+}
+
+
+/* =====================================================================
+   "Now playing" icon in track lists — animated sound bars (Spotify style)
+   no circular background: the button turns transparent while that song is playing
+   ===================================================================== */
+.play-toggle.eq-active { background: transparent; color: #fff; }
+
+.eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 15px;
+}
+.eq i {
+  display: block;
+  width: 3px;
+  height: 100%;
+  border-radius: 1.2px;
+  background: currentColor;
+  transform-origin: bottom;
+  animation: eq-bar 1s ease-in-out infinite both;
+}
+.eq i:nth-child(1) { animation-delay: 0s;    --eq-min: .30; }
+.eq i:nth-child(2) { animation-delay: .18s;  --eq-min: .55; }
+.eq i:nth-child(3) { animation-delay: .36s;  --eq-min: .20; }
+.eq i:nth-child(4) { animation-delay: .54s;  --eq-min: .70; }
+
+@keyframes eq-bar {
+  0%, 100% { transform: scaleY(var(--eq-min, .35)); }
+  50%      { transform: scaleY(1); }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* =====================================================================
+   Tidal-style page: large header + collection cards
+   ===================================================================== */
+.page-hero { margin: 4px 0 28px; }
+.page-hero h1 {
+  font-size: clamp(26px, 3.2vw, 40px);
+  line-height: 1.15;
+  letter-spacing: -.03em;
+  margin: 4px 0 8px;
+}
+.page-hero-sub { color: var(--muted); font-size: 14px; margin: 0; max-width: 70ch; }
+.page-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+
+.pill-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pill-form input[type="text"] {
+  width: min(340px, 70vw);
+  padding: 10px 16px;
+  border-radius: 999px;
+}
+
+.coll-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 24px 18px;
+}
+.coll-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.coll-art { position: relative; }
+.coll-cover {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  font-size: 42px;
+}
+.coll-play {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #fff;
+  color: #08080c;
+  font-size: 14px;
+  padding-left: 2px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .45);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .16s, transform .16s;
+}
+.coll-card:hover .coll-play { opacity: 1; transform: translateY(0); }
+.coll-card:hover .coll-name { color: var(--accent-2); }
+.coll-name {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color .15s;
+}
+.coll-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =====================================================================
+   Tidal-style auth page (login/register): black background, minimal, large type, white buttons
+   ===================================================================== */
+.auth-card {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 8px 4px;
+  max-width: 430px;
+}
+.auth-card h1 { font-size: clamp(28px, 3.4vw, 38px); letter-spacing: -.03em; }
+.auth-card > p { color: var(--muted); }
+.auth-card .form { margin-top: 26px; gap: 16px; }
+.auth-card .field > span { font-size: 12.5px; font-weight: 600; }
+.auth-card input[type="text"],
+.auth-card input[type="email"],
+.auth-card input[type="password"],
+.auth-card input[type="tel"],
+.auth-card input[type="date"],
+.auth-card select {
+  padding: 13px 16px;
+  border-radius: 8px;
+}
+.auth-wrap { padding: 40px 0 130px; }
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 26px;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -.03em;
+}
+.auth-brand .brand-mark { width: 34px; height: 34px; border-radius: 10px; }
+
+/* white primary button (Tidal style) */
+.btn-light {
+  background: #fff;
+  color: #08080c;
+  border-color: #fff;
+}
+.btn-light:hover { filter: brightness(.92); }
+
+/* =====================================================================
+   Horizontally scrolling card rail (like the Tidal home page)
+   ===================================================================== */
+.rail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.rail-tools { display: flex; gap: 8px; }
+.rail-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0 0 2px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.rail-btn:hover { background: var(--panel-3); border-color: var(--muted); }
+
+.rail { position: relative; }
+.rail-track {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  padding-bottom: 6px;
+  scrollbar-width: none;
+}
+.rail-track::-webkit-scrollbar { display: none; }
+
+.rail-card {
+  flex: 0 0 172px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+.rail-art { position: relative; display: block; }
+.rail-cover {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  font-size: 44px;
+}
+.rail-play {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding-left: 2px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #08080c;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .45);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .16s, transform .16s;
+}
+.rail-card:hover .rail-play { opacity: 1; transform: translateY(0); }
+.rail-card:hover .rail-title { color: var(--accent-2); }
+.rail-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color .15s;
+}
+.rail-sub {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rail-card-artist { align-items: center; text-align: center; }
+.rail-art-round { border-radius: 50%; }
+.rail-avatar { width: 100%; height: auto; aspect-ratio: 1 / 1; border-radius: 50%; font-size: 40px; }
+
+@media (max-width: 620px) {
+  .rail-card { flex-basis: 140px; }
+}
+
+/* card-rail "see all" button (Tidal style) + expanded state turning into a grid of cards */
+.rail-more {
+  border: 0;
+  background: none;
+  padding: 4px 2px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .15s;
+}
+.rail-more:hover { color: var(--text); }
+
+.rail.is-expanded .rail-track {
+  flex-wrap: wrap;
+  overflow-x: visible;
+  scroll-snap-type: none;
+}
+
+/* ▶ icon in card buttons (SVG) — perfectly centered in the circle, no offset glyph */
+.rail-play svg,
+.coll-play svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  display: block;
+}
+.rail-play {
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+.coll-play {
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+
+/* =====================================================================
+   Sign-up / sign-in page with email + OTP
+   ===================================================================== */
+.otp-input {
+  font-size: 26px !important;
+  letter-spacing: 10px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  padding: 14px 16px !important;
+}
+.auth-alt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+  font-size: 13px;
+}
+.link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent-2);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.link-btn:hover { text-decoration: underline; }
+
+/* box showing the code in test mode (SMTP not configured yet) */
+.dev-code {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 16px 0 4px;
+  padding: 14px 16px;
+  border: 1px dashed var(--warn);
+  border-radius: 10px;
+  background: rgba(251, 191, 36, .08);
+  text-align: center;
+}
+.dev-code-label { font-size: 11.5px; font-weight: 700; color: var(--warn); letter-spacing: .04em; }
+.dev-code strong { font-size: 30px; letter-spacing: 8px; font-variant-numeric: tabular-nums; }
+
+/* =====================================================================
+   Tidal-style sign-up page: date of birth + terms + 6 code boxes
+   ===================================================================== */
+.auth-card-center { text-align: center; }
+.auth-card select {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.auth-card select:focus { outline: none; border-color: var(--accent); }
+
+.dob-row { display: flex; gap: 10px; }
+.dob-row select { flex: 1 1 0; min-width: 0; }
+
+.check-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+}
+.check-row input {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.check-row strong { color: var(--text); font-weight: 600; }
+
+.otp-boxes { display: flex; gap: 10px; justify-content: center; }
+.otp-box {
+  width: 54px;
+  height: 62px;
+  padding: 0;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border-radius: 10px;
+  border: 1.5px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  transition: border-color .15s, box-shadow .15s;
+}
+.otp-box:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .22);
+}
+.resend-form { display: inline; }
+
+@media (max-width: 520px) {
+  .otp-box { width: 44px; height: 54px; font-size: 22px; }
+  .otp-boxes { gap: 7px; }
+}
+
+
+/* ---------------------------------------------------------------------
+   Fix for the search icon overlapping the text: the input[type="search"] rule (line ~648)
+   overrides .search input's padding-left down to 13px
+   so it has to be redeclared with higher specificity and placed last
+   --------------------------------------------------------------------- */
+.topbar .search input[type="search"] {
+  padding: 10px 14px 10px 38px;
+  border-radius: 999px;
+}
+
+/* combined auth page (Tidal style): labels hidden but still readable by screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.auth-note { margin-top: 18px; line-height: 1.7; }
+
+
+/* description under the auth page heading, matching the button that was pressed */
+.auth-intent {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin: 2px 0 4px;
+}
+
+/* sign-up form: 2 columns for field pairs + a wider card */
+.auth-card-form { max-width: 520px; }
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 560px) {
+  .field-row { grid-template-columns: 1fr; }
+}
+
+/* =====================================================================
+   Auth buttons in the topbar: wide screen = 2 buttons, narrow screen = merged into one
+   Fixed button size (doesn't stretch or shrink with the window)
+   ===================================================================== */
+.auth-split { display: flex; align-items: center; gap: 10px; }
+.auth-combined { display: none; }
+
+.user-area .btn {
+  flex: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .auth-split { display: none; }
+  .auth-combined { display: inline-flex; }
+}
+
+
+/* =====================================================================
+   Player control icons: inline SVG (iOS renders the old Unicode glyphs
+   as blue emoji squares, so every control is an SVG now)
+   ===================================================================== */
+.ctl { position: relative; }
+.ctl svg { width: 20px; height: 20px; display: block; }
+.ctl-play svg { width: 17px; height: 17px; }
+.ctl-play.big svg { width: 21px; height: 21px; }
+.vol-ico { display: inline-grid; place-items: center; }
+.vol-ico svg { width: 18px; height: 18px; display: block; }
+
+/* repeat = one: small 1 badge in the corner */
+.ctl[data-mode="one"]::after {
+  content: "1";
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent-2);
+}
+
+
+/* icons inside the now-playing top bar and round buttons */
+.np-full-icon svg { width: 20px; height: 20px; display: block; }
+.btn svg { flex: none; }
+
+/* =====================================================================
+   Touch devices have no hover: controls that only appear on :hover are
+   invisible and untappable. Always show them where hover is unavailable.
+   ===================================================================== */
+@media (hover: none), (pointer: coarse) {
+  /* tables: show the play button instead of the row number */
+  tr.track .play-toggle { display: inline-block; }
+  tr.track .rowno { display: none; }
+
+  /* cards: show the round play button permanently */
+  .rail-play,
+  .coll-play {
+    opacity: 1;
+    transform: none;
+  }
+  .rail-play { width: 40px; height: 40px; }
+  .coll-play { width: 44px; height: 44px; }
+
+  /* no hover-only colour change */
+  .rail-card:hover .rail-title,
+  .coll-card:hover .coll-name { color: inherit; }
+
+  /* the playing row keeps its sound bars (no hover swap to pause) */
+  .play-toggle.eq-active:hover .eq { display: inline-flex; }
+  .play-toggle.eq-active:hover .ico-pause { display: none; }
+}
+
+/* =====================================================================
+   Profile button (round) + dropdown menu in the topbar
+   ===================================================================== */
+.profile-menu { position: relative; }
+.profile-btn {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--panel-3);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.profile-btn:hover { border-color: var(--muted); background: var(--panel-2); }
+
+.profile-drop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  width: 268px;
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #14141c;
+  box-shadow: 0 26px 60px rgba(0, 0, 0, .6);
+  z-index: 60;
+}
+.profile-drop[hidden] { display: none; }
+.profile-drop-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 12px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.profile-drop-name { font-weight: 700; font-size: 14px; }
+.profile-drop-mail {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-item {
+  display: block;
+  padding: 11px 12px;
+  border-radius: 9px;
+  font-size: 14px;
+  color: var(--text);
+  transition: background .12s;
+}
+.profile-item:hover { background: var(--panel-3); }
+.profile-item.danger { color: #ff6b6b; }
+
+/* settings / help / terms pages */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.settings-card {
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel-2);
+  margin-bottom: 18px;
+}
+.settings-card h2 { font-size: 15px; margin: 0 0 14px; }
+.settings-card p { margin: 0; line-height: 1.7; }
+.kv { display: grid; grid-template-columns: 130px 1fr; gap: 10px 14px; margin: 0; }
+.kv dt { color: var(--muted); font-size: 13px; }
+.kv dd { margin: 0; font-size: 13.5px; }
+.kv-keys dd { font-size: 13px; }
+kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: var(--panel-3);
+  font-family: inherit;
+  font-size: 12px;
+}
+.row-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn-danger { background: #7f1d1d; border-color: #7f1d1d; color: #fff; }
+.btn-danger:hover { filter: brightness(1.15); }
+
+@media (max-width: 620px) {
+  .profile-drop { width: min(280px, calc(100vw - 28px)); right: -6px; }
+  .kv { grid-template-columns: 110px 1fr; }
+}
+
+/* Preferences row inside the settings page */
+.pref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.pref-text { display: flex; flex-direction: column; gap: 2px; }
+.pref-control { display: flex; align-items: center; gap: 10px; }
+.pref-control select {
+  width: auto;
+  min-width: 150px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--line);
+  background: var(--panel-3);
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+}
+.pref-control select:focus { outline: none; border-color: var(--accent); }
+
+/* Settings tabs (General / Account / About) */
+.settings-tabs {
+  display: flex;
+  gap: 26px;
+  margin: -6px 0 26px;
+  border-bottom: 1px solid var(--line);
+}
+.settings-tab {
+  padding: 10px 2px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .15s, border-color .15s;
+}
+.settings-tab:hover { color: var(--text); }
+.settings-tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+@media (max-width: 620px) {
+  .settings-tabs { gap: 18px; overflow-x: auto; scrollbar-width: none; }
+  .settings-tab { white-space: nowrap; }
+}
+
+/* Card header with an action button on the right */
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.card-head h2 { margin: 0; }
+.edit-form { display: flex; flex-direction: column; gap: 16px; }
+.edit-form .field input,
+.edit-form .field select { width: 100%; }
+
+/* Password card: keep the submit button aligned with the inputs */
+.password-form { margin-top: 4px; }
+.field-submit { justify-content: flex-end; }
+.field-submit .btn { width: 100%; }
+
+@media (max-width: 620px) {
+  .field-submit .btn { width: 100%; }
+}
+
+/* Logo mark (no background tile) */
+.brand-logo {
+  width: 26px;
+  height: 26px;
+  display: block;
+  flex: none;
+}
+.brand { gap: 9px; }
+.auth-brand .brand-logo { width: 30px; height: 30px; }
+@media (max-width: 620px) {
+  .brand-logo { width: 24px; height: 24px; }
+}
+
+
+/* =====================================================================
+   Ambient light — a soft glow tinted by the hovered cover art.
+   JS sets --ambient-color / --ambient-x / --ambient-y on #ambient.
+   ===================================================================== */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .35s ease;
+  background:
+    radial-gradient(760px 560px at var(--ambient-x, 50%) var(--ambient-y, 40%),
+                    var(--ambient-color, transparent), transparent 72%);
+  filter: blur(46px) saturate(1.25);
+  mix-blend-mode: screen;
+}
+.ambient.is-on { opacity: .40; }
+
+/* keep the fixed bars above the ambient layer (do NOT touch their position) */
+.app { position: relative; z-index: 1; }
+.player { z-index: 60; }
+.np-full { z-index: 90; }
+.
+/* Pager for /songs */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 26px 0 10px;
+}
+.pager-btn {
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: background .15s, border-color .15s;
+}
+.pager-btn:hover { background: var(--panel-3); border-color: var(--muted); }
+.pager-btn.is-disabled { opacity: .35; pointer-events: none; }
+.pager-info { font-size: 13px; color: var(--muted); }
+.pager-info .small { font-size: 12px; }
+
+/* the player bar stays out of the way until something is actually loaded */
+.player {
+  transition: transform .30s cubic-bezier(.22, .61, .36, 1), opacity .22s ease;
+}
+.player[data-idle="true"] {
+  transform: translateY(calc(100% + 4px));
+  opacity: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .player { transition: opacity .2s ease; }
+  .player[data-idle="true"] { transform: none; }
+}
+
+/* Artist avatar with no photo: neutral person glyph */
+.avatar-person {
+  width: 46%;
+  height: 46%;
+  opacity: .55;
+  display: block;
+}
+
+/* no photo: neutral grey disc, no hue tint */
+.avatar--empty {
+  background: var(--panel-3) !important;
+  color: #8b8b99 !important;
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}

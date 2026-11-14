@@ -148,8 +148,10 @@ def main() -> int:
 
     # CSS guard: the player bar must stay fixed (a later "position: relative"
     # rule once knocked it out of the viewport)
-    css = (pathlib.Path(__file__).resolve().parent.parent
-           / "app" / "static" / "css" / "style.css").read_text(encoding="utf-8")
+    css_dir = pathlib.Path(__file__).resolve().parent.parent / "app" / "static" / "css"
+    css = "".join((css_dir / name).read_text(encoding="utf-8")
+                   for name in ("base.css", "layout.css", "components.css",
+                                "forms.css", "player.css", "pages.css"))
     check("CSS: .player เป็น position: fixed",
           ".player {\n  position: fixed;" in css)
     check("CSS: ไม่มีกฎทับ position ของ .player",

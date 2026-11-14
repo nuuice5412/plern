@@ -27,11 +27,16 @@
 #}
 {% macro artist_avatar(artist_id, artist_name, extra_class='avatar') -%}
   {%- set url = artist_photo_url(artist_id) -%}
-  <div class="{{ extra_class }}" style="--h:{{ (artist_id * 61) % 360 }}">
+  <div class="{{ extra_class }}{{ '' if artist_photo_url(artist_id) else ' avatar--empty' }}"
+       style="--h:{{ (artist_id * 61) % 360 }}">
     {%- if url -%}
       <img src="{{ url }}" alt="{{ artist_name }}" loading="lazy" decoding="async">
     {%- else -%}
-      {{ artist_name[:1] }}
+      {#- no reliable photo: show a neutral person icon instead of guessing #}
+      <svg class="avatar-person" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <circle cx="12" cy="8.4" r="3.6"/>
+        <path d="M4.6 20.4c.5-3.5 3.6-6 7.4-6s6.9 2.5 7.4 6z"/>
+      </svg>
     {%- endif -%}
   </div>
 {%- endmacro %}
