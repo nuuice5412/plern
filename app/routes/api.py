@@ -29,7 +29,7 @@ from .common import (
     _owned_playlist_or_404,
     _playlists_of,
 )
-from .. import db
+from .. import artwork, db
 from ..auth import hash_password, login_required, verify_password
 
 # ---------------------------------------------------------------------------
@@ -143,6 +143,8 @@ def api_suggest():
     return jsonify({
         "q": raw,
         "songs": [{"id": s["SongID"], "title": s["SongTitle"],
-                   "artist": s["MainArtistName"]} for s in songs],
-        "artists": [{"id": a["ArtistID"], "name": a["ArtistName"]} for a in artists],
+                   "artist": s["MainArtistName"],
+                   "cover": artwork.cover_url(s["SongID"])} for s in songs],
+        "artists": [{"id": a["ArtistID"], "name": a["ArtistName"],
+                     "photo": artwork.artist_photo_url(a["ArtistID"])} for a in artists],
     })

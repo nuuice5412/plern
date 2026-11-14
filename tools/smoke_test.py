@@ -138,6 +138,10 @@ def main() -> int:
           f"songs={len(data.get('songs', []))} artists={len(data.get('artists', []))}")
     check("suggest จำกัดจำนวน (ไม่เกิน 10 รายการ)",
           len(data.get("songs", [])) <= 6 and len(data.get("artists", [])) <= 4)
+    check("suggest แนบรูปปกเพลงมาด้วย",
+          all(s.get("cover") for s in data.get("songs", [])))
+    check("suggest แนบรูปศิลปินมาด้วย (อย่างน้อยบางคน)",
+          any(a.get("photo") for a in data.get("artists", [])))
 
     r = session.get(base + "/api/suggest", params={"q": ""}, timeout=15)
     empty = r.json()

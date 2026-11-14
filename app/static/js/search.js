@@ -57,9 +57,12 @@
     if (data.artists.length) {
       parts.push('<div class="sg-label">ศิลปิน</div>');
       data.artists.forEach(function (artist) {
+        const face = artist.photo
+          ? '<span class="sg-ico is-photo is-round"><img src="' + artist.photo + '" alt="" loading="lazy"></span>'
+          : '<span class="sg-ico">👤</span>';
         parts.push(
           '<a class="sg-item" role="option" href="/artist/' + artist.id + '">' +
-            '<span class="sg-ico">👤</span>' +
+            face +
             '<span class="sg-text"><span class="sg-title">' + highlight(artist.name, query) + '</span>' +
             '<span class="sg-sub">ศิลปิน</span></span>' +
           '</a>');
@@ -69,9 +72,12 @@
     if (data.songs.length) {
       parts.push('<div class="sg-label">เพลง</div>');
       data.songs.forEach(function (song) {
+        const art = song.cover
+          ? '<span class="sg-ico is-photo"><img src="' + song.cover + '" alt="" loading="lazy"></span>'
+          : '<span class="sg-ico">♪</span>';
         parts.push(
           '<a class="sg-item" role="option" href="/song/' + song.id + '">' +
-            '<span class="sg-ico">♪</span>' +
+            art +
             '<span class="sg-text"><span class="sg-title">' + highlight(song.title, query) + '</span>' +
             '<span class="sg-sub">' + escapeHtml(song.artist || '') + '</span></span>' +
           '</a>');
