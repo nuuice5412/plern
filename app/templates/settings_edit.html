@@ -20,6 +20,30 @@
       </label>
     </div>
 
+    <div class="field">
+      <span>{{ t('field.dob') }}</span>
+      <div class="dob-row">
+        <select name="day" aria-label="{{ t('field.day') }}" required>
+          <option value="" disabled {{ 'selected' if not form.get('day') }}>{{ t('field.day') }}</option>
+          {% for d in days %}
+            <option value="{{ d }}" {{ 'selected' if form.get('day') == d|string }}>{{ d }}</option>
+          {% endfor %}
+        </select>
+        <select name="month" aria-label="{{ t('field.month') }}" required>
+          <option value="" disabled {{ 'selected' if not form.get('month') }}>{{ t('field.month') }}</option>
+          {% for value, label in months %}
+            <option value="{{ value }}" {{ 'selected' if form.get('month') == value|string }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <select name="year" aria-label="{{ t('field.year') }}" required>
+          <option value="" disabled {{ 'selected' if not form.get('year') }}>{{ t('field.year') }}</option>
+          {% for y in years %}
+            <option value="{{ y }}" {{ 'selected' if form.get('year') == y|string }}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
     <div class="field-row">
       <label class="field">
         <span>{{ t('field.gender') }}</span>
@@ -39,21 +63,9 @@
       </label>
     </div>
 
-    <div class="field-row">
-      <label class="field">
-        <span>{{ t('field.dob') }}</span>
-        <input type="date" name="date_of_birth" value="{{ form.get('date_of_birth', '') }}">
-      </label>
-      <label class="field">
-        <span>{{ t('field.tel') }}</span>
-        <input type="tel" name="tel" value="{{ form.get('tel', '') }}" maxlength="20">
-      </label>
-    </div>
-
     <label class="field">
-      <span>{{ t('field.new_password') }} <em>{{ t('edit.optional') }}</em></span>
-      <input type="password" name="password" minlength="8" autocomplete="new-password"
-             placeholder="{{ t('edit.password_hint') }}">
+      <span>{{ t('field.tel') }}</span>
+      <input type="tel" name="tel" value="{{ form.get('tel', '') }}" maxlength="20">
     </label>
 
     <div class="row-actions">

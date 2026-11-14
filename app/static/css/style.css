@@ -1936,3 +1936,12 @@ kbd {
 .edit-form { display: flex; flex-direction: column; gap: 16px; }
 .edit-form .field input,
 .edit-form .field select { width: 100%; }
+
+/* Password card: keep the submit button aligned with the inputs */
+.password-form { margin-top: 4px; }
+.field-submit { justify-content: flex-end; }
+.field-submit .btn { width: 100%; }
+
+@media (max-width: 620px) {
+  .field-submit .btn { width: 100%; }
+}

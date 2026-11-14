@@ -693,8 +693,8 @@ def register():
     if request.method == "POST":
         f = request.form
         username = (f.get("username") or "").strip()
-        password = f.get("password") or ""
         email = (f.get("email") or "").strip().lower()
+        password = f.get("password") or ""
         gender = (f.get("gender") or "").strip()
         country = (f.get("country") or "").strip()
         tel = (f.get("tel") or "").strip()
@@ -828,11 +828,18 @@ def account_edit():
                  ("SG", "สิงคโปร์"), ("MY", "มาเลเซีย"), ("ID", "อินโดนีเซีย")]
     genders = [("Male", "ชาย"), ("Female", "หญิง"), ("", "ไม่ระบุ")]
 
+    days = range(1, 32)
+    months = [(1, "ม.ค."), (2, "ก.พ."), (3, "มี.ค."), (4, "เม.ย."), (5, "พ.ค."), (6, "มิ.ย."),
+              (7, "ก.ค."), (8, "ส.ค."), (9, "ก.ย."), (10, "ต.ค."), (11, "พ.ย."), (12, "ธ.ค.")]
+    this_year = dt.date.today().year
+    years = range(this_year - 13, this_year - 90, -1)
+
     def render(form=None, error=None):
         if error:
             flash(error, "error")
         return render_template("settings_edit.html", form=form or {},
                                countries=countries, genders=genders,
+                               days=days, months=months, years=years,
                                **_settings_context("account"))
 
     if request.method == "POST":
@@ -842,8 +849,9 @@ def account_edit():
         gender = (f.get("gender") or "").strip()
         country = (f.get("country") or "").strip()
         tel = (f.get("tel") or "").strip()
-        password = f.get("password") or ""
-        dob_raw = f.get("date_of_birth") or ""
+        dob_day = (f.get("day") or "").strip()
+        dob_month = (f.get("month") or "").strip()
+        dob_year = (f.get("year") or "").strip()
 
         if not re.fullmatch(r"[A-Za-z0-9._-]{3,50}", username):
             return render(f, "ชื่อผู้ใช้ต้องยาว 3–50 ตัว ใช้ได้เฉพาะ a-z 0-9 . _ -")
@@ -855,17 +863,15 @@ def account_edit():
         if db.query_one("SELECT 1 AS x FROM dbo.[User] WHERE Email = ? AND UserID <> ?",
                         (email, user["UserID"])):
             return render(f, "อีเมลนี้ถูกใช้แล้ว")
-        if password and len(password) < 8:
-            return render(f, "รหัสผ่านใหม่ต้องยาวอย่างน้อย 8 ตัวอักษร")
         if tel and not re.fullmatch(r"[0-9+ -]{9,20}", tel):
             return render(f, "เบอร์โทรไม่ถูกต้อง")
 
         dob = None
-        if dob_raw:
+        if dob_day or dob_month or dob_year:
             try:
-                dob = dt.date.fromisoformat(dob_raw)
-            except ValueError:
-                return render(f, "วันเกิดไม่ถูกต้อง")
+                dob = dt.date(int(dob_year), int(dob_month), int(dob_day))
+            except (ValueError, TypeError):
+                return render(f, "กรุณาเลือกวันเกิดให้ครบ")
             if (dt.date.today() - dob).days // 365 < 13:
                 return render(f, "ต้องมีอายุ 13 ปีขึ้นไป")
 
@@ -878,11 +884,7 @@ def account_edit():
             tel or None,
         ]
         sql = ("UPDATE dbo.[User] SET Username = ?, Email = ?, Gender = ?, "
-               "Date_of_Birth = ?, Country = ?, Tel = ?")
-        if password:
-            sql += ", Password = ?"
-            params.append(hash_password(password))
-        sql += " WHERE UserID = ?"
+               "Date_of_Birth = ?, Country = ?, Tel = ? WHERE UserID = ?")
         params.append(user["UserID"])
 
         db.execute(sql, tuple(params))
@@ -893,11 +895,39 @@ def account_edit():
         "username": user["Username"],
         "email": user["Email"],
         "gender": user["Gender"] or "",
-        "date_of_birth": user["Date_of_Birth"].isoformat() if user["Date_of_Birth"] else "",
+        "day": str(user["Date_of_Birth"].day) if user["Date_of_Birth"] else "",
+        "month": str(user["Date_of_Birth"].month) if user["Date_of_Birth"] else "",
+        "year": str(user["Date_of_Birth"].year) if user["Date_of_Birth"] else "",
         "country": user["Country"] or "TH",
         "tel": user["Tel"] or "",
     }
     return render(form)
+
+
+@bp.post("/settings/account/password")
+@login_required
+def change_password():
+    """Change password from its own card on the account tab"""
+    row = db.query_one("SELECT Password FROM dbo.[User] WHERE UserID = ?",
+                       (g.user["UserID"],))
+    current = request.form.get("current") or ""
+    new = request.form.get("new") or ""
+    confirm = request.form.get("confirm") or ""
+
+    if row is None:
+        abort(404)
+    if not verify_password(current, row["Password"]):
+        flash("รหัสผ่านปัจจุบันไม่ถูกต้อง", "error")
+    elif len(new) < 8:
+        flash("รหัสผ่านใหม่ต้องยาวอย่างน้อย 8 ตัวอักษร", "error")
+    elif new != confirm:
+        flash("รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน", "error")
+    else:
+        db.execute("UPDATE dbo.[User] SET Password = ? WHERE UserID = ?",
+                   (hash_password(new), g.user["UserID"]))
+        flash("เปลี่ยนรหัสผ่านแล้ว", "success")
+
+    return redirect(url_for("main.settings_tab", tab="account"))
 
 
 @bp.post("/settings/language")
