@@ -35,10 +35,10 @@ Needs Windows, SQL Server Express, Python 3.10+ and ODBC Driver 18 — see [§2]
 | Listening history | Last 100 plays, total time, most-played artists (bar chart) |
 | Player | Play/pause, auto-advance, seek, volume, **shuffle**, **repeat (all/one)**, **full-screen now-playing** (⤢ or click the cover, `Esc` to close), spacebar |
 | Player bar | Hidden until something plays; the last track **and its position** are restored after a refresh (paused, no autoplay) |
-| Artist photos | **42 of 44** from Deezer (500×500) · the two without a trustworthy photo show a neutral person icon |
+| Artist photos | from Deezer (500×500); artists without a trustworthy photo show a neutral person icon |
 | Theme | Pure greyscale (no accent hue) · **ambient light** that takes the colour of the cover you hover |
 | PWA | Installable on a phone (`manifest.webmanifest` + service worker); the static shell is cached, HTML is always fresh |
-| Pagination | `/songs` shows 50 per page with a pager (175 songs total) |
+| Pagination | `/songs` shows 50 per page with a pager (787 songs total) |
 | Row play button | **White, no background** — a ▶ appears on hover, the playing row shows four animated bars, and hovering the playing row turns it into ⏸ |
 | Sign up / sign in | Single password-based form (PBKDF2-HMAC-SHA256 + salt), session cookie |
 
@@ -338,7 +338,7 @@ Latest result: **54/54 passing**
 
 ## 8. Audio, artwork and artist photos
 
-All **175 songs (44 artists)** in the database are **real tracks** — 37 Thai artists (Palmy,
+All **787 songs (226 artists)** in the database are **real tracks** — Thai artists (Palmy,
 Cocktail, Three Man Down, Bodyslam, Klear, Tattoo Colour, Polycat, Getsunova, Potato, Big Ass,
 Slot Machine, Paradox, The Toys, Jeff Satur, Bowkylion, …) and 7 international (The Weeknd,
 Dua Lipa, Coldplay, Bruno Mars, Billie Eilish, Laufey, Phum Viphurit).
@@ -382,7 +382,7 @@ python tools/fetch_artist_spotify.py --force     # replace current photos
 | Artist photo (better) | **Spotify Web API** | `tools/fetch_artist_spotify.py` scores the name **and** checks the candidate's top tracks against our songs, so same-name artists are rejected. Needs a free app: set `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` |
 
 Output: `app/static/img/cover_<SongID>.jpg`, `artist_<ArtistID>.jpg` and
-`app/static/img/manifest.json` (**175 covers + 42 artist photos ≈ 6.8 MB**).
+`app/static/img/manifest.json` (**786 covers + 237 artist photos ≈ 32 MB**).
 
 `app/artwork.py` reads that manifest and exposes `cover_url(song_id)` / `artist_photo_url(artist_id)`
 to the templates; missing images fall back to a generated gradient — **the ER schema is untouched**.
@@ -399,7 +399,7 @@ to the templates; missing images fall back to a generated gradient — **the ER 
 
 ## 9. Expanding the catalog
 
-The database currently holds **44 artists / 175 songs** (37 Thai + 7 international). To add more,
+The database currently holds **226 artists / 787 songs** (Thai + international). To add more,
 let `sync_catalog.py` pull them from iTunes — metadata stays correct and previews follow.
 
 ```powershell
@@ -428,7 +428,7 @@ python tools/fetch_originals.py            # download original .m4a (AAC ~271 kb
 python tools/fetch_originals.py --force    # re-download everything
 ```
 
-| Option | Command | Size (175 songs) | Quality |
+| Option | Command | Size (787 songs) | Quality |
 |---|---|---|---|
 | **Original AAC 271 kbps** | `fetch_originals.py` | **~172 MB** | **best — zero re-encoding** |
 | mp3 192 kbps | `compress_audio.py --kbps 192 --refetch-original` | ~123 MB | close, but transcoded once |
@@ -550,7 +550,7 @@ Remove-NetFirewallRule -DisplayName "Plern (Flask 5000)"
 
 You get an `https://xxxx.trycloudflare.com` URL that works anywhere. Closing the window kills the
 link and the URL changes on the next run. Speed is limited by your home upload bandwidth
-(~175 MB of audio), and anyone with the link can sign in as `demo`.
+(~770 MB of audio), and anyone with the link can sign in as `demo`.
 
 ### Option 3 — permanent hosting
 
@@ -573,14 +573,14 @@ account for long-running demos.
 
 ---
 
-## 13. Git / GitHub — 175 MB of audio via Git LFS
+## 13. Git / GitHub — 770 MB of audio via Git LFS
 
 Repository: **https://github.com/nuuice5412/plern** (public — anyone with the link can browse it)
 
 | Part | Size |
 |---|---|
 | Code / templates / images | **12.6 MB** |
-| Audio (Git LFS) | **175.3 MB** (199 files) |
+| Audio (Git LFS) | **771 MB** (786 files) |
 
 Audio is committed as **pointers**, not blobs:
 
@@ -600,11 +600,11 @@ git commit -m "your message"
 git push
 ```
 
-Git LFS uploads the audio automatically (the first push took a few minutes for ~175 MB).
+Git LFS uploads the audio automatically (the first push took a while for ~175 MB; the full catalogue is ~770 MB).
 
 ### GitHub LFS free tier
 
-1 GB storage · 1 GB bandwidth per month — this project uses ~175 MB, so every clone consumes
+1 GB storage · 1 GB bandwidth per month — this project uses ~770 MB, so budget clones carefully:
 roughly that much bandwidth.
 
 ### Cloning
