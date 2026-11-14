@@ -56,6 +56,7 @@
   // playback modes are remembered across reloads (localStorage)
   const SHUFFLE_KEY = 'plern:shuffle';
   const REPEAT_KEY = 'plern:repeat';
+  const TRACK_KEY = 'plern:track';
 
   function readFlag(key) {
     try {
@@ -78,6 +79,73 @@
     try {
       window.localStorage.setItem(key, value);
     } catch (error) { /* private mode */ }
+  }
+
+  // remember what was loaded so a refresh keeps the same song (paused)
+  function saveTrack() {
+    if (cursor < 0 || !queue.length) return;
+    const track = queue[cursor];
+    const snapshot = {
+      track: {
+        id: track.id,
+        title: track.title,
+        artist: track.artist,
+        duration: track.duration,
+        cover: track.cover,
+        href: track.href
+      },
+      queue: queue.map(function (item) {
+        return {
+          id: item.id, title: item.title, artist: item.artist,
+          duration: item.duration, cover: item.cover, href: item.href
+        };
+      }),
+      cursor: cursor,
+      time: Number(audio.currentTime) || 0
+    };
+    writeState(TRACK_KEY, JSON.stringify(snapshot));
+  }
+
+  async function restoreTrack() {
+    let saved = null;
+    try {
+      saved = JSON.parse(window.localStorage.getItem(TRACK_KEY) || 'null');
+    } catch (error) {
+      saved = null;
+    }
+    if (!saved || !saved.track || !saved.track.id) return;
+
+    await manifestReady;
+
+    const list = Array.isArray(saved.queue) && saved.queue.length ? saved.queue : [saved.track];
+    queue = list.map(function (item) {
+      const el = document.querySelector(
+        'tr.track[data-id="' + item.id + '"], [data-play-song][data-id="' + item.id + '"]'
+      );
+      return { id: item.id, title: item.title, artist: item.artist,
+               duration: item.duration, cover: item.cover, href: item.href, el: el };
+    });
+    cursor = Math.min(Math.max(0, Number(saved.cursor) || 0), queue.length - 1);
+
+    const track = queue[cursor];
+    // preload=none means metadata never arrives, so the saved position could not be applied
+    audio.preload = 'metadata';
+    audio.src = sourceFor(track.id);
+    audio.load();
+
+    const seek = Number(saved.time) || 0;
+    if (seek > 0) {
+      const applySeek = function () {
+        if (Number.isFinite(audio.duration)) {
+          audio.currentTime = Math.min(seek, Math.max(0, audio.duration - 0.4));
+        }
+      };
+      audio.addEventListener('loadedmetadata', applySeek, { once: true });
+    }
+
+    syncUI(track);              // brings the bar back and paints cover/title
+    highlight(track.el);
+    setRowPlayState(false);     // paused, not "playing"
   }
   let toastTimer = null;
 
@@ -257,6 +325,7 @@
     syncUI(track);
     highlight(track.el);
     recordPlay(track.id);
+    saveTrack();
   }
 
   function nextIndex() {
@@ -406,6 +475,22 @@
   }
   if (mini.shuffle) mini.shuffle.addEventListener('click', toggleShuffle);
   if (full.shuffle) full.shuffle.addEventListener('click', toggleShuffle);
+
+  // persist the position roughly once a second while playing
+  let lastSave = 0;
+  audio.addEventListener('timeupdate', function () {
+    if (audio.paused || cursor < 0) return;
+    const now = Date.now();
+    if (now - lastSave < 1000) return;
+    lastSave = now;
+    saveTrack();
+  });
+  if (audio) audio.addEventListener('pause', saveTrack);
+  // keep the exact position when the tab is closed or reloaded
+  window.addEventListener('pagehide', saveTrack);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') saveTrack();
+  });
 
   // restore the saved shuffle / repeat state on load
   shuffleOn = readFlag(SHUFFLE_KEY);
@@ -666,10 +751,6 @@
     event.preventDefault();
     togglePlay();
   });
+  restoreTrack();
+
 })();
-
-
-
-
-
-

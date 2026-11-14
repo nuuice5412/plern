@@ -34,6 +34,7 @@ Needs Windows, SQL Server Express, Python 3.10+ and ODBC Driver 18 — see [§2]
 | Playlists | Create / delete / add track / remove track (owner only); read-only for others |
 | Listening history | Last 100 plays, total time, most-played artists (bar chart) |
 | Player | Play/pause, auto-advance, seek, volume, **shuffle**, **repeat (all/one)**, **full-screen now-playing** (⤢ or click the cover, `Esc` to close), spacebar |
+| Player bar | Hidden until something plays; the last track **and its position** are restored after a refresh (paused, no autoplay) |
 | Theme | Pure greyscale (no accent hue) · **ambient light** that takes the colour of the cover you hover |
 | PWA | Installable on a phone (`manifest.webmanifest` + service worker); the static shell is cached, HTML is always fresh |
 | Pagination | `/songs` shows 50 per page with a pager (175 songs total) |
