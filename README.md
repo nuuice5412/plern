@@ -1,10 +1,23 @@
 # Plern — Music Streaming Web App (SQL Server + Flask)
 
+[![repo](https://img.shields.io/badge/repository-nuuice5412%2Fplern-6d28d9)](https://github.com/nuuice5412/plern)
+
 **English** | [ไทย](README.th.md)
 
 A **Database** course project: a music streaming web app running on **Microsoft SQL Server**.
 The schema follows the group's ER diagram (Peter Chen notation) and uses the real thing end to
 end — tables, constraints, indexes, views, stored procedures, triggers, and transactions.
+
+### Get it running
+
+```powershell
+git lfs install                                   # required — the audio lives in Git LFS
+git clone https://github.com/nuuice5412/plern.git
+cd plern
+.\run.ps1                                         # venv + database + audio + web server
+```
+
+Needs Windows, SQL Server Express, Python 3.10+ and ODBC Driver 18 — see [§2](#2-getting-started-3-steps).
 
 > All screenshots live in [`docs/shots/`](docs/shots) — regenerate with `python tools/screenshot.py`
 > (`player.png` is captured while a track is actually playing, so it is not in the script).
@@ -539,6 +552,8 @@ account for long-running demos.
 
 ## 13. Git / GitHub — 175 MB of audio via Git LFS
 
+Repository: **https://github.com/nuuice5412/plern** (public — anyone with the link can browse it)
+
 | Part | Size |
 |---|---|
 | Code / templates / images | **12.6 MB** |
@@ -554,14 +569,15 @@ size 1040903
 
 > `tools/bin/cloudflared.exe` (52 MB) and `.venv/` are git-ignored.
 
-### Pushing
+### Pushing (already configured)
 
 ```powershell
-git remote add origin https://github.com/<USER>/<REPO>.git
-git push -u origin main
+git add -A
+git commit -m "your message"
+git push
 ```
 
-Git LFS uploads the audio automatically (the first push takes a few minutes for ~175 MB).
+Git LFS uploads the audio automatically (the first push took a few minutes for ~175 MB).
 
 ### GitHub LFS free tier
 
@@ -572,10 +588,14 @@ roughly that much bandwidth.
 
 ```powershell
 git lfs install          # once per machine
-git clone https://github.com/<USER>/<REPO>.git
+git clone https://github.com/nuuice5412/plern.git
+cd plern
 ```
 
 Skip the audio while cloning: `GIT_LFS_SKIP_SMUDGE=1 git clone …` (then `git lfs pull` later).
+
+> **"Download ZIP" does not include the audio** — GitHub's ZIP export contains LFS pointers
+> (~130 bytes each). Always clone with Git LFS installed if you need working playback.
 
 ### Alternative without LFS
 

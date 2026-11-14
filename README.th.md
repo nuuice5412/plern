@@ -1,7 +1,11 @@
 # Plern — Music Streaming Web App (SQL Server + Flask)
 
+[![repo](https://img.shields.io/badge/repository-nuuice5412%2Fplern-6d28d9)](https://github.com/nuuice5412/plern)
 
 [English](README.md) | **ไทย**
+
+repo: **https://github.com/nuuice5412/plern** (public — ใครมีลิงก์ก็เปิดดูได้)
+
 โปรเจกต์วิชา **Database**: เว็บแอปสตรีมมิ่งเพลงที่ทำงานบนฐานข้อมูล **Microsoft SQL Server**
 โดยออกแบบ schema ตาม ER Diagram ของกลุ่ม (Peter Chen) และใช้ของจริงครบทั้ง
 ตาราง, constraint, index, view, stored procedure, trigger, transaction
@@ -583,7 +587,8 @@ size 1040903
 ```powershell
 # 1) สร้าง repo เปล่า ๆ บน GitHub (ไม่ต้องติ๊ก Add README)
 # 2) ผูก remote แล้ว push
-git remote add origin https://github.com/<USER>/<REPO>.git
+# remote ตั้งค่าไว้แล้ว (origin -> https://github.com/nuuice5412/plern.git)
+git push
 git push -u origin main
 ```
 
@@ -597,8 +602,11 @@ Git LFS จะอัปโหลดเพลงขึ้นเองอัตโ
 
 ```powershell
 git lfs install          # ติดตั้งครั้งเดียว
-git clone https://github.com/<USER>/<REPO>.git
+git clone https://github.com/nuuice5412/plern.git
 ```
+
+> **ปุ่ม "Download ZIP" ไม่มีไฟล์เพลงมาด้วย** — GitHub จะให้เป็น pointer ~130 ไบต์
+> ถ้าต้องการให้เล่นเพลงได้ ต้อง `git clone` พร้อมติดตั้ง Git LFS
 
 ถ้าไม่อยากโหลดเพลงตอนโคลน: `GIT_LFS_SKIP_SMUDGE=1 git clone ...`
 
