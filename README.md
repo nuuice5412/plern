@@ -112,6 +112,7 @@ Plern/
 │   ├── fetch_originals.py     # download original .m4a (no transcoding)
 │   ├── compress_audio.py      # transcode previews to .mp3 (PyAV/ffmpeg)
 │   ├── fetch_artwork.py       # artwork (iTunes) + artist photos (Deezer)
+│   ├── fetch_artist_spotify.py  # artist photos from Spotify (needs a free API key)
 │   ├── fetch_fonts.py         # self-hosted web fonts
 │   ├── gen_audio.py           # synthesize fallback .wav files
 │   ├── demo_backend_frontend.py  # prove: DB → backend → frontend (with screenshots)
@@ -352,12 +353,18 @@ python tools/fetch_artwork.py                 # fetch missing
 python tools/fetch_artwork.py --dry-run       # preview matching
 python tools/fetch_artwork.py --force         # re-download
 python tools/fetch_artwork.py --cover-size 600
+
+# artist photos from Spotify (optional, better accuracy)
+$env:SPOTIFY_CLIENT_ID="..."; $env:SPOTIFY_CLIENT_SECRET="..."
+python tools/fetch_artist_spotify.py --dry-run   # preview matches
+python tools/fetch_artist_spotify.py --force     # replace current photos
 ```
 
 | Asset | Source | How it is resolved |
 |---|---|---|
 | Album cover | **iTunes Lookup API** | uses the `itunesTrackId` saved by `fetch_previews.py` for an exact lookup — no guessing (requests 300×300 via `…100x100bb.jpg`) |
-| Artist photo | **Deezer Search Artist API** | search by name → keep matches ≥ 0.80 → pick the one with the most `nb_fan` (avoids same-name bands) → download `picture_big` (500×500) |
+| Artist photo (default) | **Deezer Search Artist API** | search by name → keep matches ≥ 0.80 → pick the one with the most `nb_fan` → download `picture_big` (500×500) |
+| Artist photo (better) | **Spotify Web API** | `tools/fetch_artist_spotify.py` scores the name **and** checks the candidate's top tracks against our songs, so same-name artists are rejected. Needs a free app: set `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` |
 
 Output: `app/static/img/cover_<SongID>.jpg`, `artist_<ArtistID>.jpg` and
 `app/static/img/manifest.json` (**175 covers + 42 artist photos ≈ 6.8 MB**).
