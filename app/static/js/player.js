@@ -279,6 +279,34 @@
   }
 
   // ------------------------------------------------------------------ wiring
+  // profile dropdown (topbar)
+  (function () {
+    const wrap = byId('profile-menu');
+    const button = byId('profile-btn');
+    const drop = byId('profile-drop');
+    if (!wrap || !button || !drop) return;
+
+    function close() {
+      drop.hidden = true;
+      button.setAttribute('aria-expanded', 'false');
+    }
+    function open() {
+      drop.hidden = false;
+      button.setAttribute('aria-expanded', 'true');
+    }
+
+    button.addEventListener('click', function (event) {
+      event.stopPropagation();
+      drop.hidden ? open() : close();
+    });
+    document.addEventListener('click', function (event) {
+      if (!wrap.contains(event.target)) close();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') close();
+    });
+  })();
+
   document.addEventListener('click', function (event) {
     const toggle = event.target.closest('.play-toggle');
     if (toggle) {

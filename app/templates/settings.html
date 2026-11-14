@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}ตั้งค่าบัญชี — {{ app_name }}{% endblock %}
+
+{% block content %}
+<header class="page-hero">
+  <span class="eyebrow">บัญชีของฉัน</span>
+  <h1>ตั้งค่าบัญชี</h1>
+  <p class="page-hero-sub">ข้อมูลของคุณในฐานข้อมูล (ตาราง <code>USER</code>)</p>
+</header>
+
+<div class="settings-grid">
+  <section class="settings-card">
+    <h2>ข้อมูลส่วนตัว</h2>
+    <dl class="kv">
+      <dt>ชื่อผู้ใช้</dt><dd>{{ user.Username }}</dd>
+      <dt>อีเมล</dt><dd>{{ user.Email }}</dd>
+      <dt>เพศ</dt><dd>{{ user.Gender or '—' }}</dd>
+      <dt>วันเกิด</dt><dd>{{ user.Date_of_Birth or '—' }}</dd>
+      <dt>ประเทศ</dt><dd>{{ user.Country or '—' }}</dd>
+      <dt>เบอร์โทร</dt><dd>{{ user.Tel or '—' }}</dd>
+    </dl>
+  </section>
+
+  <section class="settings-card">
+    <h2>การใช้งาน</h2>
+    <dl class="kv">
+      <dt>เพลย์ลิสต์</dt><dd>{{ stats.Playlists }} รายการ</dd>
+      <dt>เพลงในเพลย์ลิสต์</dt><dd>{{ stats.Tracks }} เพลง</dd>
+      <dt>ครั้งที่ฟัง</dt><dd>{{ stats.Plays }} ครั้ง</dd>
+      <dt>เวลาฟังรวม</dt><dd>{{ stats.Seconds|hms }}</dd>
+    </dl>
+  </section>
+</div>
+
+<section class="settings-card settings-actions">
+  <h2>บัญชี</h2>
+  <div class="row-actions">
+    <a class="btn btn-ghost" href="{{ url_for('main.history') }}">ดูประวัติการฟัง</a>
+    <a class="btn btn-ghost" href="{{ url_for('main.playlists') }}">ไปที่คลังเพลย์ลิสต์</a>
+    <a class="btn btn-danger" href="{{ url_for('main.logout') }}">ออกจากระบบ</a>
+  </div>
+</section>
+{% endblock %}

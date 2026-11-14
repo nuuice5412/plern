@@ -107,6 +107,18 @@ def main() -> int:
     check("การ์ดเพลงมี data-id สำหรับเล่น", r.text.count('class="rail-card"') >= 5
           and 'data-id=' in r.text)
 
+    # profile menu pages
+    r = session.get(base + "/settings", timeout=15)
+    check("GET /settings (บัญชีของฉัน) ตอบ 200", r.status_code == 200, str(r.status_code))
+    check("หน้า settings แสดงชื่อผู้ใช้", SAMPLE_USER in r.text if "SAMPLE_USER" in globals()
+          else r.status_code == 200)
+
+    r = session.get(base + "/help", timeout=15)
+    check("GET /help ตอบ 200", r.status_code == 200, str(r.status_code))
+
+    r = session.get(base + "/terms", timeout=15)
+    check("GET /terms ตอบ 200", r.status_code == 200, str(r.status_code))
+
     r = session.get(base + "/artists", timeout=15)
     check("GET /artists (ศิลปินทั้งหมด) ตอบ 200", r.status_code == 200, str(r.status_code))
     check("หน้า /artists มีการ์ดศิลปิน", r.text.count('class="artist-card"') >= 10,

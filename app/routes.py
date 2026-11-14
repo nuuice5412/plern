@@ -1,4 +1,4 @@
-﻿"""
+"""
 All web app routes live here.
 
 Query design notes:
@@ -761,6 +761,48 @@ def logout():
     session.clear()
     flash("ออกจากระบบแล้ว", "success")
     return redirect(url_for("main.index"))
+
+
+# ---------------------------------------------------------------------------
+# Profile menu pages: account settings, help, legal
+# ---------------------------------------------------------------------------
+@bp.get("/settings")
+@login_required
+def settings():
+    """Account page behind the round profile button"""
+    user = db.query_one(
+        "SELECT UserID, Username, Email, Gender, Date_of_Birth, Country, Tel "
+        "FROM dbo.[User] WHERE UserID = ?",
+        (g.user["UserID"],),
+    )
+    if user is None:
+        abort(404)
+
+    stats = db.query_one(
+        """
+        SELECT
+          (SELECT COUNT(*) FROM dbo.Playlist WHERE UserID = ?) AS Playlists,
+          (SELECT COUNT(*) FROM dbo.Playlist_Detail pd
+             JOIN dbo.Playlist p ON p.PlaylistID = pd.PlaylistID
+            WHERE p.UserID = ?) AS Tracks,
+          (SELECT COUNT(*) FROM dbo.History WHERE UserID = ?) AS Plays,
+          (SELECT ISNULL(SUM(s.Duration), 0) FROM dbo.History h
+             JOIN dbo.Song s ON s.SongID = h.SongID
+            WHERE h.UserID = ?) AS Seconds
+        """,
+        (g.user["UserID"],) * 4,
+    )
+    return render_template("settings.html", user=user, stats=stats)
+
+
+@bp.get("/help")
+def help_page():
+    return render_template("help.html")
+
+
+@bp.get("/terms")
+def terms():
+    return render_template("terms.html")
 
 
 # ---------------------------------------------------------------------------

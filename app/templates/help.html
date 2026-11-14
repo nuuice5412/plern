@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}ช่วยเหลือ — {{ app_name }}{% endblock %}
+
+{% block content %}
+<header class="page-hero">
+  <span class="eyebrow">ช่วยเหลือ</span>
+  <h1>คู่มือการใช้งาน</h1>
+  <p class="page-hero-sub">คีย์ลัดและวิธีใช้เครื่องเล่นเพลง</p>
+</header>
+
+<section class="settings-card">
+  <h2>คีย์ลัด</h2>
+  <dl class="kv kv-keys">
+    <dt>เล่น / หยุด</dt><dd><kbd>Space</kbd></dd>
+    <dt>ขยายหน้าจอเพลง</dt><dd><kbd>Esc</kbd> เพื่อย่อ</dd>
+    <dt>เปิดแท็บเครดิต</dt><dd>ปุ่ม “เครดิต” บนหน้าจอเต็ม</dd>
+    <dt>คิวเพลง</dt><dd>ปุ่ม <kbd>☰</kbd> มุมขวาล่าง</dd>
+  </dl>
+</section>
+
+<section class="settings-card">
+  <h2>คำถามที่พบบ่อย</h2>
+  <dl class="kv">
+    <dt>เพลงยาวแค่ 30 วินาที?</dt>
+    <dd>ไฟล์ที่ใช้เป็นพรีวิวจาก iTunes (ข้อจำกัดด้านลิขสิทธิ์) ความยาวจริงของเพลงแสดงอยู่บนหน้าเพลง</dd>
+    <dt>ทำไมบางศิลปินไม่มีรูป?</dt>
+    <dd>รูปดึงจาก Deezer ถ้าหาไม่เจอจะแสดงเป็นวงกลมไล่สีพร้อมตัวอักษรแรกแทน</dd>
+    <dt>เครดิตเพลงมาจากไหน?</dt>
+    <dd>นักร้องและศิลปินรับเชิญจาก iTunes · นักแต่งเพลงจาก MusicBrainz (เฉพาะเพลงที่ฐานข้อมูลนั้นมี)</dd>
+    <dt>เล่นต่อเนื่องไม่ได้?</dt>
+    <dd>กดปุ่มสุ่ม/เล่นซ้ำบนแถบเล่นเพลงเพื่อเปิดโหมดตามต้องการ</dd>
+  </dl>
+</section>
+{% endblock %}

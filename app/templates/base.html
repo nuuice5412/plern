@@ -57,8 +57,24 @@
 
       <div class="user-area">
         {% if current_user %}
-          <span class="chip">👤 {{ current_user.Username }}</span>
-          <a class="btn btn-ghost btn-sm" href="{{ url_for('main.logout') }}">ออกจากระบบ</a>
+          <div class="profile-menu" id="profile-menu">
+            <button type="button" class="profile-btn" id="profile-btn"
+                    aria-haspopup="true" aria-expanded="false"
+                    title="{{ current_user.Username }}">
+              <span>{{ current_user.Username[:1]|upper }}</span>
+            </button>
+
+            <div class="profile-drop" id="profile-drop" hidden>
+              <div class="profile-drop-head">
+                <span class="profile-drop-name">{{ current_user.Username }}</span>
+                <span class="profile-drop-mail">{{ current_user.Email }}</span>
+              </div>
+              <a class="profile-item" href="{{ url_for('main.settings') }}">ตั้งค่าบัญชี</a>
+              <a class="profile-item" href="{{ url_for('main.help_page') }}">ช่วยเหลือ</a>
+              <a class="profile-item" href="{{ url_for('main.terms') }}">ข้อกำหนดและความเป็นส่วนตัว</a>
+              <a class="profile-item danger" href="{{ url_for('main.logout') }}">ออกจากระบบ</a>
+            </div>
+          </div>
         {% else %}
           <span class="auth-split">
             <a class="btn btn-ghost btn-sm" href="{{ url_for('main.login') }}">เข้าสู่ระบบ</a>
