@@ -1989,3 +1989,26 @@ kbd {
 .player { z-index: 60; }
 .np-full { z-index: 90; }
 .
+/* Pager for /songs */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 26px 0 10px;
+}
+.pager-btn {
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: background .15s, border-color .15s;
+}
+.pager-btn:hover { background: var(--panel-3); border-color: var(--muted); }
+.pager-btn.is-disabled { opacity: .35; pointer-events: none; }
+.pager-info { font-size: 13px; color: var(--muted); }
+.pager-info .small { font-size: 12px; }

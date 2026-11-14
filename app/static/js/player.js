@@ -52,6 +52,33 @@
   let cursor = -1;
   let shuffleOn = false;
   let repeatMode = 'off';           // off | all | one
+
+  // playback modes are remembered across reloads (localStorage)
+  const SHUFFLE_KEY = 'plern:shuffle';
+  const REPEAT_KEY = 'plern:repeat';
+
+  function readFlag(key) {
+    try {
+      return window.localStorage.getItem(key) === '1';
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function readMode() {
+    try {
+      const value = window.localStorage.getItem(REPEAT_KEY);
+      return ['off', 'all', 'one'].includes(value) ? value : 'off';
+    } catch (error) {
+      return 'off';
+    }
+  }
+
+  function writeState(key, value) {
+    try {
+      window.localStorage.setItem(key, value);
+    } catch (error) { /* private mode */ }
+  }
   let toastTimer = null;
 
   // ---- manifest (tells which song uses which audio file) ----
@@ -372,6 +399,7 @@
   // shuffle
   function toggleShuffle() {
     shuffleOn = !shuffleOn;
+    writeState(SHUFFLE_KEY, shuffleOn ? '1' : '0');
     setActive(mini.shuffle, shuffleOn);
     setActive(full.shuffle, shuffleOn);
     toast(shuffleOn ? 'สุ่มเพลง: เปิด' : 'สุ่มเพลง: ปิด');
@@ -379,9 +407,21 @@
   if (mini.shuffle) mini.shuffle.addEventListener('click', toggleShuffle);
   if (full.shuffle) full.shuffle.addEventListener('click', toggleShuffle);
 
+  // restore the saved shuffle / repeat state on load
+  shuffleOn = readFlag(SHUFFLE_KEY);
+  setActive(mini.shuffle, shuffleOn);
+  setActive(full.shuffle, shuffleOn);
+  repeatMode = readMode();
+  setActive(mini.repeat, repeatMode !== 'off');
+  setActive(full.repeat, repeatMode !== 'off');
+  [mini.repeat, full.repeat].forEach(function (btn) {
+    if (btn) btn.dataset.mode = repeatMode;
+  });
+
   // repeat: off -> all -> one
   function cycleRepeat() {
     repeatMode = repeatMode === 'off' ? 'all' : repeatMode === 'all' ? 'one' : 'off';
+    writeState(REPEAT_KEY, repeatMode);
     setActive(mini.repeat, repeatMode !== 'off');
     setActive(full.repeat, repeatMode !== 'off');
     [mini.repeat, full.repeat].forEach(function (btn) {
@@ -572,8 +612,9 @@
     });
   });
 
-  // volume: remember the value in localStorage so it survives a page refresh
+  // volume + playback modes: remember them in localStorage across refreshes
   const VOLUME_KEY = 'plern:volume';
+
 
   function readSavedVolume() {
     try {

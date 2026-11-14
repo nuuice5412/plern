@@ -17,11 +17,13 @@ import pyodbc
 from flask import (
     Blueprint,
     abort,
+    current_app,
     flash,
     g,
     jsonify,
     redirect,
     render_template,
+    send_from_directory,
     request,
     session,
     url_for,
@@ -70,18 +72,7 @@ def _owned_playlist_or_404(playlist_id: int) -> dict:
 def index():
     top_songs = db.query("SELECT TOP (20) * FROM dbo.vw_TopSongs")
 
-    artists = db.query(
-        """
-        SELECT TOP (20) a.ArtistID, a.ArtistName, a.Country, x.SongCount, x.TotalPlays
-        FROM dbo.Artist AS a
-        OUTER APPLY (
-            SELECT COUNT(*) AS SongCount, ISNULL(SUM(s.PlayCount), 0) AS TotalPlays
-            FROM (SELECT DISTINCT SongID FROM dbo.Song_Artist_Role WHERE ArtistID = a.ArtistID) AS d
-            JOIN dbo.Song AS s ON s.SongID = d.SongID
-        ) AS x
-        ORDER BY x.TotalPlays DESC, a.ArtistName
-        """
-    )
+    artists = db.query(artist_list_sql(20))
 
     new_releases = db.query(
         """
@@ -95,7 +86,9 @@ def index():
     stats = db.query_one(
         """
         SELECT (SELECT COUNT(*) FROM dbo.Song)     AS Songs,
-               (SELECT COUNT(*) FROM dbo.Artist)   AS Artists,
+               (SELECT COUNT(DISTINCT sar.ArtistID) FROM dbo.Song_Artist_Role sar
+                    JOIN dbo.[Role] r ON r.RoleID = sar.RoleID
+                   WHERE r.[Role] IN (N'Singer', N'Featured')) AS Artists,
                (SELECT COUNT(*) FROM dbo.History)  AS Plays,
                (SELECT COUNT(*) FROM dbo.Playlist) AS Playlists
         """
@@ -130,39 +123,75 @@ def index():
 # ---------------------------------------------------------------------------
 # "View all" page (Tidal-style View all)
 # ---------------------------------------------------------------------------
-ARTIST_LIST_SQL = """
-    SELECT a.ArtistID, a.ArtistName, a.Country, x.SongCount, x.TotalPlays
+# Only artists who actually perform (Singer / Featured). Songwriters that came from
+# MusicBrainz still appear on the song pages, but they are not "artists" in the listing.
+def artist_list_sql(limit: int | None = None) -> str:
+    top = f"TOP ({int(limit)}) " if limit else ""
+    return f"""
+    WITH performed AS (
+        SELECT sar.ArtistID, sar.SongID
+        FROM dbo.Song_Artist_Role AS sar
+        JOIN dbo.[Role] AS r ON r.RoleID = sar.RoleID
+        WHERE r.[Role] IN (N'Singer', N'Featured')
+        GROUP BY sar.ArtistID, sar.SongID
+    )
+    SELECT {top}a.ArtistID, a.ArtistName, a.Country,
+           COUNT(p.SongID) AS SongCount,
+           ISNULL(SUM(s.PlayCount), 0) AS TotalPlays
     FROM dbo.Artist AS a
-    OUTER APPLY (
-        SELECT COUNT(*) AS SongCount, ISNULL(SUM(s.PlayCount), 0) AS TotalPlays
-        FROM (SELECT DISTINCT SongID FROM dbo.Song_Artist_Role WHERE ArtistID = a.ArtistID) AS d
-        JOIN dbo.Song AS s ON s.SongID = d.SongID
-    ) AS x
-    ORDER BY x.TotalPlays DESC, a.ArtistName
-"""
+    JOIN performed AS p ON p.ArtistID = a.ArtistID
+    JOIN dbo.Song AS s ON s.SongID = p.SongID
+    GROUP BY a.ArtistID, a.ArtistName, a.Country
+    ORDER BY TotalPlays DESC, a.ArtistName
+    """
+
+
+ARTIST_LIST_SQL = artist_list_sql()
+
+
+SONGS_PER_PAGE = 50
 
 
 @bp.get("/songs")
 def all_songs():
-    """All songs — ?sort=new orders by release date"""
-    if (request.args.get("sort") or "top").lower() == "new":
-        songs = db.query(
-            """
-            SELECT TOP (300) * FROM dbo.vw_SongDetail
-            WHERE Released_Date IS NOT NULL
-            ORDER BY Released_Date DESC, SongID DESC
-            """
-        )
-        heading = "เพลงออกใหม่"
-        subtitle = "เรียงตามวันที่วางจำหน่าย — ทั้งหมด %d เพลง" % len(songs)
-    else:
-        songs = db.query(
-            "SELECT TOP (300) * FROM dbo.vw_SongDetail ORDER BY PlayCount DESC, SongTitle"
-        )
-        heading = "เพลงทั้งหมด"
-        subtitle = "เรียงตามจำนวนครั้งที่ถูกเล่น — ทั้งหมด %d เพลง" % len(songs)
+    """All songs, paginated (50 per page). ?sort=new orders by release date."""
+    sort = (request.args.get("sort") or "top").lower()
+    page = max(1, int(request.args.get("page") or 1))
 
-    return render_template("songs.html", songs=songs, heading=heading, subtitle=subtitle)
+    if sort == "new":
+        total = db.query_one(
+            "SELECT COUNT(*) AS n FROM dbo.vw_SongDetail WHERE Released_Date IS NOT NULL"
+        )["n"]
+        heading = "เพลงออกใหม่"
+        order = "ORDER BY Released_Date DESC, SongID DESC"
+        where = "WHERE Released_Date IS NOT NULL"
+    else:
+        total = db.query_one("SELECT COUNT(*) AS n FROM dbo.vw_SongDetail")["n"]
+        heading = "เพลงทั้งหมด"
+        order = "ORDER BY PlayCount DESC, SongTitle"
+        where = ""
+
+    pages = max(1, -(-total // SONGS_PER_PAGE))
+    page = min(page, pages)
+    offset = (page - 1) * SONGS_PER_PAGE
+
+    songs = db.query(
+        f"SELECT * FROM dbo.vw_SongDetail {where} {order} "
+        "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
+        (offset, SONGS_PER_PAGE),
+    )
+
+    return render_template(
+        "songs.html",
+        songs=songs,
+        heading=heading,
+        subtitle=f"ทั้งหมด {total} เพลง" if sort != "new" else f"ทั้งหมด {total} เพลง (ใหม่สุดก่อน)",
+        page=page,
+        pages=pages,
+        total=total,
+        start=offset + 1,
+        sort=sort,
+    )
 
 
 @bp.get("/artists")
@@ -970,6 +999,17 @@ def help_page():
 @bp.get("/terms")
 def terms():
     return render_template("terms.html")
+
+
+@bp.get("/sw.js")
+def service_worker():
+    """Serve the service worker from the root so it can control the whole site"""
+    response = send_from_directory(
+        current_app.static_folder, "sw.js", mimetype="application/javascript"
+    )
+    response.headers["Service-Worker-Allowed"] = "/"
+    response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 # ---------------------------------------------------------------------------

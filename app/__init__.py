@@ -15,6 +15,7 @@ from .config import Config
 mimetypes.add_type("audio/mp4", ".m4a")
 mimetypes.add_type("audio/mpeg", ".mp3")
 mimetypes.add_type("font/woff2", ".woff2")
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 mimetypes.add_type("font/woff", ".woff")
 
 THAI_MONTHS = [

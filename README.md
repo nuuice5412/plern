@@ -35,6 +35,8 @@ Needs Windows, SQL Server Express, Python 3.10+ and ODBC Driver 18 — see [§2]
 | Listening history | Last 100 plays, total time, most-played artists (bar chart) |
 | Player | Play/pause, auto-advance, seek, volume, **shuffle**, **repeat (all/one)**, **full-screen now-playing** (⤢ or click the cover, `Esc` to close), spacebar |
 | Theme | Pure greyscale (no accent hue) · **ambient light** that takes the colour of the cover you hover |
+| PWA | Installable on a phone (`manifest.webmanifest` + service worker); the static shell is cached, HTML is always fresh |
+| Pagination | `/songs` shows 50 per page with a pager (175 songs total) |
 | Row play button | **White, no background** — a ▶ appears on hover, the playing row shows four animated bars, and hovering the playing row turns it into ⏸ |
 | Sign up / sign in | Single password-based form (PBKDF2-HMAC-SHA256 + salt), session cookie |
 
