@@ -1,0 +1,65 @@
+{% extends "settings_base.html" %}
+
+{% block settings_content %}
+<section class="settings-card">
+  <div class="card-head">
+    <h2>{{ t('edit.title') }}</h2>
+    <a class="link small" href="{{ url_for('main.settings_tab', tab='account') }}">{{ t('edit.back') }}</a>
+  </div>
+
+  <form method="post" class="form edit-form">
+    <div class="field-row">
+      <label class="field">
+        <span>{{ t('field.username') }}</span>
+        <input type="text" name="username" value="{{ form.get('username', '') }}"
+               required minlength="3" maxlength="50" pattern="[A-Za-z0-9._\-]{3,50}">
+      </label>
+      <label class="field">
+        <span>{{ t('field.email') }}</span>
+        <input type="email" name="email" value="{{ form.get('email', '') }}" required>
+      </label>
+    </div>
+
+    <div class="field-row">
+      <label class="field">
+        <span>{{ t('field.gender') }}</span>
+        <select name="gender">
+          {% for value, label in genders %}
+            <option value="{{ value }}" {{ 'selected' if form.get('gender', '') == value }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="field">
+        <span>{{ t('field.country') }}</span>
+        <select name="country">
+          {% for value, label in countries %}
+            <option value="{{ value }}" {{ 'selected' if form.get('country', 'TH') == value }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+
+    <div class="field-row">
+      <label class="field">
+        <span>{{ t('field.dob') }}</span>
+        <input type="date" name="date_of_birth" value="{{ form.get('date_of_birth', '') }}">
+      </label>
+      <label class="field">
+        <span>{{ t('field.tel') }}</span>
+        <input type="tel" name="tel" value="{{ form.get('tel', '') }}" maxlength="20">
+      </label>
+    </div>
+
+    <label class="field">
+      <span>{{ t('field.new_password') }} <em>{{ t('edit.optional') }}</em></span>
+      <input type="password" name="password" minlength="8" autocomplete="new-password"
+             placeholder="{{ t('edit.password_hint') }}">
+    </label>
+
+    <div class="row-actions">
+      <button class="btn btn-light" type="submit">{{ t('edit.save') }}</button>
+      <a class="btn btn-ghost" href="{{ url_for('main.settings_tab', tab='account') }}">{{ t('edit.cancel') }}</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

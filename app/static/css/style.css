@@ -1923,3 +1923,16 @@ kbd {
   .settings-tabs { gap: 18px; overflow-x: auto; scrollbar-width: none; }
   .settings-tab { white-space: nowrap; }
 }
+
+/* Card header with an action button on the right */
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.card-head h2 { margin: 0; }
+.edit-form { display: flex; flex-direction: column; gap: 16px; }
+.edit-form .field input,
+.edit-form .field select { width: 100%; }

@@ -2,7 +2,10 @@
 
 {% block settings_content %}
 <section class="settings-card">
-  <h2>{{ t('settings.account') }}</h2>
+  <div class="card-head">
+    <h2>{{ t('settings.account') }}</h2>
+    <a class="btn btn-light btn-sm" href="{{ url_for('main.account_edit') }}">{{ t('settings.manage') }}</a>
+  </div>
   <dl class="kv">
     <dt>{{ t('field.username') }}</dt><dd>{{ user.Username }}</dd>
     <dt>{{ t('field.email') }}</dt><dd>{{ user.Email }}</dd>

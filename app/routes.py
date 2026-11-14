@@ -810,6 +810,96 @@ def settings_tab(tab: str):
     return render_template(f"settings_{tab}.html", **_settings_context(tab))
 
 
+@bp.route("/settings/account/edit", methods=["GET", "POST"])
+@login_required
+def account_edit():
+    """Separate page for editing the USER row (username, email, profile fields)"""
+    user = db.query_one(
+        "SELECT UserID, Username, Email, Gender, Date_of_Birth, Country, Tel "
+        "FROM dbo.[User] WHERE UserID = ?",
+        (g.user["UserID"],),
+    )
+    if user is None:
+        abort(404)
+
+    countries = [("TH", "ไทย"), ("US", "สหรัฐอเมริกา"), ("GB", "อังกฤษ"),
+                 ("JP", "ญี่ปุ่น"), ("KR", "เกาหลีใต้"), ("CN", "จีน"),
+                 ("VN", "เวียดนาม"), ("LA", "ลาว"), ("MM", "เมียนมา"),
+                 ("SG", "สิงคโปร์"), ("MY", "มาเลเซีย"), ("ID", "อินโดนีเซีย")]
+    genders = [("Male", "ชาย"), ("Female", "หญิง"), ("", "ไม่ระบุ")]
+
+    def render(form=None, error=None):
+        if error:
+            flash(error, "error")
+        return render_template("settings_edit.html", form=form or {},
+                               countries=countries, genders=genders,
+                               **_settings_context("account"))
+
+    if request.method == "POST":
+        f = request.form
+        username = (f.get("username") or "").strip()
+        email = (f.get("email") or "").strip().lower()
+        gender = (f.get("gender") or "").strip()
+        country = (f.get("country") or "").strip()
+        tel = (f.get("tel") or "").strip()
+        password = f.get("password") or ""
+        dob_raw = f.get("date_of_birth") or ""
+
+        if not re.fullmatch(r"[A-Za-z0-9._-]{3,50}", username):
+            return render(f, "ชื่อผู้ใช้ต้องยาว 3–50 ตัว ใช้ได้เฉพาะ a-z 0-9 . _ -")
+        if db.query_one("SELECT 1 AS x FROM dbo.[User] WHERE Username = ? AND UserID <> ?",
+                        (username, user["UserID"])):
+            return render(f, "ชื่อผู้ใช้นี้ถูกใช้แล้ว")
+        if not EMAIL_RE.match(email):
+            return render(f, "อีเมลไม่ถูกต้องครับ")
+        if db.query_one("SELECT 1 AS x FROM dbo.[User] WHERE Email = ? AND UserID <> ?",
+                        (email, user["UserID"])):
+            return render(f, "อีเมลนี้ถูกใช้แล้ว")
+        if password and len(password) < 8:
+            return render(f, "รหัสผ่านใหม่ต้องยาวอย่างน้อย 8 ตัวอักษร")
+        if tel and not re.fullmatch(r"[0-9+ -]{9,20}", tel):
+            return render(f, "เบอร์โทรไม่ถูกต้อง")
+
+        dob = None
+        if dob_raw:
+            try:
+                dob = dt.date.fromisoformat(dob_raw)
+            except ValueError:
+                return render(f, "วันเกิดไม่ถูกต้อง")
+            if (dt.date.today() - dob).days // 365 < 13:
+                return render(f, "ต้องมีอายุ 13 ปีขึ้นไป")
+
+        params = [
+            username,
+            email,
+            gender if gender in ("Male", "Female") else None,
+            dob.isoformat() if dob else None,
+            country if country in {c for c, _ in countries} else None,
+            tel or None,
+        ]
+        sql = ("UPDATE dbo.[User] SET Username = ?, Email = ?, Gender = ?, "
+               "Date_of_Birth = ?, Country = ?, Tel = ?")
+        if password:
+            sql += ", Password = ?"
+            params.append(hash_password(password))
+        sql += " WHERE UserID = ?"
+        params.append(user["UserID"])
+
+        db.execute(sql, tuple(params))
+        flash("บันทึกข้อมูลบัญชีแล้ว / Account updated", "success")
+        return redirect(url_for("main.settings_tab", tab="account"))
+
+    form = {
+        "username": user["Username"],
+        "email": user["Email"],
+        "gender": user["Gender"] or "",
+        "date_of_birth": user["Date_of_Birth"].isoformat() if user["Date_of_Birth"] else "",
+        "country": user["Country"] or "TH",
+        "tel": user["Tel"] or "",
+    }
+    return render(form)
+
+
 @bp.post("/settings/language")
 @login_required
 def set_language():
