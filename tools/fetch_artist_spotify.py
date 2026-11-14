@@ -138,6 +138,20 @@ def main() -> int:
 
     client_id = os.environ.get("SPOTIFY_CLIENT_ID", "").strip()
     client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET", "").strip()
+
+    # optional: keep the credentials in .spotify.env (git-ignored) instead of the environment
+    env_file = ROOT / ".spotify.env"
+    if (not client_id or not client_secret) and env_file.exists():
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            if "=" not in line or line.strip().startswith("#"):
+                continue
+            key, _, value = line.partition("=")
+            key = key.strip().upper()
+            value = value.strip().strip('"').strip("'")
+            if key == "SPOTIFY_CLIENT_ID":
+                client_id = client_id or value
+            elif key == "SPOTIFY_CLIENT_SECRET":
+                client_secret = client_secret or value
     if not client_id or not client_secret:
         print("ยังไม่ได้ตั้งค่า SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET\n")
         print("1) เปิด https://developer.spotify.com/dashboard แล้วกด Create app")

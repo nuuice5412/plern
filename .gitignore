@@ -28,3 +28,6 @@ docs/shots/_*.png
 # ---------- หมายเหตุเรื่องเพลง ----------
 # ไฟล์เสียง .m4a / .wav ถูกเก็บด้วย Git LFS (ดู .gitattributes)
 # GitHub ให้พื้นที่ฟรี 1 GB — โปรเจกต์นี้ใช้ ~180 MB
+
+# Spotify API credentials (local only)
+.spotify.env
