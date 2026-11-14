@@ -1899,3 +1899,27 @@ kbd {
   font-size: 13.5px;
 }
 .pref-control select:focus { outline: none; border-color: var(--accent); }
+
+/* Settings tabs (General / Account / About) */
+.settings-tabs {
+  display: flex;
+  gap: 26px;
+  margin: -6px 0 26px;
+  border-bottom: 1px solid var(--line);
+}
+.settings-tab {
+  padding: 10px 2px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .15s, border-color .15s;
+}
+.settings-tab:hover { color: var(--text); }
+.settings-tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+@media (max-width: 620px) {
+  .settings-tabs { gap: 18px; overflow-x: auto; scrollbar-width: none; }
+  .settings-tab { white-space: nowrap; }
+}

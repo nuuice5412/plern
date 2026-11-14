@@ -107,17 +107,27 @@ def main() -> int:
     check("การ์ดเพลงมี data-id สำหรับเล่น", r.text.count('class="rail-card"') >= 5
           and 'data-id=' in r.text)
 
-    # profile menu pages
-    r = session.get(base + "/settings", timeout=15)
-    check("GET /settings (บัญชีของฉัน) ตอบ 200", r.status_code == 200, str(r.status_code))
-    check("หน้า settings แสดงชื่อผู้ใช้", SAMPLE_USER in r.text if "SAMPLE_USER" in globals()
-          else r.status_code == 200)
+    # settings sub-pages (tabs) - use a dedicated signed-in client so the
+    # guest-session tests further down are unaffected
+    st = requests.Session()
+    st.post(base + "/login", data={"identity": "demo", "password": "demo1234"},
+            allow_redirects=True, timeout=20)
 
-    r = session.get(base + "/help", timeout=15)
-    check("GET /help ตอบ 200", r.status_code == 200, str(r.status_code))
+    r = st.get(base + "/settings", allow_redirects=False, timeout=15)
+    location = r.headers.get("Location", "")
+    check("GET /settings redirect ไป /settings/general",
+          r.status_code in (301, 302) and location.endswith("/settings/general"),
+          f"{r.status_code} {location}")
 
-    r = session.get(base + "/terms", timeout=15)
-    check("GET /terms ตอบ 200", r.status_code == 200, str(r.status_code))
+    for tab in ("general", "account", "about"):
+        r = st.get(f"{base}/settings/{tab}", timeout=15)
+        check(f"GET /settings/{tab} ตอบ 200", r.status_code == 200, str(r.status_code))
+
+    r = st.get(base + "/settings/account", timeout=15)
+    check("หน้า account แสดงอีเมลผู้ใช้", "demo@example.com" in r.text)
+
+    r = st.get(base + "/settings/nope", timeout=15)
+    check("แท็บที่ไม่มีอยู่ -> 404", r.status_code == 404, str(r.status_code))
 
     r = session.get(base + "/artists", timeout=15)
     check("GET /artists (ศิลปินทั้งหมด) ตอบ 200", r.status_code == 200, str(r.status_code))

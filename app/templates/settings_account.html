@@ -1,0 +1,24 @@
+{% extends "settings_base.html" %}
+
+{% block settings_content %}
+<section class="settings-card">
+  <h2>{{ t('settings.account') }}</h2>
+  <dl class="kv">
+    <dt>{{ t('field.username') }}</dt><dd>{{ user.Username }}</dd>
+    <dt>{{ t('field.email') }}</dt><dd>{{ user.Email }}</dd>
+    <dt>{{ t('field.gender') }}</dt><dd>{{ user.Gender or '—' }}</dd>
+    <dt>{{ t('field.dob') }}</dt><dd>{{ user.Date_of_Birth or '—' }}</dd>
+    <dt>{{ t('field.country') }}</dt><dd>{{ user.Country or '—' }}</dd>
+    <dt>{{ t('field.tel') }}</dt><dd>{{ user.Tel or '—' }}</dd>
+  </dl>
+</section>
+
+<section class="settings-card">
+  <h2>{{ t('settings.session') }}</h2>
+  <div class="row-actions">
+    <a class="btn btn-ghost" href="{{ url_for('main.history') }}">{{ t('settings.view_history') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('main.playlists') }}">{{ t('settings.go_playlists') }}</a>
+    <a class="btn btn-danger" href="{{ url_for('main.logout') }}">{{ t('settings.logout') }}</a>
+  </div>
+</section>
+{% endblock %}

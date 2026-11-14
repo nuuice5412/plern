@@ -1,0 +1,27 @@
+{% extends "settings_base.html" %}
+
+{% block settings_content %}
+<section class="settings-card">
+  <h2>{{ t('settings.preferences') }}</h2>
+
+  <form method="post" action="{{ url_for('main.set_language') }}" class="pref-row">
+    <input type="hidden" name="next" value="{{ url_for('main.settings_tab', tab='general') }}">
+    <div class="pref-text">
+      <strong>{{ t('settings.language') }}</strong>
+      <span class="muted small">{{ t('settings.language_hint') }}</span>
+    </div>
+    <div class="pref-control">
+      <select name="lang" aria-label="{{ t('settings.language') }}"
+              onchange="this.form.submit()">
+        <option value="th" {{ 'selected' if lang == 'th' }}>ไทย</option>
+        <option value="en" {{ 'selected' if lang == 'en' }}>English</option>
+      </select>
+    </div>
+  </form>
+</section>
+
+<section class="settings-card">
+  <h2>{{ t('settings.playback') }}</h2>
+  <p class="muted">{{ t('settings.playback_note') }}</p>
+</section>
+{% endblock %}

@@ -766,10 +766,10 @@ def logout():
 # ---------------------------------------------------------------------------
 # Profile menu pages: account settings, help, legal
 # ---------------------------------------------------------------------------
-@bp.get("/settings")
-@login_required
-def settings():
-    """Account page behind the round profile button"""
+SETTINGS_TABS = ("general", "account", "about")
+
+
+def _settings_context(tab: str) -> dict:
     user = db.query_one(
         "SELECT UserID, Username, Email, Gender, Date_of_Birth, Country, Tel "
         "FROM dbo.[User] WHERE UserID = ?",
@@ -792,19 +792,37 @@ def settings():
         """,
         (g.user["UserID"],) * 4,
     )
-    return render_template("settings.html", user=user, stats=stats)
+    return {"user": user, "stats": stats, "tab": tab, "tabs": SETTINGS_TABS}
+
+
+@bp.get("/settings")
+@login_required
+def settings():
+    """Settings has its own sub-pages; the bare URL opens General"""
+    return redirect(url_for("main.settings_tab", tab="general"))
+
+
+@bp.get("/settings/<tab>")
+@login_required
+def settings_tab(tab: str):
+    if tab not in SETTINGS_TABS:
+        abort(404)
+    return render_template(f"settings_{tab}.html", **_settings_context(tab))
 
 
 @bp.post("/settings/language")
 @login_required
 def set_language():
-    """Persist the UI language in the session"""
+    """Persist the UI language and bounce straight back (no save button)"""
     lang = (request.form.get("lang") or "th").lower()
     if lang not in ("th", "en"):
         lang = "th"
     session["lang"] = lang
-    flash("บันทึกการตั้งค่าแล้ว / Preferences saved", "success")
-    return redirect(url_for("main.settings"))
+
+    target = request.form.get("next") or ""
+    if not (target.startswith("/settings") and not target.startswith("//")):
+        target = url_for("main.settings_tab", tab="general")
+    return redirect(target)
 
 
 @bp.get("/help")

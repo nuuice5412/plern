@@ -1,0 +1,23 @@
+{% extends "settings_base.html" %}
+
+{% block settings_content %}
+<section class="settings-card">
+  <h2>{{ t('settings.usage') }}</h2>
+  <dl class="kv">
+    <dt>{{ t('settings.playlists') }}</dt><dd>{{ stats.Playlists }}</dd>
+    <dt>{{ t('settings.tracks') }}</dt><dd>{{ stats.Tracks }}</dd>
+    <dt>{{ t('settings.plays') }}</dt><dd>{{ stats.Plays }}</dd>
+    <dt>{{ t('settings.time') }}</dt><dd>{{ stats.Seconds|hms }}</dd>
+  </dl>
+</section>
+
+<section class="settings-card">
+  <h2>{{ t('settings.about') }}</h2>
+  <dl class="kv">
+    <dt>{{ t('settings.app') }}</dt><dd>{{ app_name }}</dd>
+    <dt>{{ t('settings.stack') }}</dt><dd>Flask · SQL Server · pyodbc</dd>
+    <dt>{{ t('settings.version') }}</dt><dd>1.0 (course project)</dd>
+  </dl>
+  <p class="muted small" style="margin-top:14px">{{ t('settings.about_note') }}</p>
+</section>
+{% endblock %}

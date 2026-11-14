@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('settings.title') }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<header class="page-hero">
+  <span class="eyebrow">{{ t('settings.eyebrow') }}</span>
+  <h1>{{ t('settings.title') }}</h1>
+</header>
+
+<nav class="settings-tabs">
+  {% for name in tabs %}
+    <a class="settings-tab {{ 'active' if tab == name }}"
+       href="{{ url_for('main.settings_tab', tab=name) }}">{{ t('settings.tab.' ~ name) }}</a>
+  {% endfor %}
+</nav>
+
+{% block settings_content %}{% endblock %}
+{% endblock %}
