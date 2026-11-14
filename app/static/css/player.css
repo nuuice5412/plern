@@ -330,8 +330,8 @@ input[type="range"]:disabled { opacity: .4; cursor: default; }
   min-height: 0;
 }
 .np-full-cover {
-  width: min(56vh, 36vw, 600px);
-  height: min(56vh, 36vw, 600px);
+  width: min(70vh, 44vw, 640px);
+  height: min(70vh, 44vw, 640px);
   border-radius: 6px;
   font-size: 96px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, .45);
@@ -372,7 +372,7 @@ input[type="range"]:disabled { opacity: .4; cursor: default; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.np-full-center { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+.np-full-center { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
 .np-full .controls { gap: 24px; }
 .np-full .ctl { font-size: 17px; }
 .ctl-play.big { width: 48px; height: 48px; font-size: 17px; }
@@ -383,11 +383,10 @@ input[type="range"]:disabled { opacity: .4; cursor: default; }
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   width: 100%;
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 2px 0 0;
+  margin: 0;
+  padding: 0;
 }
 .np-full-progress input[type="range"] { flex: 1 1 auto; min-width: 0; }
 .np-full-progress .time {
@@ -432,7 +431,7 @@ body.np-open { overflow: hidden; }
   .np-full-right .vol-ico,
   .np-full-right #npf-vol,
   .np-full-right #npf-pill { display: none; }
-  .np-full-progress { max-width: 100%; }
+
 }
 
 @media (max-height: 620px) {
@@ -444,7 +443,7 @@ body.np-open { overflow: hidden; }
 @media (min-width: 761px) {
   .np-full-bottom {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(440px, 680px) minmax(0, 1fr);
     align-items: end;
     gap: 20px;
     max-width: none;
@@ -454,10 +453,10 @@ body.np-open { overflow: hidden; }
   .np-full-info {
     align-items: flex-start;
     text-align: left;
-    padding-bottom: 6px;
+    padding-bottom: 0;
   }
   .np-full-title { font-size: 17px; }
   .np-full-artist { font-size: 13.5px; }
-  .np-full-center { justify-self: center; width: auto; }
-  .np-full-progress { max-width: 680px; }
+  .np-full-center { justify-self: center; width: 100%; max-width: 680px; }
+
 }
