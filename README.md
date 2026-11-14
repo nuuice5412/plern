@@ -174,7 +174,7 @@ A song has several contributors, and one person can hold several roles on the sa
 (e.g. Nova Lane is singer, composer *and* producer on *Paper Lanterns*). A single `ArtistID`
 column on `Song` could only store one artist and could not answer "who composed this?".
 
-Collaborations also need multiple artists per song: *"Khiao Lueang Daeng (Get high)"* lists both
+Collaborations also need multiple artists per song: *"เขียว เหลือง แดง (Get high)"* lists both
 `PUN` and `The Toys` as singers. `vw_SongDetail` exposes `ArtistList` (a `STRING_AGG` of singers
 and featured artists) so the song page can show "PUN, The Toys", while compact lists keep using
 `MainArtistName`.

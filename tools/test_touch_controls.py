@@ -1,22 +1,19 @@
 """ทดสอบบนมือถือ: ปุ่มเล่นบนการ์ด/ตารางต้องมองเห็นและกดได้ (ไม่มี hover)"""
 import json
-import os
 import subprocess
-import tempfile
 import time
 import urllib.request
 
 import websocket
 
-CHROME = os.environ.get("CHROME_PATH") or r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-USER_DATA = tempfile.mkdtemp(prefix="plern-")
+CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 PORT = 9680
 
 proc = subprocess.Popen(
     [CHROME, "--headless=new", "--disable-gpu", "--mute-audio",
      "--autoplay-policy=no-user-gesture-required", "--hide-scrollbars",
      f"--remote-debugging-port={PORT}", "--remote-allow-origins=*",
-     f"--user-data-dir={USER_DATA}",
+     r"--user-data-dir=C:\Users\IMOS\AppData\Local\Temp\cdp-touch",
      "--window-size=390,844", "--no-first-run", "http://127.0.0.1:5000/"],
     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
