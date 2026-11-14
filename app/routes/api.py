@@ -101,4 +101,48 @@ def api_play(song_id: int):
 
     return jsonify(ok=True, songId=song_id, playCount=rows[0]["PlayCount"])
 
+@bp.get("/api/suggest")
+def api_suggest():
+    """Type-ahead for the search box: matching songs + artists (prefix first)."""
+    raw = (request.args.get("q") or "").strip()
+    if not raw:
+        return jsonify({"q": "", "songs": [], "artists": []})
+    if len(raw) > 60:
+        raw = raw[:60]
 
+    like_prefix = raw + "%"
+    like_any = "%" + raw + "%"
+    try:
+        songs = db.query(
+            """
+            SELECT TOP (6) SongID, SongTitle, MainArtistName
+            FROM dbo.vw_SongDetail
+            WHERE SongTitle LIKE ?
+            ORDER BY CASE WHEN SongTitle LIKE ? THEN 0 ELSE 1 END,
+                     PlayCount DESC, SongTitle
+            """,
+            (like_any, like_prefix),
+        )
+        artists = db.query(
+            """
+            SELECT TOP (4) a.ArtistID, a.ArtistName
+            FROM dbo.Artist AS a
+            WHERE a.ArtistName LIKE ?
+              AND EXISTS (
+                  SELECT 1
+                  FROM dbo.Song_Artist_Role AS sar
+                  JOIN dbo.[Role] AS r ON r.RoleID = sar.RoleID
+                  WHERE sar.ArtistID = a.ArtistID AND r.[Role] IN (N'Singer', N'Featured'))
+            ORDER BY CASE WHEN a.ArtistName LIKE ? THEN 0 ELSE 1 END, a.ArtistName
+            """,
+            (like_any, like_prefix),
+        )
+    except Exception:                      # noqa: BLE001 - suggestions must never 500
+        return jsonify({"q": raw, "songs": [], "artists": []})
+
+    return jsonify({
+        "q": raw,
+        "songs": [{"id": s["SongID"], "title": s["SongTitle"],
+                   "artist": s["MainArtistName"]} for s in songs],
+        "artists": [{"id": a["ArtistID"], "name": a["ArtistName"]} for a in artists],
+    })

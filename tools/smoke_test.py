@@ -129,6 +129,25 @@ def main() -> int:
     r = st.get(base + "/settings/nope", timeout=15)
     check("แท็บที่ไม่มีอยู่ -> 404", r.status_code == 404, str(r.status_code))
 
+    # ---- search suggestions (type-ahead) ----
+    r = session.get(base + "/api/suggest", params={"q": "s"}, timeout=15)
+    data = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+    check("GET /api/suggest?q=s ตอบ 200 + JSON", r.status_code == 200 and bool(data), str(r.status_code))
+    check("suggest คืนทั้งเพลงและศิลปิน",
+          bool(data.get("songs")) and bool(data.get("artists")),
+          f"songs={len(data.get('songs', []))} artists={len(data.get('artists', []))}")
+    check("suggest จำกัดจำนวน (ไม่เกิน 10 รายการ)",
+          len(data.get("songs", [])) <= 6 and len(data.get("artists", [])) <= 4)
+
+    r = session.get(base + "/api/suggest", params={"q": ""}, timeout=15)
+    empty = r.json()
+    check("suggest คำว่าง คืนลิสต์ว่าง", empty.get("songs") == [] and empty.get("artists") == [])
+
+    r = session.get(base + "/api/suggest", params={"q": "zzzzqqq"}, timeout=15)
+    none = r.json()
+    check("suggest คำที่ไม่มี คืนลิสต์ว่าง ไม่ error",
+          r.status_code == 200 and none.get("songs") == [] and none.get("artists") == [])
+
     r = st.get(base + "/settings/account/change-password", timeout=15)
     check("GET /settings/account/change-password ตอบ 200", r.status_code == 200, str(r.status_code))
     check("หน้ารหัสผ่านมีฟอร์ม", "password-form" in r.text)

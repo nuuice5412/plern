@@ -58,7 +58,9 @@
                stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>
         </span>
         <input type="search" name="q" placeholder="{{ t('search.placeholder') }}"
-               value="{{ request.args.get('q', '') }}" autocomplete="off">
+               value="{{ request.args.get('q', '') }}" autocomplete="off"
+               aria-autocomplete="list" aria-expanded="false" aria-controls="search-suggest">
+        <div class="search-suggest" id="search-suggest" role="listbox" aria-label="ผลการค้นหาแนะนำ" hidden></div>
       </form>
 
       <div class="user-area">
@@ -273,6 +275,7 @@
 
 <script src="{{ url_for('static', filename='js/player.js') }}"></script>
 <script src="{{ url_for('static', filename='js/ambient.js') }}"></script>
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
 {% block scripts %}{% endblock %}
 <script>
   // PWA: cache the static shell so the installed app opens instantly
