@@ -13,8 +13,10 @@
   --line-soft:   rgba(255, 255, 255, .06);
   --text:        #f1effa;
   --muted:       #9593a8;
-  --accent:      #8b5cf6;
-  --accent-2:    #a78bfa;
+  --accent:      #f2f2f5;   /* greyscale theme: the accent is light, not hue */
+  --accent-2:    #d8d8e0;
+  --accent-ink:  #08080c;   /* text on top of accent-coloured surfaces */
+  --glow:        transparent;
   --green:       #1ed760;
   --danger:      #f87171;
   --warn:        #fbbf24;
@@ -108,10 +110,10 @@ code {
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent), #4c1d95);
+  background: #f2f2f5;
   color: #fff;
   font-size: 17px;
-  box-shadow: 0 6px 16px rgba(139, 92, 246, .35);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .55);
 }
 
 .nav { display: flex; flex-direction: column; gap: 4px; }
@@ -220,8 +222,8 @@ code {
   padding: 10px 18px;
   border: 1px solid transparent;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--accent), #6d28d9);
-  color: #fff;
+  background: #f2f2f5;
+  color: var(--accent-ink);
   font: inherit;
   font-size: 14px;
   font-weight: 600;
@@ -263,7 +265,7 @@ code {
   border: 1px solid var(--line);
   border-radius: 22px;
   background:
-    radial-gradient(900px 320px at 8% -10%, rgba(139, 92, 246, .35), transparent 62%),
+    radial-gradient(900px 320px at 8% -10%, rgba(255, 255, 255, .35), transparent 62%),
     radial-gradient(700px 300px at 100% 120%, rgba(30, 215, 96, .16), transparent 60%),
     linear-gradient(160deg, #14141d 0%, #0b0b11 100%);
   overflow: hidden;
@@ -339,7 +341,7 @@ code {
 }
 .tracks tbody tr.track { transition: background .12s; }
 .tracks tbody tr.track:hover { background: rgba(255, 255, 255, .045); }
-.tracks tbody tr.is-playing { background: rgba(139, 92, 246, .12); }
+.tracks tbody tr.is-playing { background: rgba(255, 255, 255, .06); }
 
 .col-idx { width: 52px; position: relative; }
 .rowno { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -593,8 +595,8 @@ tr.track.is-playing .play-toggle { background: transparent; color: #ffffff; }
   display: inline-block;
   padding: 2px 9px;
   border-radius: 999px;
-  background: rgba(139, 92, 246, .16);
-  border: 1px solid rgba(139, 92, 246, .35);
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .35);
   color: var(--accent-2);
   font-size: 11.5px;
   font-weight: 700;
@@ -635,7 +637,7 @@ tr.track.is-playing .play-toggle { background: transparent; color: #ffffff; }
   padding: 24px 28px;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: linear-gradient(120deg, rgba(139, 92, 246, .16), rgba(30, 215, 96, .08));
+  background: linear-gradient(120deg, rgba(255, 255, 255, .16), rgba(30, 215, 96, .08));
 }
 .cta-actions { display: flex; gap: 10px; }
 
@@ -769,8 +771,8 @@ select { cursor: pointer; }
   margin-top: 3px;
   padding: 1px 9px;
   border-radius: 999px;
-  background: rgba(139, 92, 246, .18);
-  border: 1px solid rgba(139, 92, 246, .42);
+  background: rgba(255, 255, 255, .18);
+  border: 1px solid rgba(255, 255, 255, .42);
   color: var(--accent-2);
   font-size: 10.5px;
   font-weight: 700;
@@ -1179,7 +1181,7 @@ body.np-open { overflow: hidden; }
   cursor: pointer;
 }
 .np-queue-list li:hover { background: rgba(255, 255, 255, .06); }
-.np-queue-list li.active { background: rgba(139, 92, 246, .2); }
+.np-queue-list li.active { background: rgba(255, 255, 255, .2); }
 .q-cover { grid-row: 1 / span 2; width: 34px; height: 34px; border-radius: 5px; font-size: 13px; }
 .q-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .q-artist { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1651,7 +1653,7 @@ body.np-open { overflow: hidden; }
 .otp-box:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, .25);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .22);
 }
 .resend-form { display: inline; }
 
@@ -1958,3 +1960,26 @@ kbd {
 @media (max-width: 620px) {
   .brand-logo { width: 24px; height: 24px; }
 }
+
+
+/* =====================================================================
+   Ambient light — a soft glow tinted by the hovered cover art.
+   JS sets --ambient-color / --ambient-x / --ambient-y on #ambient.
+   ===================================================================== */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .35s ease;
+  background:
+    radial-gradient(620px 480px at var(--ambient-x, 50%) var(--ambient-y, 40%),
+                    var(--ambient-color, transparent), transparent 72%);
+  filter: blur(40px) saturate(1.15);
+  mix-blend-mode: screen;
+}
+.ambient.is-on { opacity: .28; }
+
+.app, .player, .np-full { position: relative; z-index: 1; }
+.
