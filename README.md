@@ -635,3 +635,22 @@ UTF-8. To update only views/procedures without wiping data:
 ```powershell
 python tools/init_db.py --scripts 03
 ```
+
+---
+
+## 15. Project history
+
+The work was built incrementally over two days; every step is its own commit.
+
+| Day | Milestone |
+|---|---|
+| **13 Nov** | Initial app: SQL Server schema (8 tables + trigger), Flask routes, player<br>Git LFS for the 175 MB of audio · app renamed to **Plern**<br>README + all code comments translated to English<br>OTP login removed → schema matches the 8-table ER exactly<br>Mobile pass: reachable tap targets, scrollable nav, centred song hero<br>Player controls rebuilt as SVG (iOS rendered the old glyphs as blue emoji)<br>Fixes: prev/next build the queue from their list, play buttons visible on touch |
+| **14 Nov** | Public repository + clone-and-run instructions<br>Artist photos resolved by the song they sing (not just by name)<br>Image cache-busting · Only Monday corrected to a three-member photo<br>Real composer credits from MusicBrainz (25 songs) with a provenance report<br>Round profile menu (settings / help / legal / log out)<br>Settings split into tabs, Thai/English switch, account edit page, password page |
+
+Notable engineering decisions, in the order they were made:
+
+- denormalise `PlayCount` + trigger, but compute playlist totals in a view (§5.1)
+- one ternary table for credits instead of an `ArtistID` column on `Song` (§5.2)
+- keep the ER untouched: images live in a JSON manifest, not in the database (§8)
+- delete the OTP table rather than leave the schema with a ninth table (§5.8)
+
