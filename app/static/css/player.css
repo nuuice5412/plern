@@ -414,6 +414,8 @@ body.np-open { overflow: hidden; }
   .np-full-cover { width: min(42vh, 76vw, 360px); height: min(42vh, 76vw, 360px); font-size: 64px; }
   .np-full-bottom { grid-template-columns: 1fr; gap: 12px; text-align: center; }
   .np-full-info { align-items: center; }
+  .np-full-right { justify-content: center; }
+}
 
 /* --- balance pass: keep the centre column readable on smaller screens --- */
 @media (max-width: 1080px) {
@@ -436,4 +438,26 @@ body.np-open { overflow: hidden; }
 @media (max-height: 620px) {
   .np-full-cover { width: min(44vh, 30vw); height: min(44vh, 30vw); }
   .np-full { gap: 6px; }
+}
+
+/* --- desktop: song title back in the bottom-left corner (mobile keeps the centred stack) --- */
+@media (min-width: 761px) {
+  .np-full-bottom {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: end;
+    gap: 20px;
+    max-width: none;
+    width: 100%;
+    margin: 0;
+  }
+  .np-full-info {
+    align-items: flex-start;
+    text-align: left;
+    padding-bottom: 6px;
+  }
+  .np-full-title { font-size: 17px; }
+  .np-full-artist { font-size: 13.5px; }
+  .np-full-center { justify-self: center; width: auto; }
+  .np-full-progress { max-width: 680px; }
 }
