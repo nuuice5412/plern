@@ -776,8 +776,6 @@ def _settings_tabs(active: str) -> list[dict]:
          "label": "settings.tab.general"},
         {"slug": "account", "url": url_for("main.settings_tab", tab="account"),
          "label": "settings.tab.account"},
-        {"slug": "password", "url": url_for("main.change_password_page"),
-         "label": "settings.tab.password"},
         {"slug": "about", "url": url_for("main.settings_tab", tab="about"),
          "label": "settings.tab.about"},
     ], active
@@ -944,8 +942,8 @@ def change_password_page():
             flash("เปลี่ยนรหัสผ่านแล้ว", "success")
             return redirect(url_for("main.settings_tab", tab="account"))
 
-    entries, _ = _settings_tabs("password")
-    return render_template("settings_password.html", tab="password", tabs=entries,
+    entries, _ = _settings_tabs("account")
+    return render_template("settings_password.html", tab="account", tabs=entries,
                            user=g.user, stats=None)
 
 
