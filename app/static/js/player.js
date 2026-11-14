@@ -219,7 +219,7 @@
   const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
     + '<polygon points="8,5 21.5,12 8,19"/></svg>';
   const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
-    + '<rect x="7" y="5" width="4" height="14" rx="1.4"/>'
+    + '<rect x="6.6" y="5" width="4" height="14" rx="1.4"/>'
     + '<rect x="13.5" y="5" width="4" height="14" rx="1.4"/></svg>';
 
   const EQ_ICON = '<span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
