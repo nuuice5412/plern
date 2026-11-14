@@ -43,11 +43,21 @@ def _load() -> dict:
     return _state["data"]
 
 
+def _versioned_url(name: str) -> str:
+    """Static URL with ?v=<mtime>, so a replaced file is not served from browser cache."""
+    path = pathlib.Path(current_app.static_folder) / "img" / name
+    try:
+        version = int(path.stat().st_mtime)
+    except OSError:
+        version = 0
+    return url_for("static", filename=f"img/{name}", v=version)
+
+
 def cover_url(song_id) -> str | None:
     name = _load().get("covers", {}).get(str(song_id))
-    return url_for("static", filename=f"img/{name}") if name else None
+    return _versioned_url(name) if name else None
 
 
 def artist_photo_url(artist_id) -> str | None:
     name = _load().get("artists", {}).get(str(artist_id))
-    return url_for("static", filename=f"img/{name}") if name else None
+    return _versioned_url(name) if name else None
