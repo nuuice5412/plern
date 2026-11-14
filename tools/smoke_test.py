@@ -146,6 +146,15 @@ def main() -> int:
                 allow_redirects=True, timeout=20)
     check("ยืนยันรหัสผ่านไม่ตรง ถูกปฏิเสธ", "ไม่ตรงกัน" in r.text)
 
+    # CSS guard: the player bar must stay fixed (a later "position: relative"
+    # rule once knocked it out of the viewport)
+    css = (pathlib.Path(__file__).resolve().parent.parent
+           / "app" / "static" / "css" / "style.css").read_text(encoding="utf-8")
+    check("CSS: .player เป็น position: fixed",
+          ".player {\n  position: fixed;" in css)
+    check("CSS: ไม่มีกฎทับ position ของ .player",
+          ".app, .player" not in css)
+
     r = session.get(base + "/artists", timeout=15)
     check("GET /artists (ศิลปินทั้งหมด) ตอบ 200", r.status_code == 200, str(r.status_code))
     check("หน้า /artists มีการ์ดศิลปิน", r.text.count('class="artist-card"') >= 10,

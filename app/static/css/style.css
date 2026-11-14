@@ -1981,5 +1981,8 @@ kbd {
 }
 .ambient.is-on { opacity: .28; }
 
-.app, .player, .np-full { position: relative; z-index: 1; }
+/* keep the fixed bars above the ambient layer (do NOT touch their position) */
+.app { position: relative; z-index: 1; }
+.player { z-index: 60; }
+.np-full { z-index: 90; }
 .
