@@ -2,8 +2,6 @@
 
 [![repo](https://img.shields.io/badge/repository-nuuice5412%2Fplern-6d28d9)](https://github.com/nuuice5412/plern)
 
-**English** | [ไทย](README.th.md)
-
 A **Database** course project: a music streaming web app running on **Microsoft SQL Server**.
 The schema follows the group's ER diagram (Peter Chen notation) and uses the real thing end to
 end — tables, constraints, indexes, views, stored procedures, triggers, and transactions.
@@ -48,7 +46,7 @@ buttons that fill them in.
 
 ```powershell
 # 1) Open PowerShell in the project folder
-cd C:\Users\IMOS\Documents\Spi
+cd plern
 
 # 2) One script does everything (venv + database + audio + web server)
 powershell -ExecutionPolicy Bypass -File .\run.ps1
@@ -176,7 +174,7 @@ A song has several contributors, and one person can hold several roles on the sa
 (e.g. Nova Lane is singer, composer *and* producer on *Paper Lanterns*). A single `ArtistID`
 column on `Song` could only store one artist and could not answer "who composed this?".
 
-Collaborations also need multiple artists per song: *"เขียว เหลือง แดง (Get high)"* lists both
+Collaborations also need multiple artists per song: *"Khiao Lueang Daeng (Get high)"* lists both
 `PUN` and `The Toys` as singers. `vw_SongDetail` exposes `ArtistList` (a `STRING_AGG` of singers
 and featured artists) so the song page can show "PUN, The Toys", while compact lists keep using
 `MainArtistName`.

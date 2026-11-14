@@ -1,19 +1,22 @@
 """ทดสอบปุ่มก่อนหน้า/ถัดไป/สุ่ม/เล่นซ้ำ บนหน้าแรก (การ์ด 20 เพลง)"""
 import json
+import os
 import subprocess
+import tempfile
 import time
 import urllib.request
 
 import websocket
 
-CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+CHROME = os.environ.get("CHROME_PATH") or r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+USER_DATA = tempfile.mkdtemp(prefix="plern-")
 PORT = 9660
 
 proc = subprocess.Popen(
     [CHROME, "--headless=new", "--disable-gpu", "--mute-audio",
      "--autoplay-policy=no-user-gesture-required",
      f"--remote-debugging-port={PORT}", "--remote-allow-origins=*",
-     r"--user-data-dir=C:\Users\IMOS\AppData\Local\Temp\cdp-controls",
+     f"--user-data-dir={USER_DATA}",
      "--window-size=1440,900", "--no-first-run", "http://127.0.0.1:5000/"],
     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
