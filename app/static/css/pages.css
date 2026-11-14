@@ -604,8 +604,8 @@
    ===================================================================== */
 .ctl { position: relative; }
 .ctl svg { width: 20px; height: 20px; display: block; }
-.ctl-play svg { width: 17px; height: 17px; }
-.ctl-play.big svg { width: 21px; height: 21px; }
+.ctl-play svg { width: 20px; height: 20px; }
+.ctl-play.big svg { width: 26px; height: 26px; }
 .vol-ico { display: inline-grid; place-items: center; }
 .vol-ico svg { width: 18px; height: 18px; display: block; }
 

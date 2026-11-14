@@ -67,13 +67,17 @@
 .ctl-play {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  background: var(--text);
-  color: #0a0a0f;
+  width: 42px;
+  height: 42px;
+  background: transparent;      /* ไอคอนล้วน เหมือนปุ่มอื่น */
+  color: var(--text);
   font-size: 14px;
 }
-.ctl-play:hover:not(:disabled) { color: #0a0a0f; transform: scale(1.06); }
+.ctl-play:hover:not(:disabled) {
+  color: var(--text);
+  transform: scale(1.10);
+  background: transparent;
+}
 
 .progress { display: flex; align-items: center; gap: 9px; width: 100%; }
 .time { color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; min-width: 34px; }
@@ -375,7 +379,7 @@ input[type="range"]:disabled { opacity: .4; cursor: default; }
 .np-full-center { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
 .np-full .controls { gap: 24px; }
 .np-full .ctl { font-size: 17px; }
-.ctl-play.big { width: 48px; height: 48px; font-size: 17px; }
+.ctl-play.big { width: 56px; height: 56px; font-size: 17px; }
 
 /* full-width progress bar — times pinned to the left/right edges like Tidal */
 .np-full-progress {
