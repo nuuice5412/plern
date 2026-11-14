@@ -438,8 +438,11 @@ Without PyAV it falls back to a local `ffmpeg`.
 - **No ALBUM table** — per the group's ER, songs attach directly to artists. To add one:
   `Album(AlbumID, AlbumTitle, Release_Date, ArtistID)` plus `AlbumID` on `Song`
   (the iTunes API already returns `collectionName`).
-- Credits in `Song_Artist_Role` are demo data (singer/composer/producer for the same artist), not
-  verified against real album liners; featured artists do come from real `feat.` credits.
+- **Credits in `Song_Artist_Role`** — `Singer` and `Featured` come from iTunes metadata (real).
+  `Composer` is real for the 25 songs where **MusicBrainz** knows the work (`tools/fetch_credits.py`,
+  provenance saved in `data/credits_report.json`); the rest — and every `Producer` row — was filled
+  in by `tools/sync_catalog.py` as demo data, because MusicBrainz has no catalogue for the Thai
+  tracks. Run `python tools/fetch_credits.py --prune` to delete the unverified rows.
 - No pagination (uses `TOP (100)`), no full-text search (uses `LIKE`).
 - No refresh tokens or rate limiting (course demo).
 - No multi-step atomic transactions — add `autocommit=False` with `commit()` / `rollback()`
