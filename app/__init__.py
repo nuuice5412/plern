@@ -1,4 +1,4 @@
-"""Flask application factory"""
+﻿"""Flask application factory"""
 from __future__ import annotations
 
 import datetime as dt
@@ -59,12 +59,14 @@ def create_app(config_object: type = Config) -> Flask:
 
     @app.template_filter("hms")
     def hms(seconds: int | None) -> str:
-        """4980 -> '1 hr 23 min'"""
+        """4980 -> '1 ชม. 23 น.' (Thai) or '1 h 23 m' (English)"""
         total = int(seconds or 0)
         hours, minutes = divmod(total // 60, 60)
-        if hours:
-            return f"{hours} ชม. {minutes} น."
-        return f"{minutes} น."
+        from .i18n import current_language
+
+        if current_language() == "en":
+            return f"{hours} h {minutes} m" if hours else f"{minutes} m"
+        return f"{hours} ชม. {minutes} น." if hours else f"{minutes} น."
 
     @app.template_filter("thaidate")
     def thaidate(value: dt.date | dt.datetime | None, with_time: bool = True) -> str:
@@ -81,6 +83,12 @@ def create_app(config_object: type = Config) -> Flask:
     def hue(song_id: int | None) -> int:
         """Generate a deterministic cover color from SongID (used as a CSS variable)"""
         return ((int(song_id or 1) * 47) % 360)
+
+    @app.context_processor
+    def inject_i18n() -> dict:
+        from .i18n import current_language, translate
+
+        return {"t": translate, "lang": current_language()}
 
     @app.template_filter("mask_email")
     def mask_email(value: str | None) -> str:

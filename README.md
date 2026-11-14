@@ -96,6 +96,7 @@ Plern/
 │   ├── db.py                  # data access layer (query / call_proc / error translation)
 │   ├── auth.py                # password hashing + @login_required
 │   ├── artwork.py             # cover/artist image resolution from manifest
+│   ├── i18n.py                # UI strings (Thai/English) for the app shell
 │   ├── routes.py              # all routes
 │   ├── templates/             # base, index, search, song, artist, playlist, history, auth…
 │   └── static/

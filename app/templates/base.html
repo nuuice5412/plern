@@ -25,13 +25,13 @@
 
     <nav class="nav">
       <a class="nav-item {{ 'active' if request.endpoint == 'main.index' }}" href="{{ url_for('main.index') }}">
-        <span class="ico">⌂</span> หน้าแรก
+        <span class="ico">⌂</span> {{ t('nav.home') }}
       </a>
       <a class="nav-item {{ 'active' if request.endpoint == 'main.playlists' }}" href="{{ url_for('main.playlists') }}">
-        <span class="ico">☰</span> คลังเพลย์ลิสต์
+        <span class="ico">☰</span> {{ t('nav.playlists') }}
       </a>
       <a class="nav-item {{ 'active' if request.endpoint == 'main.history' }}" href="{{ url_for('main.history') }}">
-        <span class="ico">◷</span> ประวัติการฟัง
+        <span class="ico">◷</span> {{ t('nav.history') }}
       </a>
     </nav>
 
@@ -51,7 +51,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>
         </span>
-        <input type="search" name="q" placeholder="ค้นหาเพลง หรือศิลปิน…"
+        <input type="search" name="q" placeholder="{{ t('search.placeholder') }}"
                value="{{ request.args.get('q', '') }}" autocomplete="off">
       </form>
 
@@ -69,10 +69,10 @@
                 <span class="profile-drop-name">{{ current_user.Username }}</span>
                 <span class="profile-drop-mail">{{ current_user.Email }}</span>
               </div>
-              <a class="profile-item" href="{{ url_for('main.settings') }}">ตั้งค่าบัญชี</a>
-              <a class="profile-item" href="{{ url_for('main.help_page') }}">ช่วยเหลือ</a>
-              <a class="profile-item" href="{{ url_for('main.terms') }}">ข้อกำหนดและความเป็นส่วนตัว</a>
-              <a class="profile-item danger" href="{{ url_for('main.logout') }}">ออกจากระบบ</a>
+              <a class="profile-item" href="{{ url_for('main.settings') }}">{{ t('menu.settings') }}</a>
+              <a class="profile-item" href="{{ url_for('main.help_page') }}">{{ t('menu.help') }}</a>
+              <a class="profile-item" href="{{ url_for('main.terms') }}">{{ t('menu.terms') }}</a>
+              <a class="profile-item danger" href="{{ url_for('main.logout') }}">{{ t('menu.logout') }}</a>
             </div>
           </div>
         {% else %}

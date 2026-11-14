@@ -1,4 +1,4 @@
-"""
+﻿"""
 All web app routes live here.
 
 Query design notes:
@@ -793,6 +793,18 @@ def settings():
         (g.user["UserID"],) * 4,
     )
     return render_template("settings.html", user=user, stats=stats)
+
+
+@bp.post("/settings/language")
+@login_required
+def set_language():
+    """Persist the UI language in the session"""
+    lang = (request.form.get("lang") or "th").lower()
+    if lang not in ("th", "en"):
+        lang = "th"
+    session["lang"] = lang
+    flash("บันทึกการตั้งค่าแล้ว / Preferences saved", "success")
+    return redirect(url_for("main.settings"))
 
 
 @bp.get("/help")
