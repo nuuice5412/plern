@@ -146,6 +146,10 @@ def all_songs():
         (offset, SONGS_PER_PAGE),
     )
 
+    if request.args.get("partial") == "1":
+        return render_template(
+            "_song_rows.html", songs=songs, start=offset + 1)
+
     return render_template(
         "songs.html",
         songs=songs,

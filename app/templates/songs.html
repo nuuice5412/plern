@@ -10,7 +10,10 @@
   <p class="page-hero-sub">{{ subtitle }}</p>
 </header>
 
-<table class="tracks" id="all-tracks">
+<table class="tracks" id="all-tracks"
+       data-next-page="{{ page + 1 }}"
+       data-pages="{{ pages }}"
+       data-sort="{{ sort }}">
   <thead>
     <tr>
       <th class="col-idx">#</th>
@@ -20,59 +23,17 @@
       <th class="col-right">เวลา</th>
     </tr>
   </thead>
-  <tbody>
-    {% for song in songs %}
-    <tr class="track"
-        data-id="{{ song.SongID }}"
-        data-title="{{ song.SongTitle }}"
-        data-artist="{{ song.MainArtistName }}"
-        data-duration="{{ song.Duration }}">
-      <td class="col-idx">
-        <span class="rowno">{{ start + loop.index0 }}</span>
-        <button type="button" class="play-toggle" title="เล่นเพลง">▶</button>
-      </td>
-      <td class="col-title">
-        <a class="title-link" href="{{ url_for('main.song_detail', song_id=song.SongID) }}">
-          <span class="cover cover-sm" style="--h:{{ song.SongID|hue }}">
-            {%- if cover_url(song.SongID) -%}
-              <img src="{{ cover_url(song.SongID) }}" alt="" loading="lazy">
-            {%- else -%}<span>♪</span>{%- endif -%}
-          </span>
-          <span class="tt">
-            <span class="title">{{ song.SongTitle }}</span>
-          </span>
-        </a>
-      </td>
-      <td class="muted">{{ song.MainArtistName }}</td>
-      <td class="col-right plays">{{ song.PlayCount }}</td>
-      <td class="col-right dur">{{ song.Duration|mmss }}</td>
-    </tr>
-    {% endfor %}
+  <tbody id="all-tracks-body">
+    {% include "_song_rows.html" %}
   </tbody>
 </table>
 
-{% if pages > 1 %}
-<nav class="pager" aria-label="แบ่งหน้า">
-  {% set base_args = {'sort': sort} if sort == 'new' else {} %}
+<div class="load-more" id="load-more" data-end="{{ 'true' if page >= pages else 'false' }}">
+  <span class="load-more-dot" aria-hidden="true"></span>
+  <span class="load-more-text">{{ "ครบทั้งหมดแล้ว" if page >= pages else "กำลังโหลด…" }}</span>
+</div>
+{% endblock %}
 
-  {% if page > 1 %}
-    <a class="pager-btn" href="{{ url_for('main.all_songs', page=page-1, **base_args) }}"
-       rel="prev">‹ ก่อนหน้า</a>
-  {% else %}
-    <span class="pager-btn is-disabled">‹ ก่อนหน้า</span>
-  {% endif %}
-
-  <span class="pager-info">
-    หน้า {{ page }} / {{ pages }}
-    <span class="muted small">· {{ start }}–{{ start + songs|length - 1 }} จาก {{ total }}</span>
-  </span>
-
-  {% if page < pages %}
-    <a class="pager-btn" href="{{ url_for('main.all_songs', page=page+1, **base_args) }}"
-       rel="next">ถัดไป ›</a>
-  {% else %}
-    <span class="pager-btn is-disabled">ถัดไป ›</span>
-  {% endif %}
-</nav>
-{% endif %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/infinite.js') }}"></script>
 {% endblock %}

@@ -1,0 +1,28 @@
+{# แถวเพลง — ใช้ทั้งหน้าแรกของ /songs และตอนโหลดเพิ่ม (infinite scroll) #}
+{% for song in songs %}
+<tr class="track"
+    data-id="{{ song.SongID }}"
+    data-title="{{ song.SongTitle }}"
+    data-artist="{{ song.MainArtistName }}"
+    data-duration="{{ song.Duration }}">
+  <td class="col-idx">
+    <span class="rowno">{{ start + loop.index0 }}</span>
+    <button type="button" class="play-toggle" title="เล่นเพลง">▶</button>
+  </td>
+  <td class="col-title">
+    <a class="title-link" href="{{ url_for('main.song_detail', song_id=song.SongID) }}">
+      <span class="cover cover-sm" style="--h:{{ song.SongID|hue }}">
+        {%- if cover_url(song.SongID) -%}
+          <img src="{{ cover_url(song.SongID) }}" alt="" loading="lazy">
+        {%- else -%}<span>♪</span>{%- endif -%}
+      </span>
+      <span class="tt">
+        <span class="title">{{ song.SongTitle }}</span>
+      </span>
+    </a>
+  </td>
+  <td class="muted">{{ song.MainArtistName }}</td>
+  <td class="col-right plays">{{ song.PlayCount }}</td>
+  <td class="col-right dur">{{ song.Duration|mmss }}</td>
+</tr>
+{% endfor %}

@@ -391,3 +391,31 @@ tr.track.is-playing .play-toggle { background: transparent; color: #ffffff; }
   background: linear-gradient(120deg, rgba(255, 255, 255, .16), rgba(30, 215, 96, .08));
 }
 .cta-actions { display: flex; gap: 10px; }
+
+/* Infinite scroll footer (replaces the old pager) */
+.load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 26px 0 12px;
+  min-height: 26px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.load-more-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  opacity: .35;
+}
+.load-more.is-loading .load-more-dot {
+  animation: lm-pulse 1s ease-in-out infinite;
+  opacity: 1;
+}
+.load-more.is-done .load-more-dot { display: none; }
+@keyframes lm-pulse {
+  0%, 100% { transform: scale(.8); opacity: .35; }
+  50%      { transform: scale(1.35); opacity: 1; }
+}

@@ -273,6 +273,7 @@
 
 <script src="{{ url_for('static', filename='js/player.js') }}"></script>
 <script src="{{ url_for('static', filename='js/ambient.js') }}"></script>
+{% block scripts %}{% endblock %}
 <script>
   // PWA: cache the static shell so the installed app opens instantly
   if ('serviceWorker' in navigator) {
