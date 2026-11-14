@@ -110,9 +110,20 @@ def title_key(title: str) -> tuple[str, str]:
     return norm(base), norm(" ".join(brackets))
 
 
+# ชื่อวงที่เป็นศิลปินคู่/วงดนตรี — ห้ามแยกที่ "&" (เช่น Whal & Dolph)
+KNOWN_GROUPS = {
+    "whal & dolph",
+    "simon & garfunkel",
+    "telex telexs",
+}
+
+
 def split_artists(artist_name: str) -> list[str]:
     """'The Weeknd, JENNIE & Lily Rose Depp' -> 3 names"""
-    parts = re.split(r"\s*(?:,|&|\bfeat\.|\bft\.|\sx\s)\s*", artist_name or "")
+    whole = (artist_name or "").strip()
+    if whole.lower() in KNOWN_GROUPS:
+        return [whole]
+    parts = re.split(r"\s*(?:,|&|\bfeat\.|\bft\.|\sx\s)\s*", whole)
     return [p.strip() for p in parts if p.strip()]
 
 
