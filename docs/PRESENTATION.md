@@ -118,3 +118,23 @@ cd C:\Users\IMOS\Documents\Spi
 □ เปิด /songs และ /playlists ไว้ในแท็บสำรอง
 □ ถ้าเน็ตพัง — สคริปต์ demo_crud.py ทำงานได้โดยไม่ต้องใช้เน็ต
 ```
+---
+
+## "Chain" — ถ้าอาจารย์พูดถึงคำนี้
+
+อาจารย์บอกว่า "อยากแบบ chain" แต่จำไม่ได้ว่าคืออะไร — สคริปต์ 	ools/demo_chain.py
+สาธิต **ครบทั้ง 5 แบบ** เลือกโชว์อันที่ตรงกับที่อาจารย์หมายถึงได้เลย
+
+`powershell
+.\.venv\Scripts\python.exe tools\demo_chain.py --pause
+`
+
+| # | Chain | สาธิตอะไร |
+|---|---|---|
+| 1 | **Cascade chain** | ลบ Playlist 1 แถว → Playlist_Detail ถูกลบตาม (FK ON DELETE CASCADE) · และโชว์กรณีถูก FK บล็อก |
+| 2 | **Join chain** | query ต่อ 6 ตาราง: User → Playlist → Detail → Song → Song_Artist_Role → Artist/Role |
+| 3 | **Trigger chain** | INSERT History → trigger อัปเดต PlayCount เอง (ไม่มี UPDATE ในโค้ด) |
+| 4 | **Transaction chain** | INSERT 2 ตาราง + UPDATE ในชุดเดียว → ROLLBACK แล้วหายพร้อมกัน |
+| 5 | **Layer chain** | ยิง HTTP POST จริง → Flask → SQL Server → มีแถวใหม่ใน DB |
+
+ทุกข้อจบด้วย rollback — ฐานข้อมูลไม่เปื้อน
