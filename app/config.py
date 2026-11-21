@@ -2,7 +2,28 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import secrets
+
+
+def _load_local_env() -> None:
+    """อ่าน .env.local (driver/server ที่เครื่องนั้นใช้ได้) ถ้ามี
+
+    bootstrap.py เขียนไฟล์นี้ให้ตอนเตรียมเครื่องใหม่ — ค่าที่มีอยู่แล้วใน
+    environment variable จะไม่ถูกทับ
+    """
+    env_file = pathlib.Path(__file__).resolve().parent.parent / ".env.local"
+    if not env_file.exists():
+        return
+    for raw in env_file.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        os.environ.setdefault(key.strip(), value.strip())
+
+
+_load_local_env()
 
 
 def _connection_string() -> str:

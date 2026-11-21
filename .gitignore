@@ -39,3 +39,5 @@ backups/
 # ---------- presentation material (not pushed) ----------
 presentation/
 
+# ---------- per-machine DB settings (written by presentation/bootstrap.py) ----------
+.env.local
