@@ -35,3 +35,7 @@ docs/shots/_*.png
 # ---------- database backups ----------
 backups/
 *.bak
+
+# ---------- presentation material (not pushed) ----------
+presentation/
+
